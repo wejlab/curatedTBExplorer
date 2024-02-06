@@ -1,11 +1,38 @@
 Package: curatedTBExplorer
-Title: What the Package Does (One Line, Title Case)
+Title: Curated tuberculosis analysis learning kit
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Authors@R: c(person(given="Andrew", family="Smith",
+                email="ajsajs02@gmail.com", role=c("aut")),
+            person(given="Alex", family="Sierra", email="alexjusticesierra@gmail.com",
+                role=c("aut")),
+            person(given="Elie", family="Wamana", email="mushiyieliewamana@suumail.net",
+                role=c("aut")),
+            person(given="Please", family="Lukau", email="pleaselukau@gmail.com",
+                role=c("aut")),
+            person(given=c("W.", "Evan"), family="Johnson", email="wej@bu.edu",
+                role=c("aut")))
+Description: 
+    curatedTBExplorer is an R package learning tool that lets users easily visualize, 
+    experiment with, and utilize machine learning to study curated tuberculosis data. 
+    It is to be used as an interactive R Shiny application to view and analyze the data 
+    without needing a high competence in R or Shiny. This can allow users that are interested 
+    in learning/studying about tuberculosis data take their first step.
 License: MIT + file LICENSE
+URL: https://github.com/wejlab/curatedTBExplorer
+Depends: 
+    R (>= 4.3.2),
+    TBSignatureProfiler,
+    curatedTBData
+Imports: 
+    BiocManager, 
+    DESeq2, 
+    GenomicRanges, 
+    ggplot2, 
+    iSEE,
+    MultiAssayExperiment, 
+    pheatmap,
+    RColorBrewer, 
+    SummarizedExperiment
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
