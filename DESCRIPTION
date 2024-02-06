@@ -5,7 +5,7 @@ Authors@R: c(person("Andrew", "Smith", email = "ajsajs02@gmail.com", role = c("a
             person("Alex", "Sierra", email = "alexjusticesierra@gmail.com", role = c("aut")),
             person("Elie", "Wamana", email = "mushiyieliewamana@suumail.net", role = c("aut")),
             person("Please", "Lukau", email = "pleaselukau@gmail.com", role = c("aut")),
-            person(c("W. Evan"), "Johnson", email = "wej@bu.edu", role = c("aut")))
+            person(c("W. Evan"), "Johnson", email = "wej@bu.edu", role = c("aut", "maintainer")))
 Description: 
     curatedTBExplorer is an R package learning tool that lets users easily visualize, 
     experiment with, and utilize machine learning to study curated tuberculosis data. 
