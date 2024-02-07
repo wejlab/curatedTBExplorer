@@ -23,7 +23,6 @@ Imports:
     DESeq2, 
     GenomicRanges, 
     ggplot2, 
-    iSEE,
     MultiAssayExperiment, 
     pheatmap,
     RColorBrewer, 
