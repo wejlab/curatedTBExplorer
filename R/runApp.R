@@ -8,11 +8,13 @@
 #' \dontrun{
 #'   run_curatedTBExplorer()
 #' }
+#'
 #' @export
+
 run_curatedTBExplorer <- function(dev = FALSE) {
   appDir <- system.file("shiny", package = "curatedTBExplorer")
   if (appDir == "") {
-    stop("Could not find my app. Try re-installing 'mypackage'.", 
+    stop("Could not find my app. Try re-installing 'mypackage'.",
       call. = FALSE
     )
   }
