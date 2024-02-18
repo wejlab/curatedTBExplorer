@@ -1,9 +1,11 @@
-library(shiny)
-library(shinythemes)
 library(BiocManager)
-library(TBSignatureProfiler)
+library(curatedTBData)
+library(dplyr)
 library(DT)
 library(SummarizedExperiment)
+library(shiny)
+library(shinythemes)
+library(TBSignatureProfiler)
 
 # Get the list of available studies
 data("DataSummary", package = "curatedTBData")
