@@ -9,10 +9,10 @@ tabPanel(  #this is our upload page
 
           # Could probably pull from DataSummary itself, but I don't know how to do that - Alex
           checkboxInput("filterDSPlatform", "Platform", value = FALSE, width = NULL),
-          checkboxInput("filterDSGeoRegion", "GeographicalRegion", value = TRUE, width = NULL),
-          checkboxInput("filterDSTissue", "Tissue", value = TRUE, width = NULL),
+          checkboxInput("filterDSGeoRegion", "GeographicalRegion", value = FALSE, width = NULL),
+          checkboxInput("filterDSTissue", "Tissue", value = FALSE, width = NULL),
           checkboxInput("filterDSAge", "Age", value = FALSE, width = NULL),
-          checkboxInput("filterDSHIV", "HIV Status", value = TRUE, width = NULL),
+          checkboxInput("filterDSHIV", "HIV Status", value = FALSE, width = NULL),
           checkboxInput("filterDSMethod", "Diagnosis Method", value = FALSE, width = NULL),
           checkboxInput("filterDSControl", "Control", value = FALSE, width = NULL),
           checkboxInput("filterDSLTBI", "LTBI", value = FALSE, width = NULL),
