@@ -1,10 +1,64 @@
 # Reactive values to store selected studies
 selected_studies <- reactiveVal(NULL) #might remove this block, it helped in the beginning but since changed the checkboxes to select-click it looks dumb
 
+#Grab the selected checkboxes from the ui section, and only output these within the datatable
+#super ugly block of code, but it works. Will make prettier later - Andrew
+#probably in a function in its own file? maybe
+selected_columns <- reactive({
+  selected_columns <- c("Study", "Notes")  #study id and notes are always visible
+
+  #these correspond to the checkboxes within the ui_upload code
+  #if they are selected, they are added to selected_columns, which is used within the datatable output
+  if(input$filterDSPlatform) {
+    selected_columns <- c(selected_columns, "Platform")
+  }
+  if(input$filterDSGeoRegion) {
+    selected_columns <- c(selected_columns, "GeographicalRegion")
+  }
+  if(input$filterDSTissue) {
+    selected_columns <- c(selected_columns, "Tissue")
+  }
+  if(input$filterDSAge) {
+    selected_columns <- c(selected_columns, "Age")
+  }
+  if(input$filterDSHIV) {
+    selected_columns <- c(selected_columns, "HIVStatus")
+  }
+  if(input$filterDSMethod) {
+    selected_columns <- c(selected_columns, "DiagnosisMethod")
+  }
+  if(input$filterDSControl) {
+    selected_columns <- c(selected_columns, "Control")
+  }
+  if(input$filterDSLTBI) {
+    selected_columns <- c(selected_columns, "LTBI")
+  }
+  if(input$filterDSPTB) {
+    selected_columns <- c(selected_columns, "PTB")
+  }
+  if(input$filterDSOD) {
+    selected_columns <- c(selected_columns, "OD")
+  }
+  if(input$filterDSTotal) {
+    selected_columns <- c(selected_columns, "Total")
+  }
+  if(input$filterDSType) {
+    selected_columns <- c(selected_columns, "GeneralType")
+  }
+
+  return(selected_columns)
+})
+
 # Display study information table
 output$study_table <- renderDT({
-  datatable(study_data, options = list(
-    pageLength = nrow(study_data),
+
+  #these were added to grab the selected information from the checkboxes within the ui
+  #they then create a new set of data to be rendered in the datatable
+  current_columns <- selected_columns()
+  selected_study_data <- study_data[, current_columns, drop = FALSE]
+
+  datatable(selected_study_data, options = list(
+    pageLength = nrow(selected_study_data),
     dom = 't',
     lengthMenu = c(5, 10, 15, 20),
     scrollX = TRUE,
@@ -53,8 +107,6 @@ observe({
 # Render selected studies tables on the Summarize tab
 output$selected_studies_table <- renderDT({
   if (!is.null(input$selected_studies)) {
-    # You can add your logic here to fetch and display the data tables for selected studies
-    # For demonstration purposes, a sample table is created
     data.frame(
       Study = input$selected_studies,
       Value = rnorm(length(input$selected_studies))

@@ -14,8 +14,8 @@ study_data <- DataSummary
 ui <- fluidPage(
     theme = shinytheme("flatly"),
     navbarPage("curatedTBExplorer",
-        source(file.path("ui", "ui_01_upload.R"), local = TRUE)$value
-        # source(file.path("ui", "ui_02_filter.R"), local = TRUE)$value
+        source(file.path("ui", "ui_01_upload.R"), local = TRUE)$value,
+        source(file.path("ui", "ui_02_filter.R"), local = TRUE)$value
     )
 
 )

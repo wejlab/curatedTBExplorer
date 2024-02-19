@@ -8,7 +8,6 @@ tabPanel(  #this is our upload page
           h5("Table Options: "), # Probably needs a better name at some point
 
           # Could probably pull from DataSummary itself, but I don't know how to do that - Alex
-          checkboxInput("filterDSStudy", "Study", value = TRUE, width = NULL),
           checkboxInput("filterDSPlatform", "Platform", value = FALSE, width = NULL),
           checkboxInput("filterDSGeoRegion", "GeographicalRegion", value = TRUE, width = NULL),
           checkboxInput("filterDSTissue", "Tissue", value = TRUE, width = NULL),
@@ -19,12 +18,13 @@ tabPanel(  #this is our upload page
           checkboxInput("filterDSLTBI", "LTBI", value = FALSE, width = NULL),
           checkboxInput("filterDSPTB", "PTB", value = FALSE, width = NULL),
           checkboxInput("filterDSOD", "OD", value = FALSE, width = NULL),
-          checkboxInput("filterDSTotal", "Total", value = FALSE, width = NULL)
+          checkboxInput("filterDSTotal", "Total", value = FALSE, width = NULL),
+          checkboxInput("filterDSType", "General Type", value = FALSE, width = NULL),
     ),
     column(9,
            # Select studies block
            DTOutput("study_table"),
-
+           View("study_table"),
            # Continue button that should download the dataset
            actionButton("continue", "Continue") # Probably need to align right - Alex
 
