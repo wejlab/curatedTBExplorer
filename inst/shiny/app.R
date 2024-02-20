@@ -6,9 +6,8 @@ library(SummarizedExperiment) # Not used yet
 library(shiny)
 library(shinythemes)
 library(TBSignatureProfiler) # Not used yet
-library(BiocParallel)
 library(MultiAssayExperiment)
-library(parallel)
+library(snow)
 
 # Get the list of available studies
 data("DataSummary", package = "curatedTBData")

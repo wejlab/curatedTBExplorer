@@ -1,18 +1,17 @@
 #To Do:
-  #add multithreading for download
-  #output the downloads to the summary tab (don't know how yet - Andrew) - I think we need to save to rda file too
-  #add "default" dataset so summary can be viewed without downloading anything
-    #this may allow us to ignore the summary tab only appearing after continue button
-  #fix issue where summary tab should only appear once continue button is clicked
-  #fix issue regarding deselecting datasets - works sometimes
-  #Review and delete unneccessary code
-  #change the selected columns if statements to a function so it's prettier
-  #maybe add progress bar for downloads for user? or some pop up to let them know something is happening
+#add multithreading for download
+#output the downloads to the summary tab (don't know how yet - Andrew) - I think we need to save to rda file too
+#add "default" dataset so summary can be viewed without downloading anything
+#this may allow us to ignore the summary tab only appearing after continue button
+#fix issue where summary tab should only appear once continue button is clicked
+#fix issue regarding deselecting datasets - works sometimes
+#Review and delete unneccessary code
+#change the selected columns if statements to a function so it's prettier
+#maybe add progress bar for downloads for user? or some pop up to let them know something is happening
 
 #reactive values for various tasks
 selected_studies <- reactiveVal(NULL) #this is used to update the selected studies accordingly
 continue_clicked <- reactiveVal(FALSE) #stores if Continue button is clicked
-saved_study_data <- reactiveVal(NULL)   # Saves the selected studies data
 
 
 #Grab the selected checkboxes from the ui section, and only output these within the datatable
@@ -82,27 +81,29 @@ output$study_table <- renderDT({
       "function(settings, json) {",
       "$(this.api().table().header()).css({'background-color': '#4C516D', 'color': '#fff'});",
       "}"),
-   
-  rowCallback = JS(
-  "function(row, data, index) {",
-  "$(row).addClass('study-row');",
-  "$(row).on('click', function() {",
-  "  var selected = $(row).hasClass('selected');",
-  "  if (selected) {",
-  "    $(row).removeClass('selected');",
-  "    Shiny.setInputValue('selected_study', null);",  # Deselect if already selected
-  "  } else {",
-  "    $(row).addClass('selected');",
-  "    Shiny.setInputValue('selected_study', data[1]);",  # Select if not already selected
-  "  }",
-  "});",
-  "}")),
-selection = "multiple"
+    rowCallback = JS(
+      "function(row, data, index) {",
+      "$(row).addClass('study-row');",
+      "$(row).on('click', function() {",
+      "Shiny.setInputValue('selected_study', data[1]);",
+      "});",
+      "}")),
+    selection = "multiple"
   )
 })
 
 
-
+#Display study description based on selected studies
+#I don't think we need this anymore - Andrew
+#download is achieved in the following observeEvent block
+output$study_description <- renderPrint({
+  if (!is.null(input$selected_study)) {
+    capture.output({ #captures download status info
+      selected_study_info <- curatedTBData(input$selected_study, dry.run = FALSE, curated.only = FALSE)
+    })
+    print(selected_study_info)
+  }
+})
 
 
 #updates if continue button clicked, also begins the download process for all selected studies
@@ -110,15 +111,33 @@ observeEvent(input$continue, {
   continue_clicked(TRUE)
   #if there are studies selected, this block executes
   if (!is.null(selected_studies())) {
-    #lapply is used here
-    #NOTE: still need to apply multithreaded download, however the base download functionality is present
-    selected_studies_info <- lapply(selected_studies(), function(study_id) {
-      curatedTBData(study_id, dry.run = FALSE, curated.only = FALSE)
+
+
+    #clusters from snow created, they must then load the curatedTBData library to avoid errors
+    cl <- makeCluster(4)
+    clusterEvalQ(cl, library(curatedTBData))
+    #parApply from snow used here. CL created before is a paramater
+    selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
+      curatedTBData(study_id, dry.run=FALSE, curated.only = FALSE)
     })
 
+
+    stopCluster(cl)
+    #this will be used if multithreaded download is deselected
+    #unparallelized version
+    # selected_studies_info <- lapply(selected_studies(), function(study_id) {
+    #   curatedTBData(study_id, dry.run = FALSE, curated.only = FALSE)
+    # })
+    #not sure if we actually are going to need this, keeping for now
+    View(selected_studies_info)
+    View(selected_studies_info[1])
+    # for (study_info in selected_studies_info) {
+    #   print(study_info)
+    #   View(study_info)
+    # }
   }
-  selected_studies(input$study_table_rows_selected)
 })
+
 
 
 #Display the Summarize tab only if Continue button is clicked
@@ -130,11 +149,7 @@ observe({
   }
 })
 
-# Update selected studies on Summarize tab when Continue button is clicked
-observeEvent(input$continue, {
-  continue_clicked(TRUE)
-  selected_studies(input$study_table_rows_selected)
-})
+
 #render selected studies tables on the Summarize tab
 #not currently working - Andrew
 #believe we need to change the selected_studies to work with the selected_studies() as I did for download
@@ -163,3 +178,12 @@ observeEvent(input$selected_study, {
   #allows you to see the selected studies in r studio
   View(selected_studies())
 })
+
+
+#I don't think we need this anymore - Andrew
+# Observer to capture selected row(s) and update the description
+# observe({
+#   if (!is.null(input$selected_study)) {
+#     selected_studies <- c(selected_studies, input$selected_study)
+#   }
+# })
