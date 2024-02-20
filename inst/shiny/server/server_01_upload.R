@@ -90,7 +90,7 @@ output$study_table <- renderDT({
   "  var selected = $(row).hasClass('selected');",
   "  if (selected) {",
   "    $(row).removeClass('selected');",
-  "    Shiny.setInputValue('selected_study', null);",  // Deselect if already selected
+  "    Shiny.setInputValue('selected_study', "");",  // Deselect if already selected
   "  } else {",
   "    $(row).addClass('selected');",
   "    Shiny.setInputValue('selected_study', data[1]);",  // Select if not already selected
