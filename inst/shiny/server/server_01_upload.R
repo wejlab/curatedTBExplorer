@@ -76,7 +76,7 @@ output$study_table <- renderDT({
     dom = 't',
     lengthMenu = c(5, 10, 15, 20),
     scrollX = TRUE,
-    scrollY = "50vh",  # Set the height to 50% of the viewport height
+    scrollY = "75vh",  # Set the height to 50% of the viewport height
     initComplete = JS(
       "function(settings, json) {",
       "$(this.api().table().header()).css({'background-color': '#4C516D', 'color': '#fff'});",

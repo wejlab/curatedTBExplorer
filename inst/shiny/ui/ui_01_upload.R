@@ -20,6 +20,11 @@ tabPanel(  #this is our upload page
           checkboxInput("filterDSOD", "OD", value = FALSE, width = NULL),
           checkboxInput("filterDSTotal", "Total", value = FALSE, width = NULL),
           checkboxInput("filterDSType", "General Type", value = FALSE, width = NULL),
+          actionButton("downloadOptions", "Download Options"),
+          conditionalPanel(
+            condition = "input.downloadOptions % 2 != 0",
+            checkboxInput("dLMultiThread", "Multithread Downloading", value = TRUE, width = NULL)
+          ),
     ),
     column(9,
            # Select studies block
