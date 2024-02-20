@@ -82,14 +82,22 @@ output$study_table <- renderDT({
       "function(settings, json) {",
       "$(this.api().table().header()).css({'background-color': '#4C516D', 'color': '#fff'});",
       "}"),
-    rowCallback = JS(
-      "function(row, data, index) {",
-      "$(row).addClass('study-row');",
-      "$(row).on('click', function() {",
-      "Shiny.setInputValue('selected_study', data[1]);",
-      "});",
-      "}")),
-    selection = "multiple"
+   
+  rowCallback = JS(
+  "function(row, data, index) {",
+  "$(row).addClass('study-row');",
+  "$(row).on('click', function() {",
+  "  var selected = $(row).hasClass('selected');",
+  "  if (selected) {",
+  "    $(row).removeClass('selected');",
+  "    Shiny.setInputValue('selected_study', null);",  // Deselect if already selected
+  "  } else {",
+  "    $(row).addClass('selected');",
+  "    Shiny.setInputValue('selected_study', data[1]);",  // Select if not already selected
+  "  }",
+  "});",
+  "}")),
+selection = "multiple"
   )
 })
 
