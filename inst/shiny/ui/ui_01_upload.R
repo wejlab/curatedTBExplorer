@@ -1,38 +1,41 @@
-tabPanel(  #this is our upload page
+tabPanel( # this is our upload page
   "Upload",
-  icon = icon("cloud-upload"), #this is the icon that shows up on the navbar next to the tab title
-  fluidRow(#might be better to make separated rows out of this
-    column(3,
-   # Upload file block
-          fileInput("file1", "Upload file"),
-          h5("Table Options: "), # Probably needs a better name at some point
+  icon = icon("cloud-upload"), # this is the icon that shows up on the navbar next to the tab title
+  fluidRow( # might be better to make separated rows out of this
+    column(
+      3,
+      # Adjusts checkbox size so they fit all on the same page (In progress)
+      # tags$style(HTML("#Upload input[type='checkbox'] {height: 10px;}")),
+      # Upload file block
+      fileInput("file1", "Upload file"),
+      h5("Table Options: "), # Probably needs a better name at some point
 
-          # Could probably pull from DataSummary itself, but I don't know how to do that - Alex
-          checkboxInput("filterDSPlatform", "Platform", value = FALSE, width = NULL),
-          checkboxInput("filterDSGeoRegion", "GeographicalRegion", value = FALSE, width = NULL),
-          checkboxInput("filterDSTissue", "Tissue", value = FALSE, width = NULL),
-          checkboxInput("filterDSAge", "Age", value = FALSE, width = NULL),
-          checkboxInput("filterDSHIV", "HIV Status", value = FALSE, width = NULL),
-          checkboxInput("filterDSMethod", "Diagnosis Method", value = FALSE, width = NULL),
-          checkboxInput("filterDSControl", "Control", value = FALSE, width = NULL),
-          checkboxInput("filterDSLTBI", "LTBI", value = FALSE, width = NULL),
-          checkboxInput("filterDSPTB", "PTB", value = FALSE, width = NULL),
-          checkboxInput("filterDSOD", "OD", value = FALSE, width = NULL),
-          checkboxInput("filterDSTotal", "Total", value = FALSE, width = NULL),
-          checkboxInput("filterDSType", "General Type", value = FALSE, width = NULL),
-          actionButton("downloadOptions", "Download Options"),
-          conditionalPanel(
-            condition = "input.downloadOptions % 2 != 0",
-            checkboxInput("dLMultiThread", "Multithread Downloading", value = TRUE, width = NULL)
-          ),
+      # Could probably pull from DataSummary itself, but I don't know how to do that - Alex
+      checkboxInput("filterDSPlatform", "Platform", value = FALSE, width = NULL),
+      checkboxInput("filterDSGeoRegion", "GeographicalRegion", value = FALSE, width = NULL),
+      checkboxInput("filterDSTissue", "Tissue", value = FALSE, width = NULL),
+      checkboxInput("filterDSAge", "Age", value = FALSE, width = NULL),
+      checkboxInput("filterDSHIV", "HIV Status", value = FALSE, width = NULL),
+      checkboxInput("filterDSMethod", "Diagnosis Method", value = FALSE, width = NULL),
+      checkboxInput("filterDSControl", "Control", value = FALSE, width = NULL),
+      checkboxInput("filterDSLTBI", "LTBI", value = FALSE, width = NULL),
+      checkboxInput("filterDSPTB", "PTB", value = FALSE, width = NULL),
+      checkboxInput("filterDSOD", "OD", value = FALSE, width = NULL),
+      checkboxInput("filterDSTotal", "Total", value = FALSE, width = NULL),
+      checkboxInput("filterDSType", "General Type", value = FALSE, width = NULL),
+      actionButton("downloadOptions", "Download Options"),
+      conditionalPanel(
+        condition = "input.downloadOptions % 2 != 0",
+        checkboxInput("dLMultiThread", "Multithread Downloading", value = TRUE, width = NULL)
+      ),
     ),
-    column(9,
-           # Select studies block
-           DTOutput("study_table"),
-           View("study_table"),
-           # Continue button that should download the dataset
-           actionButton("continue", "Continue") # Probably need to align right - Alex
-
+    column(
+      9,
+      # Select studies block
+      DTOutput("study_table"),
+      View("study_table"),
+      # Continue button that should download the dataset
+      actionButton("continue", "Continue") # Probably need to align right - Alex
     )
   )
 )
