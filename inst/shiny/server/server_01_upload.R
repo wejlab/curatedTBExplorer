@@ -12,6 +12,7 @@
 #reactive values for various tasks
 selected_studies <- reactiveVal(NULL) #this is used to update the selected studies accordingly
 continue_clicked <- reactiveVal(FALSE) #stores if Continue button is clicked
+saved_study_data <- reactiveVal(NULL)   # Saves the selected studies data
 
 
 #Grab the selected checkboxes from the ui section, and only output these within the datatable
@@ -93,17 +94,7 @@ output$study_table <- renderDT({
 })
 
 
-#Display study description based on selected studies
-#I don't think we need this anymore - Andrew
-#download is achieved in the following observeEvent block
-output$study_description <- renderPrint({
-  if (!is.null(input$selected_study)) {
-    capture.output({ #captures download status info
-      selected_study_info <- curatedTBData(input$selected_study, dry.run = FALSE, curated.only = FALSE)
-    })
-    print(selected_study_info)
-  }
-})
+
 
 
 #updates if continue button clicked, also begins the download process for all selected studies
@@ -116,12 +107,9 @@ observeEvent(input$continue, {
     selected_studies_info <- lapply(selected_studies(), function(study_id) {
       curatedTBData(study_id, dry.run = FALSE, curated.only = FALSE)
     })
-    #not sure if we actually are going to need this, keeping for now
-    for (study_info in selected_studies_info) {
-      print(study_info)
-      View(study_info)
-    }
+
   }
+  selected_studies(input$study_table_rows_selected)
 })
 
 
@@ -134,7 +122,11 @@ observe({
   }
 })
 
-
+# Update selected studies on Summarize tab when Continue button is clicked
+observeEvent(input$continue, {
+  continue_clicked(TRUE)
+  selected_studies(input$study_table_rows_selected)
+})
 #render selected studies tables on the Summarize tab
 #not currently working - Andrew
 #believe we need to change the selected_studies to work with the selected_studies() as I did for download
@@ -163,12 +155,3 @@ observeEvent(input$selected_study, {
   #allows you to see the selected studies in r studio
   View(selected_studies())
 })
-
-
-#I don't think we need this anymore - Andrew
-# Observer to capture selected row(s) and update the description
-# observe({
-#   if (!is.null(input$selected_study)) {
-#     selected_studies <- c(selected_studies, input$selected_study)
-#   }
-# })
