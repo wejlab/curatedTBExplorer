@@ -26,7 +26,9 @@ tabPanel( # this is our upload page
       actionButton("downloadOptions", "Download Options"),
       conditionalPanel(
         condition = "input.downloadOptions % 2 != 0",
-        checkboxInput("dLMultiThread", "Multithread Downloading", value = TRUE, width = NULL)
+        checkboxInput("dLMultiThread", "Multithread Downloading", value = TRUE, width = NULL),
+        checkboxInput("dLCurated", "Curated Data Only", value = TRUE, width = NULL),
+        checkboxInput("dLLocal", "Local Download", value = FALSE, width = NULL)
       ),
     ),
     column(
