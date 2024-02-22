@@ -36,8 +36,12 @@ tabPanel( # this is our upload page
       # Select studies block
       DTOutput("study_table"),
       View("study_table"),
+
+      HTML("<br>"),
+
       # Continue button that should download the dataset
-      actionButton("continue", "Continue") # Probably need to align right - Alex
+      div(style = "display:inline-block; float: right", actionButton("continue", "Continue"))
+       # Probably need to align right - Alex
     )
   )
 )
