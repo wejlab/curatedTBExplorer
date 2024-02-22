@@ -35,7 +35,7 @@ tabPanel( # this is our upload page
       9,
       # Select studies block
       DTOutput("study_table"),
-      View("study_table"),
+      # View("study_table"),
 
       HTML("<br>"),
 

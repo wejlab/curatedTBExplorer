@@ -93,6 +93,10 @@ output$study_table <- renderDT({
   )
 })
 
+#observes the checkbox for the multithread
+observeEvent(input$dLMultiThread,  {
+  multithread_value(input$dLMultiThread)
+})
 
 #updates if continue button clicked, also begins the download process for all selected studies
 observeEvent(input$continue, {
@@ -104,6 +108,7 @@ observeEvent(input$continue, {
     withProgress(message = 'Downloading Datasets...', value = 0, {
       n <- length(selected_studies())
         # if (!is.null(multithread_value()) && multithread_value()) {
+        View(multithread_value())
         if(multithread_value() == TRUE) {
             print("Parallel download")
           #clusters from snow created, they must then load the curatedTBData library to avoid errors
