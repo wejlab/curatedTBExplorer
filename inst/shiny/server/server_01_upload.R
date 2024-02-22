@@ -112,17 +112,24 @@ observeEvent(input$continue, {
   #if there are studies selected, this block executes
   if (!is.null(selected_studies())) {
 
+    # Adds progress message
+    withProgress(message = 'Downloading Datasets...', value = 0, {
+      n <- length(selected_studies())
 
-    #clusters from snow created, they must then load the curatedTBData library to avoid errors
-    cl <- makeCluster(4)
-    clusterEvalQ(cl, library(curatedTBData))
-    #parApply from snow used here. CL created before is a paramater
-    selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
-      curatedTBData(study_id, dry.run=FALSE, curated.only = FALSE)
+      #clusters from snow created, they must then load the curatedTBData library to avoid errors
+      cl <- makeCluster(4)
+      clusterEvalQ(cl, library(curatedTBData))
+      #parApply from snow used here. CL created before is a paramater
+      selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
+        curatedTBData(study_id, dry.run=FALSE, curated.only = TRUE)
+      })
+
+      stopCluster(cl)
+
+      # Completes Progress Message
+      incProgress(1/1, message = "Finished Downloading")
     })
 
-
-    stopCluster(cl)
     #this will be used if multithreaded download is deselected
     #unparallelized version
     # selected_studies_info <- lapply(selected_studies(), function(study_id) {
