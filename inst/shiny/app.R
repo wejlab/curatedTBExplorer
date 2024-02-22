@@ -4,10 +4,12 @@ library(dplyr)
 library(DT)
 library(SummarizedExperiment) # Not used yet
 library(shiny)
+library(shinyjs)
 library(shinythemes)
 library(TBSignatureProfiler) # Not used yet
 library(MultiAssayExperiment)
 library(snow)
+
 
 # Get the list of available studies
 data("DataSummary", package = "curatedTBData")
