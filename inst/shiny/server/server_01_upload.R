@@ -1,17 +1,18 @@
 #To Do:
-#add multithreading for download
+#fix multithread selection -> also just do non_parallel if selecttion is less than (4 studies)
+#look into local download functionality
+#add funtionality to allow user to selected "curated only" -> will be true by default
+#add functionality to let users select cores/ clusters -> maybe -> default is 4 rn
 #output the downloads to the summary tab (don't know how yet - Andrew) - I think we need to save to rda file too
 #add "default" dataset so summary can be viewed without downloading anything
-#this may allow us to ignore the summary tab only appearing after continue button
-#fix issue where summary tab should only appear once continue button is clicked
 #fix issue regarding deselecting datasets - works sometimes
-#Review and delete unneccessary code
+#fix issue where if selections are made, then user changes table options, deselection occurs on ui side
 #change the selected columns if statements to a function so it's prettier
-#maybe add progress bar for downloads for user? or some pop up to let them know something is happening
 
 #reactive values for various tasks
 selected_studies <- reactiveVal(NULL) #this is used to update the selected studies accordingly
 continue_clicked <- reactiveVal(FALSE) #stores if Continue button is clicked
+multithread_value <- reactiveVal(TRUE)
 
 
 #Grab the selected checkboxes from the ui section, and only output these within the datatable
@@ -93,19 +94,6 @@ output$study_table <- renderDT({
 })
 
 
-#Display study description based on selected studies
-#I don't think we need this anymore - Andrew
-#download is achieved in the following observeEvent block
-output$study_description <- renderPrint({
-  if (!is.null(input$selected_study)) {
-    capture.output({ #captures download status info
-      selected_study_info <- curatedTBData(input$selected_study, dry.run = FALSE, curated.only = FALSE)
-    })
-    print(selected_study_info)
-  }
-})
-
-
 #updates if continue button clicked, also begins the download process for all selected studies
 observeEvent(input$continue, {
   continue_clicked(TRUE)
@@ -115,44 +103,35 @@ observeEvent(input$continue, {
     # Adds progress message
     withProgress(message = 'Downloading Datasets...', value = 0, {
       n <- length(selected_studies())
+        # if (!is.null(multithread_value()) && multithread_value()) {
+        if(multithread_value() == TRUE) {
+            print("Parallel download")
+          #clusters from snow created, they must then load the curatedTBData library to avoid errors
+          cl <- makeCluster(4)
+          clusterEvalQ(cl, library(curatedTBData))
+          #parApply from snow used here. CL created before is a paramater
+          selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
+            curatedTBData(study_id, dry.run=FALSE, curated.only = TRUE)
+          })
 
-      #clusters from snow created, they must then load the curatedTBData library to avoid errors
-      cl <- makeCluster(4)
-      clusterEvalQ(cl, library(curatedTBData))
-      #parApply from snow used here. CL created before is a paramater
-      selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
-        curatedTBData(study_id, dry.run=FALSE, curated.only = TRUE)
-      })
+          stopCluster(cl)
+          # multithread_value(TRUE)
+          # print(multithread_value())
 
-      stopCluster(cl)
+        } else {
+          print("Non-Parallel Download")
+          # unparallelized version
+          selected_studies_info <- lapply(selected_studies(), function(study_id) {
+            curatedTBData(study_id, dry.run = FALSE, curated.only = TRUE)
+          })
+        }
 
       # Completes Progress Message
       incProgress(1/1, message = "Finished Downloading")
     })
 
-    #this will be used if multithreaded download is deselected
-    #unparallelized version
-    # selected_studies_info <- lapply(selected_studies(), function(study_id) {
-    #   curatedTBData(study_id, dry.run = FALSE, curated.only = FALSE)
-    # })
     #not sure if we actually are going to need this, keeping for now
     View(selected_studies_info)
-    View(selected_studies_info[1])
-    # for (study_info in selected_studies_info) {
-    #   print(study_info)
-    #   View(study_info)
-    # }
-  }
-})
-
-
-
-#Display the Summarize tab only if Continue button is clicked
-#this isn't working - Andrew
-#i dont think we need this, as if we have default data then the summarize tab should always be available
-observe({
-  if (continue_clicked()) {
-    updateTabsetPanel(session, "main", selected = "Summarize")
   }
 })
 
@@ -185,12 +164,3 @@ observeEvent(input$selected_study, {
   #allows you to see the selected studies in r studio
   View(selected_studies())
 })
-
-
-#I don't think we need this anymore - Andrew
-# Observer to capture selected row(s) and update the description
-# observe({
-#   if (!is.null(input$selected_study)) {
-#     selected_studies <- c(selected_studies, input$selected_study)
-#   }
-# })
