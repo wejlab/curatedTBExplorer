@@ -8,7 +8,7 @@ The TBSignatureProfiler requires R Version 4.1.
 * Install the development version of the package from Github:
 
 ``` r
-if (!requireNamespace("devtools", quietly = TRUE))
+if (!requireNamespace("devtools", quietly=TRUE))
   install.packages("devtools")
-devtools::install_github("wejlab/curatedTBExplorer”)
+devtools::install_github("wejlab/curatedTBExplorer")
 ```
