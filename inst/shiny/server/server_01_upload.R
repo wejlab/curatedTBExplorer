@@ -15,6 +15,9 @@ continue_clicked <- reactiveVal(FALSE) #stores if Continue button is clicked
 multithread_value <- reactiveVal(TRUE)
 curated_only <- reactiveVal(TRUE)
 local_download <- reactiveVal(FALSE)
+#initiates environment for storing the downloaded datasets
+  #allows for use within other files
+the <- new.env(parent = emptyenv())
 
 
 #Grab the selected checkboxes from the ui section, and only output these within the datatable
@@ -152,8 +155,11 @@ observeEvent(input$continue, {
       incProgress(1/1, message = "Finished Downloading")
     })
 
-    #not sure if we actually are going to need this, keeping for now
-    View(selected_studies_info)
+    #commented out for now, can be used to view the downloaded studies
+    # View(selected_studies_info)
+
+    #this saves the selected_studies_info into an environment, can be accessed from other files
+    the$downloaded_datasets <<- selected_studies_info
   }
 })
 
@@ -183,6 +189,6 @@ observeEvent(input$selected_study, {
   } else {
     selected_studies(c(current_studies, current_selection))
   }
-  #allows you to see the selected studies in r studio
-  View(selected_studies())
+  #allows you to see the selected studies
+  # View(selected_studies())
 })
