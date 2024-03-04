@@ -103,13 +103,13 @@ observeEvent(input$dLMultiThread,  {
 #observes the checkbox for curated or not
 observeEvent(input$dLCurated, {
   curated_only(input$dLCurated)
-  View(curated_only())
+  #View(curated_only())
 })
 
 #observes the checkbox for local download or not
 observeEvent(input$dLLocal, {
   local_download(input$dLLocal)
-  View(local_download())
+  #View(local_download())
 })
 
 
@@ -123,15 +123,17 @@ observeEvent(input$continue, {
     withProgress(message = 'Downloading Datasets...', value = 0, {
       n <- length(selected_studies())
         # if (!is.null(multithread_value()) && multithread_value()) {
-        View(multithread_value())
-        if(multithread_value() == TRUE) {
-            print("Parallel download")
+        #View(multithread_value())
+        if(multithread_value()) {
+          print("Parallel download")
+
+          curated_only_value <- curated_only()
           #clusters from snow created, they must then load the curatedTBData library to avoid errors
           cl <- makeCluster(4)
           clusterEvalQ(cl, library(curatedTBData))
           #parApply from snow used here. CL created before is a paramater
           selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
-            curatedTBData(study_id, dry.run=FALSE, curated.only = curated_only)
+            curatedTBData(study_id, dry.run=FALSE, curated.only = curated_only_value)
           })
 
           stopCluster(cl)
