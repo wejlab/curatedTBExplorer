@@ -2,7 +2,7 @@
   output$selected_studies_text <- renderText({
     paste("Selected Studies: ", paste(selected_studies(), collapse = ", "))
   })
-  
+
   # Filter data based on user input
   observeEvent(input$filter_button, {
     filtered_data <- filterData(selected_studies(),
@@ -10,38 +10,24 @@
                                 tb_status = input$tb_status,
                                 hiv_status = input$hiv_status,
                                 diabetes_status = input$diabetes_status)
-    
+
     # Update summary table
     output$summary_table <- renderDT({
       datatable(filtered_data)
     })
-    
+
     # Update summary plots
     output$summary_plots <- renderPlot({
       # ... (code for generating summary plots)
     })
   })
-  
+
   # Reset the form
   observeEvent(input$reset_button, {
     # ... (code to reset input fields)
   })
-  
+
     # Reactive values for various tasks
   selected_studies <- reactiveVal(NULL)  # this is used to update the selected studies accordingly
   continue_clicked <- reactiveVal(FALSE)  # stores if Continue button is clicked
 
-  # Update selected studies when Continue button is clicked
-  observeEvent(input$continue, {
-    continue_clicked(TRUE)
-    selected_studies(input$study_table_rows_selected)
-  })
-
-  # ... (existing code for rendering study table, filtering data, and generating summary plots)
-
-  # Display the selected studies in the "Filter" tab
-  output$selected_studies_text <- renderText({
-    if (continue_clicked()) {
-      paste("Selected Studies: ", paste(selected_studies(), collapse = ", "))
-    }
-  })
