@@ -13,6 +13,8 @@
 selected_studies <- reactiveVal(NULL) #this is used to update the selected studies accordingly
 continue_clicked <- reactiveVal(FALSE) #stores if Continue button is clicked
 multithread_value <- reactiveVal(TRUE)
+curated_only <- reactiveVal(TRUE)
+local_download <- reactiveVal(FALSE)
 
 
 #Grab the selected checkboxes from the ui section, and only output these within the datatable
@@ -98,6 +100,19 @@ observeEvent(input$dLMultiThread,  {
   multithread_value(input$dLMultiThread)
 })
 
+#observes the checkbox for curated or not
+observeEvent(input$dLCurated, {
+  curated_only(input$dLCurated)
+  View(curated_only())
+})
+
+#observes the checkbox for local download or not
+observeEvent(input$dLLocal, {
+  local_download(input$dLLocal)
+  View(local_download())
+})
+
+
 #updates if continue button clicked, also begins the download process for all selected studies
 observeEvent(input$continue, {
   continue_clicked(TRUE)
@@ -116,7 +131,7 @@ observeEvent(input$continue, {
           clusterEvalQ(cl, library(curatedTBData))
           #parApply from snow used here. CL created before is a paramater
           selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
-            curatedTBData(study_id, dry.run=FALSE, curated.only = TRUE)
+            curatedTBData(study_id, dry.run=FALSE, curated.only = curated_only)
           })
 
           stopCluster(cl)
@@ -127,7 +142,7 @@ observeEvent(input$continue, {
           print("Non-Parallel Download")
           # unparallelized version
           selected_studies_info <- lapply(selected_studies(), function(study_id) {
-            curatedTBData(study_id, dry.run = FALSE, curated.only = TRUE)
+            curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only)
           })
         }
 
