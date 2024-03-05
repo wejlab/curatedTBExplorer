@@ -22,31 +22,20 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
     stop("Could not find my function. Try re-installing 'curatedTBExplorer'.", call. = FALSE)
   }
 
-  #assays to be created
+  #assays to be created (might not need?)
   # selected_dataset <- mkAssay(selected_dataset, counts, log = TRUE, counts_to_CPM = TRUE)
 
-  #attempts to create the necessary assays, as mkAssay was having issues
-  #also not working currently
-  # log_counts_assay <- log(assay(selected_dataset))
-  # counts_CPM_assay <- assay(selected_dataset) / colSums(assay(selected_dataset)) * 1e6
-  # log_counts_CPM_assay <- log(counts_CPM_assay + 1)
-  #
-  # n_rows <- nrow(log_counts_assay)
-  # n_cols <- ncol(log_counts_assay)
-  #
-  # selected_dataset$assays <- SimpleList(
-  #   log_counts = matrix(log_counts_assay, nrow = n_rows, ncol = n_cols),
-  #   counts_CPM = matrix(counts_CPM_assay, nrow = n_rows, ncol = n_cols),
-  #   log_counts_CPM = matrix(log_counts_CPM_assay, nrow = n_rows, ncol = n_cols)
-  # )
-  # assays(selected_dataset) <- selected_dataset$assays
-
-  View(selected_dataset$assays)
+  #lets you view the first assay, commented out for now
+  # View(assay(selected_dataset))
 
   #runs the tbsigprofiler
+  #notes:
+    #input I believe should be the selected_dataset itself
+    #and useAssay should be counts, log_counts, etc
+    #but this runs as a proof of concept
   out <- capture.output({
     ssgsea_result <- runTBsigProfiler(
-      input = selected_dataset,
+      input = assay(selected_dataset),
       useAssay = NULL, #will need to change based on user input
       signatures = TBsignatures, #may potentially need to change? though I don't think so
       algorithm = "ssGSEA", #need to add user input to select algorithms
@@ -54,6 +43,7 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
       parallel.sz = 1,
       update_genes = FALSE
     )
+
   })
 
   #Removes unscored signatures
@@ -63,7 +53,9 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
   selected_sigs <- unlist(selected_profiles)
 
   #This changes the columns dependent on the selected dataset
-  ssgsea_print_results <- as.data.frame(colData(ssgsea_result)[, c("Disease", selected_sigs)])
+  #commented out line that changes the colData title, as different se objects can have different names
+    #will probably be fixed when we have a single se with all data
+  # ssgsea_print_results <- as.data.frame(colData(ssgsea_result)[, c("Disease", selected_sigs)])
   ssgsea_print_results[, 2:length(selected_sigs) + 1] <- round(ssgsea_print_results[, 2:length(selected_sigs) + 1], 4)
 
   #Create and output the datatable
