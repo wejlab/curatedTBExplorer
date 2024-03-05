@@ -7,7 +7,7 @@
 runTBsigProfilerFunction(selected_dataset, selected_profiles)
 }
 \arguments{
-\item{selected_dataset}{The selected dataset to be viewed. Required.}
+\item{selected_dataset}{The selected dataset (summarized experiment) to be viewed. Required.}
 
 \item{selected_profiles}{The group of selected profiles to be viewed. Required.}
 }
@@ -19,5 +19,8 @@ The runTBsigProfilerFunction allows for different datasets, profiles, and assays
 to be pulled into a datatable, allowing for easy searching, sorting, and visualization
 }
 \examples{
-R code here showing how your function works 
+\dontrun{
+runTBsigProfilerFunction(SE, profiles)
+}
+
 }
