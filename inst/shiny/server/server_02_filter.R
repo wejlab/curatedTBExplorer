@@ -36,4 +36,17 @@
   selected_studies <- reactiveVal(NULL)  # this is used to update the selected studies accordingly
   continue_clicked <- reactiveVal(FALSE)  # stores if Continue button is clicked
 
+  # Taking all the column names from the experiment list
+
+
+
+
+
+
+
+
+
+
+
+
 
