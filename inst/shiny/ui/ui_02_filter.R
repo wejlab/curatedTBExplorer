@@ -4,10 +4,10 @@ tabPanel("Summarize",
                         sidebarPanel(
                           h4("Selected Studies:"),
                           verbatimTextOutput("selected_studies_text"),
-                          
+
                           selectInput("filter_by", "Filter By",
-                                      choices = c("TB Status", "HIV Status", "Diabetes Status")),
-                          
+                                      choices = c("TB Status", "HIV Status", "Diabetes Status", "Region", "Tissue")),
+
                           conditionalPanel(
                             condition = "input.filter_by == 'TB Status'",
                             selectInput("tb_status", "TB Status", choices = c("PTB", "LTBI"))
@@ -20,7 +20,15 @@ tabPanel("Summarize",
                             condition = "input.filter_by == 'Diabetes Status'",
                             selectInput("diabetes_status", "Diabetes Status", choices = c("Positive", "Negative"))
                           ),
-                          
+                          conditionalPanel(
+                            condition = "input.filter_by == 'Region'",
+                            selectInput("geo_region", "Region", choices = c("Brazil", "China", "Germany", "India", "Indonesia", "Kenya", "Malawi", "Mongolian", "South Africa", "South India", "Taiwan", "The Gambia", "UK", "US", "Venezuela"))
+                          ),
+                          conditionalPanel(
+                            condition = "input.filter_by == 'Tissue'",
+                            selectInput("tissue", "Tissue", choices = c("Whole Blood", "PBMCs", "CD", "Monocytes", "Neutrophils"))
+                          ),
+
                           actionButton("filter_button", "Filter"),
                           actionButton("reset_button", "Reset")
                         ),
@@ -29,9 +37,10 @@ tabPanel("Summarize",
                           plotOutput("summary_plots")
                         )
                ),
-               
+
                tabPanel("Categorize",
                         # code for the "Categorize" sub-tab
-               )
+               ),
+               tabPanel("Raw Data")
              )
     )
