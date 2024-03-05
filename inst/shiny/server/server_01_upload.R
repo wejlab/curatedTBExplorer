@@ -128,7 +128,7 @@ observeEvent(input$continue, {
       curated_only_value <- curated_only()
         # if (!is.null(multithread_value()) && multithread_value()) {
         #View(multithread_value())
-        if(multithread_value()) {
+        if(multithread_value() && n >= 4) {
           print("Parallel download")
 
           #clusters from snow created, they must then load the curatedTBData library to avoid errors
