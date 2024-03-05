@@ -24,8 +24,8 @@ the <- new.env(parent = emptyenv())
 data_dir = system.file("extdata/MAEList.rds", package = "curatedTBExplorer")
 emptyList <- list()
 vals <- reactiveValues(
-  MAEList = emptyList, #readRDS(data_dir),
-  MAE_backup = MAEList
+  MAEList = emptyList #readRDS(data_dir),
+  #MAE_backup = MAEList
 )
 
 #Grab the selected checkboxes from the ui section, and only output these within the datatable
@@ -134,6 +134,7 @@ observeEvent(input$continue, {
     withProgress(message = 'Downloading Datasets...', value = 0, {
       n <- length(selected_studies())
       curated_only_value <- curated_only()
+      dLLocal_value <- local_download()
         # if (!is.null(multithread_value()) && multithread_value()) {
         #View(multithread_value())
         if(multithread_value() && n >= 4) {
@@ -144,7 +145,8 @@ observeEvent(input$continue, {
           clusterEvalQ(cl, library(curatedTBData))
           #parApply from snow used here. CL created before is a paramater
           selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
-            curatedTBData(study_id, dry.run=FALSE, curated.only = curated_only_value)
+            vals$MAEList <- c(vals$MAEList, curatedTBData(study_id, dry.run=FALSE, curated.only = curated_only_value))
+            View(vals$MAEList)
           })
 
           stopCluster(cl)
@@ -157,10 +159,20 @@ observeEvent(input$continue, {
           selected_studies_info <- lapply(selected_studies(), function(study_id) {
             setProgress(message = paste("Downloading...", study_id))
             result <- curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value)
+            vals$MAEList <- c(vals$MAEList, result)
+            View(vals$MAEList)
             incProgress(1/n)
             return(result)
-          })
+          }
+          )
         }
+
+      if(dLLocal_value) {
+        print("Downloaded/ing")
+        dir <- system.file("inst/extdata", package = "curatedTBExplorer")
+        path <- file.path(dir, "MAEList.rds")
+        saveRDS(vals$MAEList, file = "path")
+      }
 
       # Completes Progress Message
       incProgress(n/n, message = "Finished Downloading")
@@ -172,8 +184,6 @@ observeEvent(input$continue, {
     #this saves the selected_studies_info into an environment, can be accessed from other files
     the$downloaded_datasets <<- selected_studies_info
     # View(the$downloaded_datasets)
-
-    vals$MAEList <- selected_studies_info
   }
 })
 
