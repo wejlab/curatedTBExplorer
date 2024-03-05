@@ -125,12 +125,12 @@ observeEvent(input$continue, {
     # Adds progress message
     withProgress(message = 'Downloading Datasets...', value = 0, {
       n <- length(selected_studies())
+      curated_only_value <- curated_only()
         # if (!is.null(multithread_value()) && multithread_value()) {
         #View(multithread_value())
         if(multithread_value()) {
           print("Parallel download")
 
-          curated_only_value <- curated_only()
           #clusters from snow created, they must then load the curatedTBData library to avoid errors
           cl <- makeCluster(4)
           clusterEvalQ(cl, library(curatedTBData))
@@ -147,7 +147,7 @@ observeEvent(input$continue, {
           print("Non-Parallel Download")
           # unparallelized version
           selected_studies_info <- lapply(selected_studies(), function(study_id) {
-            curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only)
+            curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value)
           })
         }
 
