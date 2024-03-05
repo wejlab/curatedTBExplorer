@@ -147,12 +147,14 @@ observeEvent(input$continue, {
           print("Non-Parallel Download")
           # unparallelized version
           selected_studies_info <- lapply(selected_studies(), function(study_id) {
+            setProgress(message = paste("Downloading...", study_id))
             curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value)
+            incProgress(1/n)
           })
         }
 
       # Completes Progress Message
-      incProgress(1/1, message = "Finished Downloading")
+      incProgress(n/n, message = "Finished Downloading")
     })
 
     #commented out for now, can be used to view the downloaded studies
