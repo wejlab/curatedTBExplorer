@@ -11,6 +11,6 @@ observeEvent(input$begin, {
     selected_assay <- input$assay
     # runTBsigProfilerFunction(temp_se, selected_profiles, selected_assay)
     #note that this isn't currently working
-    curatedTBExplorer::runTBsigProfilerFunction(temp_se, selected_profiles)
+    runTBsigProfilerFunction(temp_se, selected_profiles)
   })
 })

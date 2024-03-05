@@ -11,7 +11,7 @@ tabPanel(
     # not currently working
     selectInput("assay", "Select Assay:", choices = c("log_counts", "log_counts_cpm", "counts"), selected = "log_counts")
   ),
-  titlePanel("Shiny Demo Using TBSignatureProfiler"),
+  # titlePanel(""),
   DTOutput("ssgsea_table"),
   actionButton("begin", "Begin")
 )
