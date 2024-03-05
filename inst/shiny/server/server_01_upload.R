@@ -159,11 +159,11 @@ observeEvent(input$continue, {
     })
 
     #commented out for now, can be used to view the downloaded studies
-    View(selected_studies_info)
+    # View(selected_studies_info)
 
     #this saves the selected_studies_info into an environment, can be accessed from other files
     the$downloaded_datasets <<- selected_studies_info
-    View(the$downloaded_datasets)
+    # View(the$downloaded_datasets)
   }
 })
 
