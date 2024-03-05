@@ -15,10 +15,18 @@ continue_clicked <- reactiveVal(FALSE) #stores if Continue button is clicked
 multithread_value <- reactiveVal(TRUE)
 curated_only <- reactiveVal(TRUE)
 local_download <- reactiveVal(FALSE)
+
 #initiates environment for storing the downloaded datasets
   #allows for use within other files
 the <- new.env(parent = emptyenv())
 
+# attempt at making a download location
+data_dir = system.file("extdata/MAEList.rds", package = "curatedTBExplorer")
+emptyList <- list()
+vals <- reactiveValues(
+  MAEList = emptyList, #readRDS(data_dir),
+  MAE_backup = MAEList
+)
 
 #Grab the selected checkboxes from the ui section, and only output these within the datatable
 #super ugly block of code, but it works. Will make prettier later - Andrew
@@ -164,6 +172,8 @@ observeEvent(input$continue, {
     #this saves the selected_studies_info into an environment, can be accessed from other files
     the$downloaded_datasets <<- selected_studies_info
     # View(the$downloaded_datasets)
+
+    vals$MAEList <- selected_studies_info
   }
 })
 
