@@ -25,3 +25,4 @@ toSE <- function(MAE) {
   se <- SummarizedExperiment(assays=assay_data, colData=col_data, rowData=row_data)
   return (se)
 }
+

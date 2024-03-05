@@ -1,8 +1,8 @@
 tabPanel(
   "TBSigProfiler",
   sidebarPanel(
-    # dropdown to select the dataset
-    selectInput("dataset", "Select Dataset:", choices = c("TB_hiv", "TB_indian"), selected = "TB_hiv"),
+    # dropdown to select the dataset - not sure we actually need this implemented, as i believe we will just use the downloaded datasets?
+    # selectInput("dataset", "Select Dataset:", choices = temp$downloaded_datasets),
     # dropdowns to select the profile information
     selectInput("profile1", "Select Profile 1:", choices = names(TBsignatures), selected = "Anderson_42"),
     selectInput("profile2", "Select Profile 2:", choices = names(TBsignatures), selected = "Anderson_OD_51"),
@@ -12,5 +12,6 @@ tabPanel(
     selectInput("assay", "Select Assay:", choices = c("log_counts", "log_counts_cpm", "counts"), selected = "log_counts")
   ),
   titlePanel("Shiny Demo Using TBSignatureProfiler"),
-  DTOutput("ssgsea_table")
+  DTOutput("ssgsea_table"),
+  actionButton("begin", "Begin")
 )
