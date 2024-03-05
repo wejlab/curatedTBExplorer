@@ -148,8 +148,9 @@ observeEvent(input$continue, {
           # unparallelized version
           selected_studies_info <- lapply(selected_studies(), function(study_id) {
             setProgress(message = paste("Downloading...", study_id))
-            curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value)
+            result <- curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value)
             incProgress(1/n)
+            return(result)
           })
         }
 
@@ -162,6 +163,7 @@ observeEvent(input$continue, {
 
     #this saves the selected_studies_info into an environment, can be accessed from other files
     the$downloaded_datasets <<- selected_studies_info
+    # View(the$downloaded_datasets)
   }
 })
 

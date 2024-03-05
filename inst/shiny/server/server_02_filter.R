@@ -6,8 +6,7 @@
   # Filter data based on user input
   observeEvent(input$filter_button, {
 
-    #temprary, allow you to see the downloaded datasets and how to access
-
+    #temporary, allow you to see the downloaded datasets and how to access
     View(the$downloaded_datasets)
 
     #filterData gives me errors - andrew
