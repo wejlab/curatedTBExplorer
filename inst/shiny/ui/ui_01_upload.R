@@ -41,7 +41,7 @@ tabPanel( # this is our upload page
 
       # Continue button that should download the dataset
       div(style = "display:inline-block; float: right", actionButton("continue", "Continue"))
-       # Probably need to align right - Alex
+      # Probably need to align right - Alex
     )
   )
 )
