@@ -6,19 +6,30 @@ tabPanel("Summarize",
                           verbatimTextOutput("selected_studies_text"),
 
                           selectInput("filter_by", "Filter By",
-                                      choices = c("TB Status", "HIV Status", "Diabetes Status", "Region", "Tissue")),
+                                      choices = c("TB Status", "HIV Status", "Diabetes Status")),
 
+                          #for TB
                           conditionalPanel(
                             condition = "input.filter_by == 'TB Status'",
-                            selectInput("tb_status", "TB Status", choices = c("PTB", "LTBI"))
-                          ),
+                            selectizeInput("tb_status", "TB Status", choices = c("PTB", "LTBI"), multiple=FALSE),
+                            uiOutput("filter_tb_params"),
+
+                              actionButton("filter_tb_btn", "Filter", class = "btn-primary")
+
+                            ),
                           conditionalPanel(
                             condition = "input.filter_by == 'HIV Status'",
-                            selectInput("hiv_status", "HIV Status", choices = c("Positive", "Negative"))
+                            selectInput("hiv_status", "HIV Status", choices = c("Positive", "Negative")),
+
+                              actionButton("filter_hiv_btn", "Filter", class = "btn-primary")
+
                           ),
                           conditionalPanel(
                             condition = "input.filter_by == 'Diabetes Status'",
-                            selectInput("diabetes_status", "Diabetes Status", choices = c("Positive", "Negative"))
+                            selectInput("diabetes_status", "Diabetes Status", choices = c("Positive", "Negative")),
+
+                              actionButton("filter_diabetes_btn", "Filter", class = "btn-primary")
+
                           ),
                           conditionalPanel(
                             condition = "input.filter_by == 'Region'",
@@ -28,13 +39,24 @@ tabPanel("Summarize",
                             condition = "input.filter_by == 'Tissue'",
                             selectInput("tissue", "Tissue", choices = c("Whole Blood", "PBMCs", "CD", "Monocytes", "Neutrophils"))
                           ),
+                          br(),
 
-                          actionButton("filter_button", "Filter"),
-                          actionButton("reset_button", "Reset")
+                          #Reset
+
+                          actionButton("reset_button", "Reset"),
+                          br()
                         ),
                         mainPanel(
-                          DTOutput("summary_table"),
-                          plotOutput("summary_plots")
+                          fluidRow(
+                            column(5,
+                                   uiOutput("filter_summary_table")
+                            ),
+                            column(7,
+                                   plotlyOutput("filter_summary_top_plot", height="350px"),
+                                   plotlyOutput("filter_summary_bottom_plot", height="350px")
+                            )
+                          ),
+                          width=7
                         )
                ),
 

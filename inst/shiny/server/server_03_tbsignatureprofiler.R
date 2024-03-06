@@ -1,10 +1,13 @@
+#note: somtimes it just fails? but then will work otherwise - look into
+
 
 observeEvent(input$begin, {
   # View(the$downloaded_datasets)
   #converts the datasets into se
   #currently only uses the first downloaded dataset, will change once we have a single se with all downloads
-  temp_se <- toSE(the$downloaded_datasets[[1]])
+  temp_se <- toSE(vals$MAEList[1])
   # View(temp_se)
+  # se <- toSE(vals$MAEList[[1]])
 
   output$ssgsea_table <- renderDT({
     selected_dataset <- temp_se

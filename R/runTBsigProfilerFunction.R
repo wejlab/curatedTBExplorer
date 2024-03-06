@@ -15,6 +15,9 @@
 #'
 #' @export
 
+#notes:
+  #need to check if the assay_curated corresponds to log_counts like I think it does
+
 #derived from the TBSignatureProfiler Vignette
 runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
   appDir <- system.file("shiny", package = "curatedTBExplorer")
@@ -22,42 +25,42 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
     stop("Could not find my function. Try re-installing 'curatedTBExplorer'.", call. = FALSE)
   }
 
-  #assays to be created (might not need?)
-  # selected_dataset <- mkAssay(selected_dataset, counts, log = TRUE, counts_to_CPM = TRUE)
+  #creates the assays for processing
+  #likely want to have additional parameter to select which to run
+  #also need to create all 4, currently only have 2, easy fix
+  selected_dataset <- mkAssay(selected_dataset, "assay_curated")
 
-  #lets you view the first assay, commented out for now
+  #random views for ease of troubleshooting
+  # View(selected_dataset)
+  # View(names(selected_dataset))
   # View(assay(selected_dataset))
 
-  #runs the tbsigprofiler
-  #notes:
-    #input I believe should be the selected_dataset itself
-    #and useAssay should be counts, log_counts, etc
-    #but this runs as a proof of concept
+  #runs the tbsigprofiler using the parameter info
+  #still need to add info to capture the desired algorithm, assays, etc
   out <- capture.output({
     ssgsea_result <- runTBsigProfiler(
-      input = assay(selected_dataset),
-      useAssay = NULL, #will need to change based on user input
-      signatures = TBsignatures, #may potentially need to change? though I don't think so
-      algorithm = "ssGSEA", #need to add user input to select algorithms
+      input = selected_dataset,         #input is the selected_dataset parameter
+      useAssay = "assay_curated_cpm",   #will need to change based on user input
+      signatures = TBsignatures,        #may potentially need to change? though I don't think so
+      algorithm = "ssGSEA",             #need to add user input to select algorithms
       combineSigAndAlgorithm = TRUE,
       parallel.sz = 1,
       update_genes = FALSE
     )
-
   })
 
   #Removes unscored signatures
-  TBsignatures <- subset(TBsignatures, !(names(TBsignatures) %in% c("Chendi_HIV_2")))
+    #this came from the vignette, not sure we actually need
+    #or may need to alter based on our specific needs
+  # TBsignatures <- subset(TBsignatures, !(names(TBsignatures) %in% c("Chendi_HIV_2")))
 
   #Info for the datatable
   selected_sigs <- unlist(selected_profiles)
 
-  #This changes the columns dependent on the selected dataset
-  #commented out line that changes the colData title, as different se objects can have different names
-    #will probably be fixed when we have a single se with all data
-  # ssgsea_print_results <- as.data.frame(colData(ssgsea_result)[, c("Disease", selected_sigs)])
-  ssgsea_print_results[, 2:length(selected_sigs) + 1] <- round(ssgsea_print_results[, 2:length(selected_sigs) + 1], 4)
+  #this currently uses PatientID as the info in the datatable, however this will need to change based on filter
+  ssgsea_print_results <- as.data.frame(colData(ssgsea_result)[ , c("PatientID", selected_sigs)])
+  ssgsea_print_results[, 2:4] <- round(ssgsea_print_results[, 2:4], 4)
 
-  #Create and output the datatable
-  datatable(ssgsea_print_results)
+  #datatable is returned
+  DT::datatable(ssgsea_print_results)
 }

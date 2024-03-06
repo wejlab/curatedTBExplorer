@@ -9,6 +9,7 @@ library(shinythemes)
 library(TBSignatureProfiler) # Not used yet
 library(MultiAssayExperiment)
 library(snow)
+library(plotly)
 
 
 # Get the list of available studies
