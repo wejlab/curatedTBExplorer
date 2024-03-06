@@ -15,6 +15,11 @@
 #'
 #' @export
 
+#notes:
+  #currently outputs the same values everytime?
+  #appears to be outputting the table from the default as well
+
+
 #derived from the TBSignatureProfiler Vignette
 runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
   appDir <- system.file("shiny", package = "curatedTBExplorer")
@@ -28,6 +33,9 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
   #lets you view the first assay, commented out for now
   # View(assay(selected_dataset))
 
+  temp <- assay(selected_dataset)
+  View(temp)
+  # str(temp)
   #runs the tbsigprofiler
   #notes:
     #input I believe should be the selected_dataset itself
@@ -36,18 +44,19 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
   out <- capture.output({
     ssgsea_result <- runTBsigProfiler(
       input = assay(selected_dataset),
+      # input = selected_dataset,
       useAssay = NULL, #will need to change based on user input
+      # useAssay = temp,
       signatures = TBsignatures, #may potentially need to change? though I don't think so
       algorithm = "ssGSEA", #need to add user input to select algorithms
       combineSigAndAlgorithm = TRUE,
       parallel.sz = 1,
       update_genes = FALSE
     )
-
   })
 
   #Removes unscored signatures
-  TBsignatures <- subset(TBsignatures, !(names(TBsignatures) %in% c("Chendi_HIV_2")))
+  # TBsignatures <- subset(TBsignatures, !(names(TBsignatures) %in% c("Chendi_HIV_2")))
 
   #Info for the datatable
   selected_sigs <- unlist(selected_profiles)

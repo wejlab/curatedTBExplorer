@@ -1,3 +1,5 @@
+#add additional inputs for algorithm
+
 tabPanel(
   "TBSigProfiler",
   sidebarPanel(
