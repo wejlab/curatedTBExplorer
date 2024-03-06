@@ -20,13 +20,15 @@ local_download <- reactiveVal(FALSE)
   #allows for use within other files
 the <- new.env(parent = emptyenv())
 
-# attempt at making a download location
-data_dir = system.file("extdata/MAEList.rds", package = "curatedTBExplorer")
+# Downloads the locally downloaded MAEs
+data_dir = system.file("extdata/localMAEList.rds", package = "curatedTBExplorer")
 emptyList <- list()
 vals <- reactiveValues(
-  MAEList = readRDS(data_dir)
+  localMAEList = readRDS(data_dir),
+  MAEList = emptyList
   #MAE_backup = MAEList
 )
+
 
 #Grab the selected checkboxes from the ui section, and only output these within the datatable
 #super ugly block of code, but it works. Will make prettier later - Andrew
@@ -170,7 +172,7 @@ observeEvent(input$continue, {
       if(dLLocal_value) {
         print("Downloaded/ing")
         dir <- system.file("extdata", package = "curatedTBExplorer")
-        path <- file.path(dir, "MAEList.rds")
+        path <- file.path(dir, "localMAEList.rds")
         saveRDS(vals$MAEList, file = path)
         print("Downloaded")
       }
