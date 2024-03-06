@@ -24,7 +24,7 @@ the <- new.env(parent = emptyenv())
 data_dir = system.file("extdata/MAEList.rds", package = "curatedTBExplorer")
 emptyList <- list()
 vals <- reactiveValues(
-  MAEList = emptyList #readRDS(data_dir),
+  MAEList = readRDS(data_dir)
   #MAE_backup = MAEList
 )
 
@@ -169,9 +169,10 @@ observeEvent(input$continue, {
 
       if(dLLocal_value) {
         print("Downloaded/ing")
-        dir <- system.file("inst/extdata", package = "curatedTBExplorer")
+        dir <- system.file("extdata", package = "curatedTBExplorer")
         path <- file.path(dir, "MAEList.rds")
-        saveRDS(vals$MAEList, file = "path")
+        saveRDS(vals$MAEList, file = path)
+        print("Downloaded")
       }
 
       # Completes Progress Message
