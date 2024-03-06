@@ -1,4 +1,4 @@
-#add additional inputs for algorithm
+# add additional inputs for algorithm
 
 tabPanel(
   "TBSigProfiler",
