@@ -20,13 +20,21 @@ local_download <- reactiveVal(FALSE)
   #allows for use within other files
 the <- new.env(parent = emptyenv())
 
+emptyList <- list()
 # Downloads the locally downloaded MAEs
 data_dir = system.file("extdata/localMAEList.rds", package = "curatedTBExplorer")
-emptyList <- list()
+dir <- system.file("extdata", package = "curatedTBExplorer")
+path <- file.path(dir, "localMAEList.rds")
+if (!file.exists(data_dir)) {
+  saveRDS(emptyList, file = path)
+}
+
+
+
+
 vals <- reactiveValues(
   localMAEList = readRDS(data_dir),
   MAEList = emptyList
-  #MAE_backup = MAEList
 )
 
 
