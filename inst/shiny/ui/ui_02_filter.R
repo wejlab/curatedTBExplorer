@@ -13,23 +13,23 @@ tabPanel("Summarize",
                             condition = "input.filter_by == 'TB Status'",
                             selectizeInput("tb_status", "TB Status", choices = c("PTB", "LTBI"), multiple=FALSE),
                             uiOutput("filter_tb_params"),
-                            
+
                               actionButton("filter_tb_btn", "Filter", class = "btn-primary")
-                            
+
                             ),
                           conditionalPanel(
                             condition = "input.filter_by == 'HIV Status'",
                             selectInput("hiv_status", "HIV Status", choices = c("Positive", "Negative")),
-                            
+
                               actionButton("filter_hiv_btn", "Filter", class = "btn-primary")
-                            
+
                           ),
                           conditionalPanel(
                             condition = "input.filter_by == 'Diabetes Status'",
                             selectInput("diabetes_status", "Diabetes Status", choices = c("Positive", "Negative")),
-                            
+
                               actionButton("filter_diabetes_btn", "Filter", class = "btn-primary")
-                            
+
                           ),
                           conditionalPanel(
                             condition = "input.filter_by == 'Region'",
@@ -42,8 +42,8 @@ tabPanel("Summarize",
                           br(),
 
                           #Reset
-                          
-                          actionButton("reset_button", "Reset")
+
+                          actionButton("reset_button", "Reset"),
                           br()
                         ),
                         mainPanel(
