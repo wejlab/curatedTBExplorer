@@ -21,16 +21,16 @@ tabPanel(
       sidebarPanel(
         "Create Heatmap"
       ),
-      plotOutput("heatmap_result"),
-      actionButton("genHeatmap", "Create Heatmap")
+      actionButton("genHeatmap", "Create Heatmap"),
+      plotOutput("heatmap_result", height = "750")
     ),
     tabPanel(
       "Boxplots",
       sidebarPanel(
         "Create Boxplots"
       ),
-      plotOutput("boxplot_result"),
-      actionButton("genBoxplots", "Create Boxplots")
+      actionButton("genBoxplots", "Create Boxplots"),
+      plotOutput("boxplot_result", height = "200")
     )
   )
 )
