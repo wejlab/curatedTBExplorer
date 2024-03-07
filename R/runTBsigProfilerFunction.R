@@ -62,5 +62,10 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
   ssgsea_print_results[, 2:4] <- round(ssgsea_print_results[, 2:4], 4)
 
   #datatable is returned
-  DT::datatable(ssgsea_print_results)
+  # DT::datatable(ssgsea_print_results)
+  #datatable info is returned, as well as the ssgsea_result itself
+  return(list(
+    datatable = DT::datatable(ssgsea_print_results),
+    ssgsea_result = ssgsea_result
+  ))
 }
