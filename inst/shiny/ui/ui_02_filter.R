@@ -62,5 +62,9 @@ tabPanel(
       # code for the "Categorize" sub-tab
     ),
     tabPanel("Raw Data")
+    # I think we need to make tabs that are generated
+    # based on what studies were chosen.
+    # The chosen tabs can open and then display a table of the raw data.
+
   )
 )
