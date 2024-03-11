@@ -10,6 +10,7 @@ library(TBSignatureProfiler) # Not used yet
 library(MultiAssayExperiment)
 library(snow)
 library(plotly)
+library(SEtools)
 
 
 # Get the list of available studies

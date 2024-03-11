@@ -1,9 +1,6 @@
 # To Do:
-# fix multithread selection -> also just do non_parallel if selecttion is less than (4 studies)
 # look into local download functionality
-# add funtionality to allow user to selected "curated only" -> will be true by default
 # add functionality to let users select cores/ clusters -> maybe -> default is 4 rn
-# output the downloads to the summary tab (don't know how yet - Andrew) - I think we need to save to rda file too
 # add "default" dataset so summary can be viewed without downloading anything
 # fix issue regarding deselecting datasets - works sometimes
 # fix issue where if selections are made, then user changes table options, deselection occurs on ui side
@@ -22,28 +19,27 @@ the <- new.env(parent = emptyenv())
 
 emptyList <- list()
 
-tryCatch({
-  # Downloads the locally downloaded MAEs
-  data_dir <- system.file("extdata/localMAEList.rds", package = "curatedTBExplorer")
-  dir <- system.file("extdata", package = "curatedTBExplorer")
-  path <- file.path(dir, "localMAEList.rds")
-  if (!file.exists(data_dir)) {
-    saveRDS(emptyList, file = path)
-  }
-
-  vals <- reactiveValues(
-    localMAEList = readRDS(data_dir),
-    MAEList = emptyList
-  )
-}, error = function(e) {
-  vals <- reactiveValues(
-    localMAEList = emptyList,
-    MAEList = emptyList
-  )
-  cat("Error:", conditionMessage(e), "\n")
-})
-
-# vals <- reactiveValues()
+# tryCatch({
+#   # Downloads the locally downloaded MAEs
+#   data_dir <- system.file("extdata/localMAEList.rds", package = "curatedTBExplorer")
+#   dir <- system.file("extdata", package = "curatedTBExplorer")
+#   path <- file.path(dir, "localMAEList.rds")
+#   if (!file.exists(data_dir)) {
+#     saveRDS(emptyList, file = path)
+#   }
+#
+#   vals <- reactiveValues(
+#     localMAEList = readRDS(data_dir),
+#     MAEList = emptyList
+#   )
+# }, error = function(e) {
+#   vals <- reactiveValues(
+#     localMAEList = emptyList,
+#     MAEList = emptyList
+#   )
+#   cat("Error:", conditionMessage(e), "\n")
+# })
+vals <- reactiveValues()
 
 
 # Grab the selected checkboxes from the ui section, and only output these within the datatable
@@ -166,7 +162,7 @@ observeEvent(input$continue, {
         # parApply from snow used here. CL created before is a paramater
         selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
           vals$MAEList <- c(vals$MAEList, curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value))
-          View(vals$MAEList)
+          # View(vals$MAEList)
         })
 
         stopCluster(cl)
@@ -178,8 +174,19 @@ observeEvent(input$continue, {
         selected_studies_info <- lapply(selected_studies(), function(study_id) {
           setProgress(message = paste("Downloading...", study_id))
           result <- curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value)
+          #storage for all of the mae's
           vals$MAEList <- c(vals$MAEList, result)
-          View(vals$MAEList)
+
+          #stores all mae's into a SINGLE se
+          result_se <- toSE(result)
+          if(!is.null(vals$SEList)){
+            temp <- mergeSEs( list(se1 = vals$SEList, se2 = result_se) )
+            vals$SEList <- temp
+          } else {
+            vals$SEList <- result_se
+          }
+
+          # View(vals$MAEList)
           incProgress(1 / n)
           return(result)
         })
@@ -202,7 +209,9 @@ observeEvent(input$continue, {
 
     # this saves the selected_studies_info into an environment, can be accessed from other files
     the$downloaded_datasets <<- selected_studies_info
+    # combineExperiments(vals$MAEList)
     # View(the$downloaded_datasets)
+    View(vals$SEList)
   }
 })
 
