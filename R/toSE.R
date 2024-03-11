@@ -22,7 +22,9 @@ toSE <- function(MAE) {
   assay_data <- assays(MAECleaned)
   col_data <- colData(MAECleaned)
   row_data <- rowRanges(assay_data$assay_curated)
-  se <- SummarizedExperiment(assays=assay_data, colData=col_data, rowData=row_data)
+  study_source <- rep(list(names(MAE)), times = nrow(col_data))
+  se <- SummarizedExperiment(assays=assay_data, colData=col_data, rowData=row_data, metadata=study_source)
+  SummarizedExperiment
   return (se)
 }
 
