@@ -20,7 +20,8 @@ the <- new.env(parent = emptyenv())
 emptyList <- list()
 vals <- reactiveValues(
   localMAEList = emptyList,
-  MAEList = emptyList
+  MAEList = emptyList,
+  selectedDownloadList = emptyList
 )
 
 tryCatch({
@@ -153,14 +154,18 @@ observeEvent(input$clearLocalDownload, {
 observeEvent(input$continue, {
   continue_clicked(TRUE)
 
-  # If local download coincides with studies in the selected_studies() download list,
-  # it removes them from selected_studies() and adds the local download to the MAEList
-
-
-
-
   # if there are studies selected, this block executes
   if (!is.null(selected_studies())) {
+
+    # If local download coincides with studies in the selected_studies() download list,
+    # it removes them from selected_studies() and adds the local download to the MAEList
+    # for (studyName in selected_studies()) {
+    #   if (studyName %in% names(vals$localMAEList)) {
+    #     selected_studies() <- selected_studies()[selected_studies() != studyName]
+    #     cat("Removed '", studyName, "' from the download list due to previous download.", sep = "")
+    #   }
+    # }
+
     # Adds progress message
     withProgress(message = "Downloading Datasets...", value = 0, {
       n <- length(selected_studies())
