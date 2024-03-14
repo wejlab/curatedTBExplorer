@@ -18,28 +18,28 @@ local_download <- reactiveVal(FALSE)
 the <- new.env(parent = emptyenv())
 
 emptyList <- list()
+vals <- reactiveValues(
+  localMAEList = emptyList,
+  MAEList = emptyList
+)
 
-# tryCatch({
-#   # Downloads the locally downloaded MAEs
-#   data_dir <- system.file("extdata/localMAEList.rds", package = "curatedTBExplorer")
-#   dir <- system.file("extdata", package = "curatedTBExplorer")
-#   path <- file.path(dir, "localMAEList.rds")
-#   if (!file.exists(data_dir)) {
-#     saveRDS(emptyList, file = path)
-#   }
-#
-#   vals <- reactiveValues(
-#     localMAEList = readRDS(data_dir),
-#     MAEList = emptyList
-#   )
-# }, error = function(e) {
-#   vals <- reactiveValues(
-#     localMAEList = emptyList,
-#     MAEList = emptyList
-#   )
-#   cat("Error:", conditionMessage(e), "\n")
-# })
-vals <- reactiveValues()
+tryCatch({
+  # Downloads the locally downloaded MAEs
+  data_dir <- system.file("extdata/localMAEList.rds", package = "curatedTBExplorer")
+  dir <- system.file("extdata", package = "curatedTBExplorer")
+  path <- file.path(dir, "localMAEList.rds")
+  truth <- file.exists(data_dir)
+  if (!truth) {
+    saveRDS(emptyList, file = path)
+  }
+  vals$localMAEList <- readRDS(data_dir)
+  cat("Added local download to localMAEList rective value")
+
+}, error = function(e) {
+  cat("Error:", conditionMessage(e), "\n")
+  cat("Might be due to not installing via devtools::install_github(\"wejlab/curatedTBExplorer\")")
+})
+# vals <- reactiveValues()
 
 
 # Grab the selected checkboxes from the ui section, and only output these within the datatable
@@ -140,10 +140,25 @@ observeEvent(input$dLLocal, {
   # View(local_download())
 })
 
+observeEvent(input$clearLocalDownload, {
+  vals$localMAEList <- list()
+  dir <- system.file("extdata", package = "curatedTBExplorer")
+  path <- file.path(dir, "localMAEList.rds")
+  saveRDS(emptyList, file = path)
+  cat("Cleared Local Download")
+})
+
 
 # updates if continue button clicked, also begins the download process for all selected studies
 observeEvent(input$continue, {
   continue_clicked(TRUE)
+
+  # If local download coincides with studies in the selected_studies() download list,
+  # it removes them from selected_studies() and adds the local download to the MAEList
+
+
+
+
   # if there are studies selected, this block executes
   if (!is.null(selected_studies())) {
     # Adds progress message
@@ -162,7 +177,6 @@ observeEvent(input$continue, {
         # parApply from snow used here. CL created before is a paramater
         selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
           vals$MAEList <- c(vals$MAEList, curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value))
-          # View(vals$MAEList)
         })
 
         stopCluster(cl)
@@ -199,6 +213,7 @@ observeEvent(input$continue, {
         saveRDS(vals$MAEList, file = path)
         print("Downloaded")
       }
+      View(vals$localMAEList)
 
       # Completes Progress Message
       incProgress(n / n, message = "Finished Downloading")
@@ -212,6 +227,9 @@ observeEvent(input$continue, {
     # combineExperiments(vals$MAEList)
     # View(the$downloaded_datasets)
     View(vals$SEList)
+  }
+  else {
+    # Should be code here to add default download to the
   }
 })
 
