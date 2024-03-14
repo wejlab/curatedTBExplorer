@@ -198,6 +198,7 @@ observeEvent(input$continue, {
 
           #stores all mae's into a SINGLE se
           result_se <- toSE(result)
+          # View(result_se)
           if(!is.null(vals$SEList)){
             temp <- mergeSEs( list(se1 = vals$SEList, se2 = result_se) )
             vals$SEList <- temp
@@ -231,7 +232,8 @@ observeEvent(input$continue, {
     the$downloaded_datasets <<- selected_studies_info
     # combineExperiments(vals$MAEList)
     # View(the$downloaded_datasets)
-    View(vals$SEList)
+    # View(vals$SEList)
+    # View(vals$MAEList)
   }
   else {
     # Should be code here to add default download to the

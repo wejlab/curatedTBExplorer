@@ -29,6 +29,7 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
   #likely want to have additional parameter to select which to run
   #also need to create all 4, currently only have 2, easy fix
   selected_dataset <- mkAssay(selected_dataset, "assay_curated")
+  # View(selected_dataset)
 
   #random views for ease of troubleshooting
   # View(selected_dataset)

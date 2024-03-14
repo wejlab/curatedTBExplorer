@@ -23,3 +23,4 @@ run_curatedTBExplorer <- function(dev = FALSE) {
   }
   shiny::runApp(appDir, display.mode = "normal")
 }
+

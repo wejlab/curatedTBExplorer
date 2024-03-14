@@ -9,19 +9,18 @@ tb_profiler_result <- reactiveVal(NULL)
 observeEvent(input$begin, {
   #converts the datasets into se
   #currently only uses the first downloaded dataset, will change once we have a single se with all downloads
-  temp_se <- toSE(vals$MAEList[1])
-  # se <- toSE(vals$MAEList[[1]])
-
-  selected_dataset <- temp_se
-  selected_profiles <- c(input$profile1, input$profile2, input$profile3)
+  # temp_se <- toSE(vals$MAEList[1])
+  selected_dataset <- vals$SEList
+  # selected_profiles <- c(input$profile1, input$profile2, input$profile3)
+  selected_profiles <- input$profiles
   selected_assay <- input$assay
   #stores both the direct ssgsea_results and the info for the dt output
-  tb_profiler_result(runTBsigProfilerFunction(temp_se, selected_profiles))
-
+  tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles))
   #renders the dt
   output$ssgsea_table <- renderDT({
     tb_profiler_result()[[1]]
   })
+
 })
 
 #observer for the heatmap button
@@ -56,7 +55,8 @@ observeEvent(input$genBoxplots, {
     output$boxplot_result <- renderPlot({
       signatureBoxplot(inputData = tb_profiler_result()[[2]],
                        name = "Boxplots of Signatures, ssGSEA",
-                       signatureColNames = names(TBsignatures),
+                       # signatureColNames = names(TBsignatures),
+                       signatureColNames = input$box_profiles,
                        annotationColName = "PatientID", rotateLabels = FALSE)
     })
   }
