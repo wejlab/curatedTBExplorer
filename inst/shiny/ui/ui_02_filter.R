@@ -1,6 +1,8 @@
 # Summarize tab page
 tabPanel(
   "Summarize",
+
+  icon = icon("filter", class = "fa-solid fa-filter", lib = "font-awesome"),
   tabsetPanel(
     tabPanel(
       "Filter",
