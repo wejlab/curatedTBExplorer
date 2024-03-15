@@ -36,6 +36,8 @@ tabPanel(
       # Conditional panel for more options
       conditionalPanel(
         condition = "input.downloadOptions % 2 != 0",
+
+        # Checkbox inputs for selecting download options
         checkboxInput("dLMultiThread", "Multithread Downloading", value = TRUE, width = NULL),
         checkboxInput("dLCurated", "Curated Data Only", value = TRUE, width = NULL),
         checkboxInput("dLLocal", "Local Download", value = FALSE, width = NULL),
