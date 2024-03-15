@@ -1,16 +1,22 @@
-tabPanel( # this is our upload page
+# Upload tab page
+tabPanel(
   "Upload",
-  icon = icon("cloud-upload"), # this is the icon that shows up on the navbar next to the tab title
-  fluidRow( # might be better to make separated rows out of this
+
+  # Upload Icon by tab title
+  icon = icon("cloud-upload"),
+
+  # Layout panel to seperate page into columns
+  fluidRow(
     column(
       3,
-      # Adjusts checkbox size so they fit all on the same page (In progress)
-      # tags$style(HTML("#Upload input[type='checkbox'] {height: 10px;}")),
+
       # Upload file block
       fileInput("file1", "Upload file"),
-      h5("Table Options: "), # Probably needs a better name at some point
 
-      # Could probably pull from DataSummary itself, but I don't know how to do that - Alex
+      # Table Options
+      h5("Table Options: "),
+
+      # Checkbox inputs for choosing displayed columns on the table
       checkboxInput("filterDSPlatform", "Platform", value = FALSE, width = NULL),
       checkboxInput("filterDSGeoRegion", "GeographicalRegion", value = FALSE, width = NULL),
       checkboxInput("filterDSTissue", "Tissue", value = FALSE, width = NULL),
@@ -23,26 +29,29 @@ tabPanel( # this is our upload page
       checkboxInput("filterDSOD", "OD", value = FALSE, width = NULL),
       checkboxInput("filterDSTotal", "Total", value = FALSE, width = NULL),
       checkboxInput("filterDSType", "General Type", value = FALSE, width = NULL),
+
+      # Download options button
       actionButton("downloadOptions", "Download Options"),
+
+      # Conditional panel for more options
       conditionalPanel(
         condition = "input.downloadOptions % 2 != 0",
         checkboxInput("dLMultiThread", "Multithread Downloading", value = TRUE, width = NULL),
         checkboxInput("dLCurated", "Curated Data Only", value = TRUE, width = NULL),
         checkboxInput("dLLocal", "Local Download", value = FALSE, width = NULL),
+
+        # Button to clear the local download
         actionButton("clearLocalDownload", "Clear Local Download")
       ),
     ),
     column(
       9,
-      # Select studies block
+      # Dynamic table for selection of studies
       DTOutput("study_table"),
-      # View("study_table"),
-
       HTML("<br>"),
 
-      # Continue button that should download the dataset
+      # Button to continue and download selected studies
       div(style = "display:inline-block; float: right", actionButton("continue", "Continue"))
-      # Probably need to align right - Alex
     )
   )
 )
