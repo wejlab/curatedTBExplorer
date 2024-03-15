@@ -1,9 +1,9 @@
-# Upload tab page
+# Select/Download tab page
 tabPanel(
-  "Upload",
+  "Select/Download",
 
   # Upload Icon by tab title
-  icon = icon("cloud-upload"),
+  icon = icon("download", class = "fa-solid fa-download" , lib = "font-awesome"),
 
   # Layout panel to seperate page into columns
   fluidRow(
