@@ -1,46 +1,53 @@
 # To Do:
-# look into local download functionality
-# add functionality to let users select cores/ clusters -> maybe -> default is 4 rn
-# add "default" dataset so summary can be viewed without downloading anything
-# fix issue regarding deselecting datasets - works sometimes
-# fix issue where if selections are made, then user changes table options, deselection occurs on ui side
-# change the selected columns if statements to a function so it's prettier
+# Finish local download functionality
+# Perhaps allow specification of exact core (multithreading) usage
+# Add "default" dataset so summary can be viewed without downloading anything
+# Fix issue regarding deselecting datasets - works sometimes
+# Fix issue where if selections are made, then user changes table options, deselection occurs on ui side
 
-# reactive values for various tasks
+# Reactive values for various tasks
 selected_studies <- reactiveVal(NULL) # this is used to update the selected studies accordingly
 continue_clicked <- reactiveVal(FALSE) # stores if Continue button is clicked
 multithread_value <- reactiveVal(TRUE)
 curated_only <- reactiveVal(TRUE)
 local_download <- reactiveVal(FALSE)
 
-# initiates environment for storing the downloaded datasets
-# allows for use within other files
-the <- new.env(parent = emptyenv())
 
-emptyList <- list()
+# emptyList <- list()
+
+# Creates reactive values for later use
 vals <- reactiveValues(
-  localMAEList = emptyList,
-  MAEList = emptyList,
-  selectedDownloadList = emptyList
+  # Holds list of MAEs that are locally downloaded by user
+  localMAEList = list(),
+
+  # Holds active list of MAEs in use
+  MAEList = list(),
+
+  # Holds list of MAEs to download
+  selectedDownloadList = list()
 )
 
-tryCatch({
-  # Downloads the locally downloaded MAEs
-  data_dir <- system.file("extdata/localMAEList.rds", package = "curatedTBExplorer")
-  dir <- system.file("extdata", package = "curatedTBExplorer")
-  path <- file.path(dir, "localMAEList.rds")
-  truth <- file.exists(data_dir)
-  if (!truth) {
-    saveRDS(emptyList, file = path)
+# Error handling for downloading issues
+tryCatch(
+  {
+    # Sets pathing and directories for reading and saving .rds files
+    localMAEListDir <- system.file("extdata/localMAEList.rds", package = "curatedTBExplorer")
+    extdataDir <- system.file("extdata", package = "curatedTBExplorer")
+    localMAEListPath <- file.path(extdataDir, "localMAEList.rds")
+    
+    # If 
+    # fileExists <- file.exists(localMAEListDir)
+    if (!file.exists(localMAEListDir)) {
+      saveRDS(list(), file = localMAEListPath)
+    }
+    vals$localMAEList <- readRDS(localMAEListDir)
+    cat("Added local download to localMAEList rective value")
+  },
+  error = function(e) {
+    cat("Error:", conditionMessage(e), "\n")
+    cat("Might be due to not installing via devtools::install_github(\"wejlab/curatedTBExplorer\")")
   }
-  vals$localMAEList <- readRDS(data_dir)
-  cat("Added local download to localMAEList rective value")
-
-}, error = function(e) {
-  cat("Error:", conditionMessage(e), "\n")
-  cat("Might be due to not installing via devtools::install_github(\"wejlab/curatedTBExplorer\")")
-})
-# vals <- reactiveValues()
+)
 
 
 # Grab the selected checkboxes from the ui section, and only output these within the datatable
@@ -143,9 +150,9 @@ observeEvent(input$dLLocal, {
 
 observeEvent(input$clearLocalDownload, {
   vals$localMAEList <- list()
-  dir <- system.file("extdata", package = "curatedTBExplorer")
-  path <- file.path(dir, "localMAEList.rds")
-  saveRDS(emptyList, file = path)
+  extdataDir <- system.file("extdata", package = "curatedTBExplorer")
+  localMAEListPath <- file.path(extdataDir, "localMAEList.rds")
+  saveRDS(list(), file = localMAEListPath)
   cat("Cleared Local Download")
 })
 
@@ -156,7 +163,6 @@ observeEvent(input$continue, {
 
   # if there are studies selected, this block executes
   if (!is.null(selected_studies())) {
-
     # If local download coincides with studies in the selected_studies() download list,
     # it removes them from selected_studies() and adds the local download to the MAEList
     # for (studyName in selected_studies()) {
@@ -193,14 +199,14 @@ observeEvent(input$continue, {
         selected_studies_info <- lapply(selected_studies(), function(study_id) {
           setProgress(message = paste("Downloading...", study_id))
           result <- curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value)
-          #storage for all of the mae's
+          # storage for all of the mae's
           vals$MAEList <- c(vals$MAEList, result)
 
-          #stores all mae's into a SINGLE se
+          # stores all mae's into a SINGLE se
           result_se <- toSE(result)
           # View(result_se)
-          if(!is.null(vals$SEList)){
-            temp <- mergeSEs( list(se1 = vals$SEList, se2 = result_se) )
+          if (!is.null(vals$SEList)) {
+            temp <- mergeSEs(list(se1 = vals$SEList, se2 = result_se))
             vals$SEList <- temp
           } else {
             vals$SEList <- result_se
@@ -214,9 +220,9 @@ observeEvent(input$continue, {
 
       if (dLLocal_value) {
         print("Downloaded/ing")
-        dir <- system.file("extdata", package = "curatedTBExplorer")
-        path <- file.path(dir, "localMAEList.rds")
-        saveRDS(vals$MAEList, file = path)
+        extdataDir <- system.file("extdata", package = "curatedTBExplorer")
+        localMAEListPath <- file.path(extdataDir, "localMAEList.rds")
+        saveRDS(vals$MAEList, file = localMAEListPath)
         print("Downloaded")
       }
       View(vals$localMAEList)
@@ -225,17 +231,13 @@ observeEvent(input$continue, {
       incProgress(n / n, message = "Finished Downloading")
     })
 
-    # commented out for now, can be used to view the downloaded studies
-    # View(selected_studies_info)
-
-    # this saves the selected_studies_info into an environment, can be accessed from other files
-    the$downloaded_datasets <<- selected_studies_info
+    # Obsolete test code: 
+    # the$downloaded_datasets <<- selected_studies_info
     # combineExperiments(vals$MAEList)
     # View(the$downloaded_datasets)
     # View(vals$SEList)
     # View(vals$MAEList)
-  }
-  else {
+  } else {
     # Should be code here to add default download to the
   }
 })
