@@ -17,6 +17,7 @@ local_download <- reactiveVal(FALSE)
 
 # Creates reactive values for later use
 vals <- reactiveValues(
+
   # Holds list of MAEs that are locally downloaded by user
   localMAEList = list(),
 
@@ -34,12 +35,13 @@ tryCatch(
     localMAEListDir <- system.file("extdata/localMAEList.rds", package = "curatedTBExplorer")
     extdataDir <- system.file("extdata", package = "curatedTBExplorer")
     localMAEListPath <- file.path(extdataDir, "localMAEList.rds")
-    
-    # If 
-    # fileExists <- file.exists(localMAEListDir)
+
+    # If file localMAEList.rds doesn't exist, makes one
     if (!file.exists(localMAEListDir)) {
       saveRDS(list(), file = localMAEListPath)
     }
+
+    # Reads .rds file into localMAEList reactive value
     vals$localMAEList <- readRDS(localMAEListDir)
     cat("Added local download to localMAEList rective value")
   },
@@ -51,13 +53,12 @@ tryCatch(
 
 
 # Grab the selected checkboxes from the ui section, and only output these within the datatable
-# super ugly block of code, but it works. Will make prettier later - Andrew
-# probably in a function in its own file? maybe
 selected_columns <- reactive({
-  selected_columns <- c("Study", "Notes") # study id and notes are always visible
 
-  # these correspond to the checkboxes within the ui_upload code
-  # if they are selected, they are added to selected_columns, which is used within the datatable output
+  # Sets study id and notes column as always visible
+  selected_columns <- c("Study", "Notes")
+
+  # Detects checkbox input and adds correspondingly to the selected columns input
   if (input$filterDSPlatform) {
     selected_columns <- c(selected_columns, "Platform")
   }
@@ -99,13 +100,14 @@ selected_columns <- reactive({
 })
 
 
-# Display study information table
+# Displays study information table
 output$study_table <- renderDT({
-  # these were added to grab the selected information from the checkboxes within the ui
-  # they then create a new set of data to be rendered in the datatable
+
+  # Checks selected columns and creates a new set of data to be rendered in the datatable
   current_columns <- selected_columns()
   selected_study_data <- study_data[, current_columns, drop = FALSE]
 
+  # Datatable setup
   datatable(selected_study_data,
     options = list(
       pageLength = nrow(selected_study_data),
@@ -131,23 +133,24 @@ output$study_table <- renderDT({
   )
 })
 
-# observes the checkbox for the multithread
+# Observes the checkbox for the multithread or not
 observeEvent(input$dLMultiThread, {
   multithread_value(input$dLMultiThread)
 })
 
-# observes the checkbox for curated or not
+# Observes the checkbox for curated or not
 observeEvent(input$dLCurated, {
   curated_only(input$dLCurated)
   # View(curated_only())
 })
 
-# observes the checkbox for local download or not
+# Observes the checkbox for local download or not
 observeEvent(input$dLLocal, {
   local_download(input$dLLocal)
   # View(local_download())
 })
 
+# If clear local download button pressed, replaces data in .rds file with empty list
 observeEvent(input$clearLocalDownload, {
   vals$localMAEList <- list()
   extdataDir <- system.file("extdata", package = "curatedTBExplorer")
@@ -156,12 +159,11 @@ observeEvent(input$clearLocalDownload, {
   cat("Cleared Local Download")
 })
 
-
-# updates if continue button clicked, also begins the download process for all selected studies
+# If continue button pressed, downloads study data for selected studies accordingly
 observeEvent(input$continue, {
   continue_clicked(TRUE)
 
-  # if there are studies selected, this block executes
+  # Executes only if there are studies selected
   if (!is.null(selected_studies())) {
     # If local download coincides with studies in the selected_studies() download list,
     # it removes them from selected_studies() and adds the local download to the MAEList
@@ -177,34 +179,45 @@ observeEvent(input$continue, {
       n <- length(selected_studies())
       curated_only_value <- curated_only()
       dLLocal_value <- local_download()
-      # if (!is.null(multithread_value()) && multithread_value()) {
-      # View(multithread_value())
-      if (multithread_value() && n >= 4) {
-        print("Parallel download")
 
-        # clusters from snow created, they must then load the curatedTBData library to avoid errors
+      # Only allows multithreading if 4 or more studies selected
+      if (multithread_value() && n >= 4) {
+        cat("Multi-thread download starting...")
+
+        # Clusters from snow created, loaded the curatedTBData since clusters need new libraries
         cl <- makeCluster(4)
         clusterEvalQ(cl, library(curatedTBData))
-        # parApply from snow used here. CL created before is a paramater
+
+        # 4 clusters download and insert study data into the MAEList reactive value with parLapply
         selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
           vals$MAEList <- c(vals$MAEList, curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value))
         })
 
+        # Ends the clusters when done
         stopCluster(cl)
-        # multithread_value(TRUE)
-        # print(multithread_value())
+
+        cat("Multi-thread download finished")
       } else {
-        print("Non-Parallel Download")
-        # unparallelized version
+        cat("Single-thread download starting...")
+
+        # Downloads and inserts study data into the MAEList reactive value with lapply
         selected_studies_info <- lapply(selected_studies(), function(study_id) {
+
+          # Updates progress bar message
           setProgress(message = paste("Downloading...", study_id))
+
+          # Stores downloaded study data into result
           result <- curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value)
-          # storage for all of the mae's
+
+          # Adds downloaded study data to MAEList
           vals$MAEList <- c(vals$MAEList, result)
 
-          # stores all mae's into a SINGLE se
+          # Converts all downloaded MAEs into a list of SEs
           result_se <- toSE(result)
+
           # View(result_se)
+
+          # Executes block if SEList is null
           if (!is.null(vals$SEList)) {
             temp <- mergeSEs(list(se1 = vals$SEList, se2 = result_se))
             vals$SEList <- temp
@@ -212,18 +225,21 @@ observeEvent(input$continue, {
             vals$SEList <- result_se
           }
 
-          # View(vals$MAEList)
+          # Updates progress bar
           incProgress(1 / n)
           return(result)
         })
       }
 
+      #
       if (dLLocal_value) {
-        print("Downloaded/ing")
+        cat("Local download starting...")
+
+        # Adding current MAEList to localMAEList.rds file
         extdataDir <- system.file("extdata", package = "curatedTBExplorer")
         localMAEListPath <- file.path(extdataDir, "localMAEList.rds")
         saveRDS(vals$MAEList, file = localMAEListPath)
-        print("Downloaded")
+        cat("Local download finished")
       }
       View(vals$localMAEList)
 
@@ -231,14 +247,14 @@ observeEvent(input$continue, {
       incProgress(n / n, message = "Finished Downloading")
     })
 
-    # Obsolete test code: 
+    # Obsolete test code:
     # the$downloaded_datasets <<- selected_studies_info
     # combineExperiments(vals$MAEList)
     # View(the$downloaded_datasets)
     # View(vals$SEList)
     # View(vals$MAEList)
   } else {
-    # Should be code here to add default download to the
+    cat("Please select a study first")
   }
 })
 
