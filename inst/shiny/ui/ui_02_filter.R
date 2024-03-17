@@ -59,16 +59,16 @@ tabPanel(
       mainPanel(
         fluidRow(
           column(
-            5,
-            uiOutput("filter_summary_table")
+            12,
+            DTOutput("filter_summary_table")
           ),
-          column(
-            7,
-            plotlyOutput("filter_summary_top_plot", height = "350px"),
-            plotlyOutput("filter_summary_bottom_plot", height = "350px")
-          )
+          # column(
+          #   7,
+          #   plotlyOutput("filter_summary_top_plot", height = "350px"),
+          #   plotlyOutput("filter_summary_bottom_plot", height = "350px")
+          # )
         ),
-        width = 7
+        width = 8
       )
     )
   ),

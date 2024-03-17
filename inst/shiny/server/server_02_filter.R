@@ -53,10 +53,23 @@ observeEvent(input$filter_diabetes_btn, {
   }
 })
 
-# })
-output$filter_summary_table <- renderTable(
-  { # outputs the table
-    my_data()
-  },
-  rownames = TRUE
+
+output$filter_summary_table <- renderDT(
+  {
+    datatable(my_data(), options = list(
+      ordering = TRUE,
+      pageLength = 10,
+      scrollX = TRUE,
+      scrollY = TRUE,
+      initComplete = JS(
+        "function(settings, json) {",
+        "$(this.api().table().header()).css({'background-color': '#4C516D', 'color': '#fff'});",
+        "}"
+      ),
+      rowCallback = JS(
+       
+      )
+      ))
+    
+  }
 )
