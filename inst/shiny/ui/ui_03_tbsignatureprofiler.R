@@ -7,9 +7,15 @@ tabPanel(
       sidebarPanel(
         "Select Data For the TBSignatureProfiler",
 
-        # Button for displaying selected profiles to display
-        actionButton("showProfiles", "Profiler Selection"),
+        # Dropdown box for selecting assay
+        selectInput("assay", "Select Assay:",
+                    # choices = c("log_counts", "log_counts_cpm", "counts"),
+                    choices = c("assay_curated", "log_assay_curated", "assay_curated_cpm", "log_assay_curated_cpm"),
+                    selected = "assay_curated"
+        ),
 
+        # Button for displaying selected profiles to display
+        actionButton("showProfiles", "Profile Selection"),
         # Conditional Panel for displaying selected profiles
         conditionalPanel(
           condition = "input.showProfiles % 2 != 0",
@@ -17,22 +23,20 @@ tabPanel(
           # Dropdowns box for selecting profile information
           checkboxGroupInput("profiles", "Select Profiles:",
             choices = names(TBsignatures),
-            selected = names(TBsignatures)
+            selected = NULL
           ),
 
-          # Dropdown box for selecting assay
-          selectInput("assay", "Select Assay:",
-            choices = c("log_counts", "log_counts_cpm", "counts"),
-            selected = "log_counts"
-          )
-        )
+          actionButton("selectAll", "Select All"),
+          actionButton("deselectAll", "Deselect All")
+
+        ),
+        # Button to begin table generation
+        actionButton("begin", "Run TBSignatureProfiler")
       ),
 
       # Displays ssgsea table
       DTOutput("ssgsea_table"),
 
-      # Button to begin table generation
-      actionButton("begin", "Begin")
     ),
     tabPanel(
       "Heatmap",

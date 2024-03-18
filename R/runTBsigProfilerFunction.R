@@ -19,12 +19,12 @@
   #need to check if the assay_curated corresponds to log_counts like I think it does
 
 #derived from the TBSignatureProfiler Vignette
-runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
+runTBsigProfilerFunction <- function(selected_dataset, selected_profiles, selected_assay) {
   appDir <- system.file("shiny", package = "curatedTBExplorer")
   if (appDir == "") {
     stop("Could not find my function. Try re-installing 'curatedTBExplorer'.", call. = FALSE)
   }
-
+  View(selected_assay)
   #creates the assays for processing
   #likely want to have additional parameter to select which to run
   #also need to create all 4, currently only have 2, easy fix
@@ -41,11 +41,11 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles) {
   out <- capture.output({
     ssgsea_result <- runTBsigProfiler(
       input = selected_dataset,         #input is the selected_dataset parameter
-      useAssay = "assay_curated_cpm",   #will need to change based on user input
+      useAssay = selected_assay,   #will need to change based on user input
       signatures = TBsignatures,        #may potentially need to change? though I don't think so
       algorithm = "ssGSEA",             #need to add user input to select algorithms
       combineSigAndAlgorithm = TRUE,
-      parallel.sz = 1,
+      parallel.sz = 4,
       update_genes = FALSE
     )
   })

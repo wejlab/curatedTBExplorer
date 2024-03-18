@@ -6,16 +6,37 @@
 # allow for the plots in the heatmap to change based on filters from the filter page
 
 tb_profiler_result <- reactiveVal(NULL)
+
+#need to get select All / deselect All working properly
+#need to get assay selection working properly
+  #works, however it doesn't run properly
+observeEvent(input$selectAll, {
+  selected_profiles <- names(TBsignatures)
+})
+
 observeEvent(input$begin, {
-  # converts the datasets into se
-  # currently only uses the first downloaded dataset, will change once we have a single se with all downloads
-  # temp_se <- toSE(vals$MAEList[1])
+  vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
+                        log = TRUE, counts_to_CPM = FALSE)
+  vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",)
+  vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
+                         log = TRUE)
+  vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
+  # View(vals$datassays)
+  # View(input$assay)
+
+
+  # View(assays(vals$SEList)$assay_curated_cpm)
+  # View(assays(vals$SEList)$assay_curated)
+  # View(assays(vals$SEList)$log_assay_curated)
+  # View(assays(vals$SEList)$log_assay_curated_cpm)
+
+
   selected_dataset <- vals$SEList
   # selected_profiles <- c(input$profile1, input$profile2, input$profile3)
   selected_profiles <- input$profiles
   selected_assay <- input$assay
   # stores both the direct ssgsea_results and the info for the dt output
-  tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles))
+  tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay))
   # renders the dt
   output$ssgsea_table <- renderDT({
     tb_profiler_result()[[1]]
