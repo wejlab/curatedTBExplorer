@@ -4,14 +4,24 @@ tabPanel(
   tabsetPanel(
     tabPanel(
       "Profiler",
-      sidebarPanel(
-        "Select Data For the TBSignatureProfiler",
+        sidebarPanel(
+        selectInput("selectAssay", "Make Assay",
+          choices = c("Log Counts","CPM","Log CPM"),
+          selected = "CPM"
+        ),
+        actionButton("makeAssay", "Create Assays"),
 
+        HTML("<br><br>"),
+        # "Select Data For the TBSignatureProfiler",
+        # HTML("<br>"),
         # Dropdown box for selecting assay
-        selectInput("assay", "Select Assay:",
+        selectInput("assay", "Select Assay for Profiler:",
                     # choices = c("log_counts", "log_counts_cpm", "counts"),
                     choices = c("assay_curated", "log_assay_curated", "assay_curated_cpm", "log_assay_curated_cpm"),
                     selected = "assay_curated"
+        ),
+        selectInput("algorithm", "Select Algorithm for Profiler:",
+                    choices = c("GSVA", "ssGSEA")
         ),
 
         # Button for displaying selected profiles to display
@@ -73,3 +83,4 @@ tabPanel(
     )
   )
 )
+

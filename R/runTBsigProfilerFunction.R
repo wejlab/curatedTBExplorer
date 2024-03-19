@@ -7,6 +7,7 @@
 #'
 #' @param selected_dataset The selected dataset (summarized experiment) to be viewed. Required.
 #' @param selected_profiles The group of selected profiles to be viewed. Required.
+#' @param selected_assay The assay used in the profiler. Required.
 #'
 #' @examples
 #' \dontrun{
@@ -19,7 +20,7 @@
   #need to check if the assay_curated corresponds to log_counts like I think it does
 
 #derived from the TBSignatureProfiler Vignette
-runTBsigProfilerFunction <- function(selected_dataset, selected_profiles, selected_assay) {
+runTBsigProfilerFunction <- function(selected_dataset, selected_profiles, selected_assay, selected_algorithm) {
   appDir <- system.file("shiny", package = "curatedTBExplorer")
   if (appDir == "") {
     stop("Could not find my function. Try re-installing 'curatedTBExplorer'.", call. = FALSE)
@@ -34,7 +35,8 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles, select
   #random views for ease of troubleshooting
   # View(selected_dataset)
   # View(names(selected_dataset))
-  # View(assay(selected_dataset))
+  # View(assay(selected_dataset)$assay_curated)
+  # View(assay(selected_dataset)$log_assay_curated_cpm)
 
   #runs the tbsigprofiler using the parameter info
   #still need to add info to capture the desired algorithm, assays, etc
@@ -43,7 +45,7 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles, select
       input = selected_dataset,         #input is the selected_dataset parameter
       useAssay = selected_assay,   #will need to change based on user input
       signatures = TBsignatures,        #may potentially need to change? though I don't think so
-      algorithm = "ssGSEA",             #need to add user input to select algorithms
+      algorithm = selected_algorithm,             #need to add user input to select algorithms
       combineSigAndAlgorithm = TRUE,
       parallel.sz = 4,
       update_genes = FALSE

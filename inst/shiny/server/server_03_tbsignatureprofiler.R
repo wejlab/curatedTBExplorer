@@ -2,8 +2,8 @@
 
 # to do:
 # generate box plots correctly
-# fix the output of the heatmap (its just squished and the button overlaps)
 # allow for the plots in the heatmap to change based on filters from the filter page
+#update assay selection based on what has been created
 
 tb_profiler_result <- reactiveVal(NULL)
 
@@ -14,29 +14,36 @@ observeEvent(input$selectAll, {
   selected_profiles <- names(TBsignatures)
 })
 
+#Select which Assays (if any) to create
+observeEvent(input$makeAssay, {
+  if(input$selectAssay == "Log Counts"){
+    vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
+                           log = TRUE, counts_to_CPM = FALSE)
+    vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
+  } else if(input$selectAssay == "CPM"){
+    vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",)
+    vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
+  } else if(input$selectAssay == "Log CPM"){
+    vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
+                           log = TRUE)
+    vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
+
+  }
+})
+
 observeEvent(input$begin, {
-  vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
-                        log = TRUE, counts_to_CPM = FALSE)
-  vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",)
-  vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
-                         log = TRUE)
-  vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
-  # View(vals$datassays)
-  # View(input$assay)
-
-
-  # View(assays(vals$SEList)$assay_curated_cpm)
-  # View(assays(vals$SEList)$assay_curated)
-  # View(assays(vals$SEList)$log_assay_curated)
-  # View(assays(vals$SEList)$log_assay_curated_cpm)
-
-
+  # vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
+  #                       log = TRUE, counts_to_CPM = FALSE)
+  # vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",)
+  # vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
+  #                        log = TRUE)
+  # vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
   selected_dataset <- vals$SEList
-  # selected_profiles <- c(input$profile1, input$profile2, input$profile3)
   selected_profiles <- input$profiles
   selected_assay <- input$assay
+  selected_algorithm <- input$algorithm
   # stores both the direct ssgsea_results and the info for the dt output
-  tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay))
+  tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay, selected_algorithm))
   # renders the dt
   output$ssgsea_table <- renderDT({
     tb_profiler_result()[[1]]
