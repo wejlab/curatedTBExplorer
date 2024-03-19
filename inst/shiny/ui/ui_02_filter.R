@@ -29,12 +29,17 @@ tabPanel(
         # [25] "Study"                   "QFT_GIT"                 "HealthControl"          
         # [28] "StillStatus"             "AdultSLE_Status"         "PediatricSLE_Status"    
         # [31] "StaphStatus"             "StrepStatus"            
-
+        
         
         # This will outputa dynamic field with a conditional selectInput and filter button created in server file
         uiOutput("dynamic_filter"),
         br(),
+        # Add Filter button
+        actionButton("add_filter_btn", "Add Filter", class = "btn btn-primary"),
+        uiOutput("selected_filters_ui"),
         
+        #APPLY FILTER BUTTON
+        actionButton("filter_apply_btn", "Apply Filter", class = "btn-primary"),
         # Reset filter button
         actionButton("filter_reset_btn", "Reset"),
         br()
