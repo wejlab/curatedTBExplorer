@@ -2,6 +2,8 @@
 selected_studies <- reactiveVal(NULL) # this is used to update the selected studies accordingly
 # continue_clicked <- reactiveVal(FALSE)  # stores if Continue button is clicked
 my_data <- reactiveVal(NULL)
+# reactive Value to store selected filters
+selected_filters <- reactiveValues(filters = NULL)
 
 
 
@@ -29,22 +31,141 @@ observe({
     # Render the dynamic selectInput based on the selected filter_by choice
     output$dynamic_filter <- renderUI({
       tagList(
-      selectInput("sub_filter", filter_by, choices = unique_column_values),
-      actionButton("filter_apply_btn", "Filter", class = "btn-primary")
+        selectInput("sub_filter", filter_by, choices = unique_column_values),
       )
     })
   }
 })
+
+##FOLLOWING CODE IS FOR ADDING FILTERS TO LIST
+
+# UI for displaying selected filters as bubbles
+output$selected_filters_ui <- renderUI({
+  filters <- selected_filters$filters
+  
+  # List to store UI elements for each filter
+  filter_bubbles <- lapply(seq_along(filters), function(i) {
+    tagList(
+      div(
+        paste(filters[[i]]$filter_by, ":", filters[[i]]$sub_filter),
+        class = "filter-bubble",
+        actionButton(paste0("remove_filter_btn_", i), "x", class = "btn btn-danger btn-sm remove-filter-btn")
+      ),
+      br()
+    )
+  })
+  
+  # Wrap filter bubbles in a div
+  div(filter_bubbles)
+})
+#Remove a filter when the user clicks on the "x" button
+# observeEvent({
+#   lapply(seq_along(selected_filters$filters), function(i) {
+#     input[[paste0("remove_filter_btn_", i)]]
+#   })
+# }, {
+#   filters <- selected_filters$filters
+#   for (i in seq_along(filters)) {
+# 
+#     if (!is.null(selected_filters) && !is.null(input[[paste0("remove_filter_btn_", i)]])) {
+#       selected_filters$filters <- filters[-i]
+#       break
+#     }
+#   }
+# })
+
+# Add a new filter when the user clicks on "Add Filter" button
+observeEvent(input$add_filter_btn, {
+  print(input$filter_by)
+  print(input$sub_filter)
+  filters <- selected_filters$filters
+  new_filter_index <- length(filters) + 1
+  
+  # Create a new filter object and add it to selected_filters
+  selected_filters$filters[[new_filter_index]] <- list(
+    filter_by = input$filter_by,
+    sub_filter = input$sub_filter
+  )
+})
+# 
+# observe({
+#   filters <- selected_filters$filters()
+#   for (i in seq_along(filters)) {
+#     observeEvent(input[[paste0("remove_filter_btn_", i)]], {
+#       selected_filters$filters <- filters[-i]
+#     })
+#   }
+# })
+
+
+
+
+
+
+
+
+###################
+
+# observeEvent(input$filter_apply_btn, {
+#   print("Filter button clicked")
+#   filter_by <- input$filter_by
+#   sub_filter <- input$sub_filter # Retrieve value of subfilter from input
+#   # Subset our SE in specific category
+#   subset_SE <- combined_studies[combined_studies[[filter_by]] == sub_filter, ] # subset the filter value in SE obj
+#   print("the code ran this far")
+#   my_data(as.data.frame(colData(subset_SE)))
+# })
+# Apply filters and update my_data when the user clicks on the "Apply Filter" button
+
 observeEvent(input$filter_apply_btn, {
   print("Filter button clicked")
-  filter_by <- input$filter_by
-  sub_filter <- input$sub_filter # Retrieve value of subfilter from input
-  # Subset our SE in specific category
-  subset_SE <- combined_studies[combined_studies[[filter_by]] == sub_filter, ] # subset the filter value in SE obj
-  print("the code ran this far")
+  #filtered_data <- combined_studies
+  filters <- selected_filters$filters
+  if(is.null(filters)){
+    print("selected filters is null")
+    filter_by <- input$filter_by
+    sub_filter <- input$sub_filter # Retrieve value of subfilter from input
+    subset_SE <- combined_studies[, eval(parse(text = paste0("combined_studies$", filter_by))) == sub_filter]# subset the filter value in SE obj
+    #Explanation : the values of filter_by and sub_filter have quote around it, we need those quotes removed for only filter_by in order for this command to execute properly
+  }
+  else{
+    print("selected filters is not null")
+    print(filters)
+    subset_SE <- combined_studies
+    for (filter in filters) {
+      print(filter$filter_by)
+      filter_by <- filter$filter_by
+      print(filter$sub_filter)
+      sub_filter <- filter$sub_filter
+      subset_SE <- subset_SE[, eval(parse(text = paste0("subset_SE$", filter_by))) == sub_filter]# subset the filter value in SE obj
+      #subset_SE <- combined_studies[combined_studies[[filter_by]] == sub_filter, ]
+    }
+    
+  }
+   
   my_data(as.data.frame(colData(subset_SE)))
 })
 
+
+# observeEvent(input$filter_apply_btn, {
+#   print("Filter button clicked")
+#   filters <- selected_filters$filters
+#   
+#   if (is.null(filters) || length(filters) == 0) {
+#     print("No filters selected")
+#     subset_SE <- combined_studies
+#   } else {
+#     print("Applying filters")
+#     subset_SE <- combined_studies
+#     for (filter in filters) {
+#       filter_by <- filter$filter_by
+#       sub_filter <- filter$sub_filter
+#       subset_SE <- subset_SE[subset_SE[[filter_by]] == sub_filter, ]
+#     }
+#   }
+#   
+#   my_data(as.data.frame(colData(subset_SE)))
+# })
 
 output$filter_summary_table <- renderDT(
   {
