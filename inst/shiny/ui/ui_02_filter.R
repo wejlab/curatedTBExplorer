@@ -1,57 +1,45 @@
 # Summarize tab page
 tabPanel(
   "Summarize",
-
+  
   icon = icon("filter", class = "fa-solid fa-filter", lib = "font-awesome"),
   tabsetPanel(
     tabPanel(
       "Filter",
       sidebarPanel(
-
+        
         # Title and display of selected studies
         h4("Selected Studies:"),
         verbatimTextOutput("selected_studies_text"),
-
+        
         # Dropdown box for selecting filter
         selectInput("filter_by", "Filter By",
-          choices = c("TB Status", "HIV Status", "Diabetes Status")
+                    choices = c(colnames(colData(combined_studies)))
         ),
-
-        # Filter options for TB status
-        conditionalPanel(
-          condition = "input.filter_by == 'TB Status'",
-          selectInput("tb_status", "TB Status", choices = c("PTB", "LTBI")),
-          actionButton("filter_tb_btn", "Filter", class = "btn-primary")
-        ),
-
-        # Filter options for HIV status
-        conditionalPanel(
-          condition = "input.filter_by == 'HIV Status'",
-          selectInput("hiv_status", "HIV Status", choices = c("Positive", "Negative")),
-          actionButton("filter_hiv_btn", "Filter", class = "btn-primary")
-        ),
-
-        # Filter options for Diabetes status
-        conditionalPanel(
-          condition = "input.filter_by == 'Diabetes Status'",
-          selectInput("diabetes_status", "Diabetes Status", choices = c("Positive", "Negative")),
-          actionButton("filter_diabetes_btn", "Filter", class = "btn-primary")
-        ),
-
-        # Filter options for Region
-        conditionalPanel(
-          condition = "input.filter_by == 'Region'",
-          selectInput("geo_region", "Region", choices = c("Brazil", "China", "Germany", "India", "Indonesia", "Kenya", "Malawi", "Mongolian", "South Africa", "South India", "Taiwan", "The Gambia", "UK", "US", "Venezuela"))
-        ),
-
-        # Filter options for Tissue
-        conditionalPanel(
-          condition = "input.filter_by == 'Tissue'",
-          selectInput("tissue", "Tissue", choices = c("Whole Blood", "PBMCs", "CD", "Monocytes", "Neutrophils"))
-        ),
-
+        #Those values are :
+        # print(c(colnames(colData(combined_studies))))
+        # [1] "Age"                     "Gender"                  "Ethnicity"              
+        # [4] "TBStatus"                "GeographicalRegion"      "BcgVaccinated"          
+        # [7] "BirthRegion"             "TST"                     "Tissue"                 
+        # [10] "HIVStatus"               "MeasurementTime"         "PatientID"              
+        # [13] "PneumoniaStatus"         "exposure_latent"         "index_case_disease_site"
+        # [16] "smear_of_index_case"     "modal_x_ray_grade"       "SputumSmearStatus"      
+        # [19] "sputum_culture"          "bal_smear"               "bal_culture"            
+        # [22] "isolate_sensitivity"     "DiabetesStatus"          "Treatment"              
+        # [25] "Study"                   "QFT_GIT"                 "HealthControl"          
+        # [28] "StillStatus"             "AdultSLE_Status"         "PediatricSLE_Status"    
+        # [31] "StaphStatus"             "StrepStatus"            
+        
+        
+        # This will outputa dynamic field with a conditional selectInput and filter button created in server file
+        uiOutput("dynamic_filter"),
         br(),
-
+        # Add Filter button
+        actionButton("add_filter_btn", "Add Filter", class = "btn btn-primary"),
+        uiOutput("selected_filters_ui"),
+        
+        #APPLY FILTER BUTTON
+        actionButton("filter_apply_btn", "Apply Filter", class = "btn-primary"),
         # Reset filter button
         actionButton("filter_reset_btn", "Reset"),
         br()
@@ -62,11 +50,6 @@ tabPanel(
             12,
             DTOutput("filter_summary_table")
           ),
-          # column(
-          #   7,
-          #   plotlyOutput("filter_summary_top_plot", height = "350px"),
-          #   plotlyOutput("filter_summary_bottom_plot", height = "350px")
-          # )
         ),
         width = 8
       )
