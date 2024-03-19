@@ -11,46 +11,38 @@ output$selected_studies_text <- renderText({
 })
 
 reactive({ # apparently need to be wrapped in reactive to work
-
+  
   # move the selected studies in a single object list
   object_list <- curatedTBData(selected_studies(), dry.run = FALSE, curated.only = TRUE)
   # Combine the studies together in a single SE object
   combined_studies <- combine_objects(object_list, experiment_name = "assay_curated", update_genes = FALSE)
 })
 
-observeEvent(input$filter_tb_btn, {
-  print("Filter TB button clicked")
-  tb_status <- input$tb_status # Retrieve value of tb_status from input
+observe({
+  filter_by <- input$filter_by
+  
+  if (!is.null(filter_by)) {
+    column_index <- which(colnames(colData(combined_studies)) == filter_by)
+    column_values <- colData(combined_studies)[, column_index]
+    unique_column_values <- unique(column_values)
+    
+    # Render the dynamic selectInput based on the selected filter_by choice
+    output$dynamic_filter <- renderUI({
+      tagList(
+      selectInput("sub_filter", filter_by, choices = unique_column_values),
+      actionButton("filter_apply_btn", "Filter", class = "btn-primary")
+      )
+    })
+  }
+})
+observeEvent(input$filter_apply_btn, {
+  print("Filter button clicked")
+  filter_by <- input$filter_by
+  sub_filter <- input$sub_filter # Retrieve value of subfilter from input
   # Subset our SE in specific category
-  PTB <- combined_studies[, combined_studies$TBStatus == "PTB"] # subset the active group in SE obj
-  LTBI <- combined_studies[, combined_studies$TBStatus == "LTBI"] # subset the control group in SE obj
-  if (tb_status == "PTB") {
-    my_data(as.data.frame(colData(PTB)))
-  } else {
-    my_data(as.data.frame(colData(LTBI)))
-  }
-})
-observeEvent(input$filter_hiv_btn, {
-  print("Filter HIV button clicked")
-  hiv_status <- input$hiv_status # Retrieve value of hiv_status from input
-  HIV_Positive <- combined_studies[, combined_studies$HIVStatus == "Positive"]
-  HIV_Negative <- combined_studies[, combined_studies$HIVStatus == "Negative"]
-  if (hiv_status == "Positive") {
-    my_data(as.data.frame(colData(HIV_Positive)))
-  } else {
-    my_data(as.data.frame(colData(HIV_Negative)))
-  }
-})
-observeEvent(input$filter_diabetes_btn, {
-  print("Filter Diabetes button clicked")
-  diabetes_status <- input$diabetes_status # Retrieve value of diabetes_status from input
-  Diabetes_Positive <- combined_studies[, combined_studies$DiabetesStatus == "Positive"]
-  Diabetes_Negative <- combined_studies[, combined_studies$DiabetesStatus == "Negative"]
-  if (diabetes_status == "Positive") {
-    my_data(as.data.frame(colData(Diabetes_Positive)))
-  } else {
-    my_data(as.data.frame(colData(Diabetes_Negative)))
-  }
+  subset_SE <- combined_studies[combined_studies[[filter_by]] == sub_filter, ] # subset the filter value in SE obj
+  print("the code ran this far")
+  my_data(as.data.frame(colData(subset_SE)))
 })
 
 
@@ -67,9 +59,9 @@ output$filter_summary_table <- renderDT(
         "}"
       ),
       rowCallback = JS(
-       
+        
       )
-      ))
+    ))
     
   }
 )
