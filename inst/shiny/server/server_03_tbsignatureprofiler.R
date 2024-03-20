@@ -1,15 +1,13 @@
-# note: the 5th dataset is a great dataset for the heatmap visualization
-
 # to do:
 # generate box plots correctly
 # allow for the plots in the heatmap to change based on filters from the filter page
-#update assay selection based on what has been created
 
 tb_profiler_result <- reactiveVal(NULL)
+reactive ({
+  vals$datassays <- names(assays(vals$SEList))
+})
 
 #need to get select All / deselect All working properly
-#need to get assay selection working properly
-  #works, however it doesn't run properly
 observeEvent(input$selectAll, {
   selected_profiles <- names(TBsignatures)
 })
@@ -31,18 +29,20 @@ observeEvent(input$makeAssay, {
   }
 })
 
+shiny::observe({
+  updateSelectInput(session, "boxCovariate", choices = vals$covars)
+})
+
+shiny::observe({
+  updateSelectInput(session, "assay", choices = vals$datassays)
+})
+
 observeEvent(input$begin, {
-  # vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
-  #                       log = TRUE, counts_to_CPM = FALSE)
-  # vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",)
-  # vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
-  #                        log = TRUE)
-  # vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
   selected_dataset <- vals$SEList
   selected_profiles <- input$profiles
   selected_assay <- input$assay
   selected_algorithm <- input$algorithm
-  # stores both the direct ssgsea_results and the info for the dt output
+
   tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay, selected_algorithm))
   # renders the dt
   output$ssgsea_table <- renderDT({
@@ -57,22 +57,41 @@ observeEvent(input$genHeatmap, {
     # note: want to output to user in the future
     print("You must run the TB Signature Profiler First!")
   } else {
-    # derived from the TBSignatureProfiler Vignette
     colors <- RColorBrewer::brewer.pal(6, "Spectral")
     col.me <- circlize::colorRamp2(seq(from = -2, to = 2, length.out = 6), colors)
-    output$heatmap_result <- renderPlot({
-      signatureHeatmap(tb_profiler_result()[[2]],
-        name = "Heatmap of Signatures, ssGSEA Algorithm",
-        signatureColNames = names(TBsignatures),
-        annotationColNames = "PatientID",
-        scale = TRUE,
-        showColumnNames = TRUE,
-        choose_color = col.me
-      )
-    })
+    #outputs heatmap using all signatures
+    if(input$heatmapType == "All Signatures") {
+      # derived from the TBSignatureProfiler Vignette
+      output$heatmap_result <- renderPlot({
+        signatureHeatmap(tb_profiler_result()[[2]],
+                         name = "Heatmap of Signatures",
+                         signatureColNames = names(TBsignatures),
+                         annotationColNames = "PatientID",
+                         scale = TRUE,
+                         showColumnNames = TRUE,
+                         choose_color = col.me
+        )
+      })
+    } else {
+      #outputs heatmap using only selected signatures
+        #note: need to change from patient id to genes
+      output$heatmap_result <- renderPlot({
+        signatureHeatmap(tb_profiler_result()[[2]],
+                         name = "Heatmap of Signatures",
+                         signatureColNames = input$signatures,
+                         annotationColNames = "PatientID",
+                         scale = TRUE,
+                         showColumnNames = TRUE,
+                         choose_color = col.me
+        )
+      })
+    }
   }
 })
 
+shiny::observe({
+  updateSelectInput(session, "boxCovariate" ,choices = vals$covars)
+})
 # observer for the boxplots button
 # note: not working yet
 observeEvent(input$genBoxplots, {
@@ -81,14 +100,21 @@ observeEvent(input$genBoxplots, {
     print("You must run the TB Signature Profiler First!")
   } else {
     # dervied from the TBSignatureProfiler Vignette
+    # output$boxplot_result <- renderPlot({
+    #   signatureBoxplot(
+    #     inputData = tb_profiler_result()[[2]],
+    #     name = "Boxplots of Signatures, ssGSEA",
+    #     # signatureColNames = names(TBsignatures),
+    #     signatureColNames = input$box_profiles,
+    #     annotationColName = "PatientID", rotateLabels = FALSE
+    #   )
+    # })
     output$boxplot_result <- renderPlot({
-      signatureBoxplot(
-        inputData = tb_profiler_result()[[2]],
-        name = "Boxplots of Signatures, ssGSEA",
-        # signatureColNames = names(TBsignatures),
-        signatureColNames = input$box_profiles,
-        annotationColName = "PatientID", rotateLabels = FALSE
-      )
+      isolate({
+        print(signatureBoxplot(tb_profiler_result()[[2]],
+                         signatureColNames = input$box_profiles,
+                         annotationColName = input$boxCovariate))
+      })
     })
   }
 })

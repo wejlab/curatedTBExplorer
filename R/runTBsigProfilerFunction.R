@@ -25,7 +25,6 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles, select
   if (appDir == "") {
     stop("Could not find my function. Try re-installing 'curatedTBExplorer'.", call. = FALSE)
   }
-  View(selected_assay)
   #creates the assays for processing
   #likely want to have additional parameter to select which to run
   #also need to create all 4, currently only have 2, easy fix
@@ -41,11 +40,11 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles, select
   #runs the tbsigprofiler using the parameter info
   #still need to add info to capture the desired algorithm, assays, etc
   out <- capture.output({
-    ssgsea_result <- runTBsigProfiler(
+    profiler_result <- runTBsigProfiler(
       input = selected_dataset,         #input is the selected_dataset parameter
-      useAssay = selected_assay,   #will need to change based on user input
-      signatures = TBsignatures,        #may potentially need to change? though I don't think so
-      algorithm = selected_algorithm,             #need to add user input to select algorithms
+      useAssay = selected_assay,
+      signatures = TBsignatures,
+      algorithm = selected_algorithm,
       combineSigAndAlgorithm = TRUE,
       parallel.sz = 4,
       update_genes = FALSE
@@ -61,14 +60,14 @@ runTBsigProfilerFunction <- function(selected_dataset, selected_profiles, select
   selected_sigs <- unlist(selected_profiles)
 
   #this currently uses PatientID as the info in the datatable, however this will need to change based on filter
-  ssgsea_print_results <- as.data.frame(colData(ssgsea_result)[ , c("PatientID", selected_sigs)])
-  ssgsea_print_results[, 2:4] <- round(ssgsea_print_results[, 2:4], 4)
+  profiler_print_results <- as.data.frame(colData(profiler_result)[ , c("PatientID", selected_sigs)])
+  profiler_print_results[, 2:4] <- round(profiler_print_results[, 2:4], 4)
 
   #datatable is returned
   # DT::datatable(ssgsea_print_results)
   #datatable info is returned, as well as the ssgsea_result itself
   return(list(
-    datatable = DT::datatable(ssgsea_print_results),
-    ssgsea_result = ssgsea_result
+    datatable = DT::datatable(profiler_print_results),
+    profiler_result = profiler_result
   ))
 }

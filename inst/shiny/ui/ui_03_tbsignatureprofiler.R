@@ -15,10 +15,13 @@ tabPanel(
         # "Select Data For the TBSignatureProfiler",
         # HTML("<br>"),
         # Dropdown box for selecting assay
+        # selectInput("profassay", "Select Assay for Profiler",
+        #             choices = NULL),
         selectInput("assay", "Select Assay for Profiler:",
                     # choices = c("log_counts", "log_counts_cpm", "counts"),
-                    choices = c("assay_curated", "log_assay_curated", "assay_curated_cpm", "log_assay_curated_cpm"),
-                    selected = "assay_curated"
+                    # choices = c("assay_curated", "log_assay_curated", "assay_curated_cpm", "log_assay_curated_cpm"),
+                    # selected = "assay_curated"
+                    choices = "assay_curated"
         ),
         selectInput("algorithm", "Select Algorithm for Profiler:",
                     choices = c("GSVA", "ssGSEA")
@@ -36,6 +39,7 @@ tabPanel(
             selected = NULL
           ),
 
+          #unfunctional atm
           actionButton("selectAll", "Select All"),
           actionButton("deselectAll", "Deselect All")
 
@@ -51,32 +55,75 @@ tabPanel(
     tabPanel(
       "Heatmap",
       sidebarPanel(
-        "Create Heatmap"
-      ),
+        # "Create Heatmap",
+        # Button to begin heatmap generation
+        selectInput("heatmapType", "Select Type of Heatmap",
+                    choices = c("All Signatures","Single Signature")
+        ),
 
-      # Button to begin heatmap generation
-      actionButton("genHeatmap", "Create Heatmap"),
+        conditionalPanel(
+          condition = "input.heatmapType == 'Single Signature'",
+
+          actionButton("showSigs", "Signature Selection"),
+          conditionalPanel(
+            condition = "input.showSigs % 2 != 0",
+            checkboxGroupInput("signatures", "Select Signatures:",
+                               choices = names(TBsignatures),
+                               selected = NULL
+            ),
+
+            actionButton("selectAll", "Select All"),
+            actionButton("deselectAll", "Deselect All")
+          )
+        ),
+        actionButton("genHeatmap", "Create Heatmap")
+      ),
 
       # Displays generated heatmaps
       plotOutput("heatmap_result", height = "750")
     ),
+
+
+
+    # shiny::tabPanel(
+    #   "Boxplots of Individual Signatures",
+    #   shiny::sidebarPanel(
+    #     shinyWidgets::pickerInput(
+    #       "singbox", "Signature(s)", choices = siglist,
+    #       options = list("actions-box" = TRUE),
+    #       multiple = TRUE, selected = NULL),
+    #     shiny::hr(),
+    #     shiny::selectInput("singboxcovar", "Covariate", choices = NULL),
+    #     shiny::actionButton("singboxplot", "Plot Boxplot(s)")
+    #   ),
+    #   shiny::mainPanel(
+    #     shiny::plotOutput("boxplotind", height = 500)
+    #   )
+    # ),
+
+
     tabPanel(
       "Boxplots",
       sidebarPanel(
-        "Create Boxplots",
-
+        # "Create Boxplots",
+        pickerInput(
+          "box_profiles", "Select Signature(s)", choices = names(TBsignatures),
+          options = list("actions-box" = TRUE),
+          multiple = TRUE, selected = NULL),
+        selectInput("boxCovariate", "Covariate", choices = NULL),
+        actionButton("genBoxplots", "Create Boxplots"),
         # Button for displaying selected profiles
-        actionButton("selectProfiles", "Profiler Selection"),
-        conditionalPanel(
-          condition = "input.selectProfiles % 2 != 0",
-          checkboxGroupInput("box_profiles", "Select Profiles:",
-            choices = names(TBsignatures)
-          ),
-        )
+        # actionButton("selectProfiles", "Profiler Selection"),
+        # conditionalPanel(
+        #   condition = "input.selectProfiles % 2 != 0",
+        #   checkboxGroupInput("box_profiles", "Select Profiles:",
+        #     choices = names(TBsignatures)
+        #   ),
+        # )
       ),
 
       # Button to generate boxplots
-      actionButton("genBoxplots", "Create Boxplots"),
+
 
       # Displays generated boxplots
       plotOutput("boxplot_result", height = "200")

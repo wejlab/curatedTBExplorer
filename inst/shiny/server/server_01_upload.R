@@ -223,6 +223,8 @@ observeEvent(input$continue, {
             vals$SEList <- temp
           } else {
             vals$SEList <- result_se
+            vals$colData <- colData(vals$SEList)
+            vals$covars <- colnames(colData(vals$SEList))
           }
 
           # Updates progress bar

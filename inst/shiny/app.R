@@ -2,11 +2,11 @@ library(BiocManager)
 library(curatedTBData)
 library(dplyr)
 library(DT)
-library(SummarizedExperiment) # Not used yet
+library(SummarizedExperiment)
 library(shiny)
 library(shinyjs)
 library(shinythemes)
-library(TBSignatureProfiler) # Not used yet
+library(TBSignatureProfiler)
 library(MultiAssayExperiment)
 library(snow)
 library(plotly)
