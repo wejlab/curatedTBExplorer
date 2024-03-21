@@ -24,7 +24,8 @@ ui <- fluidPage(
         "curatedTBExplorer",
         source(file.path("ui", "ui_01_upload.R"), local = TRUE)$value,
         source(file.path("ui", "ui_02_filter.R"), local = TRUE)$value,
-        source(file.path("ui", "ui_03_tbsignatureprofiler.R"), local = TRUE)$value
+        source(file.path("ui", "ui_03_tbsignatureprofiler.R"), local = TRUE)$value,
+        source(file.path("ui", "ui_04_ml.R"), local = TRUE)$value
     )
 )
 

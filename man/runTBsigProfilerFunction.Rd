@@ -17,6 +17,8 @@ runTBsigProfilerFunction(
 \item{selected_profiles}{The group of selected profiles to be viewed. Required.}
 
 \item{selected_assay}{The assay used in the profiler. Required.}
+
+\item{selected_algorithm}{The algorithm to be used in the tbSigProfiler. Required}
 }
 \value{
 A datatable with results
@@ -27,7 +29,7 @@ to be pulled into a datatable, allowing for easy searching, sorting, and visuali
 }
 \examples{
 \dontrun{
-runTBsigProfilerFunction(SE, profiles)
+runTBsigProfilerFunction(SE, profiles, assay, algorithm)
 }
 
 }

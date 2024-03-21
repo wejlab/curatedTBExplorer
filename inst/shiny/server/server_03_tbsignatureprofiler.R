@@ -3,26 +3,27 @@
 # allow for the plots in the heatmap to change based on filters from the filter page
 
 tb_profiler_result <- reactiveVal(NULL)
-reactive ({
-  vals$datassays <- names(assays(vals$SEList))
-})
+# reactive ({
+#   vals$datassays <- names(assays(vals$SEList))
+#   View(vals$datassays)
+# })
 
 #need to get select All / deselect All working properly
-observeEvent(input$selectAll, {
-  selected_profiles <- names(TBsignatures)
-})
+# observeEvent(input$selectAll, {
+#   selected_profiles <- names(TBsignatures)
+# })
 
 #Select which Assays (if any) to create
 observeEvent(input$makeAssay, {
   if(input$selectAssay == "Log Counts"){
-    vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
+    vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",
                            log = TRUE, counts_to_CPM = FALSE)
     vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
   } else if(input$selectAssay == "CPM"){
-    vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",)
+    vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",)
     vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
   } else if(input$selectAssay == "Log CPM"){
-    vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
+    vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",
                            log = TRUE)
     vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
 
@@ -35,6 +36,7 @@ shiny::observe({
 
 shiny::observe({
   updateSelectInput(session, "assay", choices = vals$datassays)
+  View(vals$datassays)
 })
 
 observeEvent(input$begin, {
@@ -43,7 +45,9 @@ observeEvent(input$begin, {
   selected_assay <- input$assay
   selected_algorithm <- input$algorithm
 
+  print("entered")
   tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay, selected_algorithm))
+  print("exit")
   # renders the dt
   output$ssgsea_table <- renderDT({
     tb_profiler_result()[[1]]

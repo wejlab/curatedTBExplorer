@@ -212,8 +212,8 @@ observeEvent(input$continue, {
 
     # Extract study names from localMAEList
     local_studies <- names(vals$localMAEList)
-    View(local_studies)
-    View(vals$selected_studies)
+    # View(local_studies)
+    # View(vals$selected_studies)
 
     studies_to_download <- vals$selected_studies[!(vals$selected_studies %in% local_studies)]
 
@@ -281,8 +281,6 @@ observeEvent(input$continue, {
               vals$SEList <- temp
             } else {
               vals$SEList <- result_se
-              vals$colData <- colData(vals$SEList)
-              vals$covars <- colnames(colData(vals$SEList))
             }
 
             return(study_data)
@@ -302,7 +300,15 @@ observeEvent(input$continue, {
           saveRDS(vals$localMAEList, file = localMAEListPath)
           cat("Local download finished\n")
         }
-
+        # object_list <- curatedTBData(vals$selected_studies, dry.run = FALSE, curated.only = TRUE)
+        # # Combine the studies together in a single SE object
+        # combined_studies <- combine_objects(object_list, experiment_name = "assay_curated", update_genes = FALSE)
+        # View(combined_studies)
+        # View(vals$SEList)
+        vals$SEList <- combine_objects(vals$MAEList, experiment_name = "assay_curated", update_genes = FALSE)
+        vals$colData <- colData(vals$SEList)
+        vals$covars <- colnames(colData(vals$SEList))
+        vals$datassays <- names(assays(vals$SEList))
         # Completes Progress Message
         incProgress(n / n, message = "Finished Downloading")
       })

@@ -21,7 +21,7 @@ tabPanel(
                     # choices = c("log_counts", "log_counts_cpm", "counts"),
                     # choices = c("assay_curated", "log_assay_curated", "assay_curated_cpm", "log_assay_curated_cpm"),
                     # selected = "assay_curated"
-                    choices = "assay_curated"
+                    choices = "assay1"
         ),
         selectInput("algorithm", "Select Algorithm for Profiler:",
                     choices = c("GSVA", "ssGSEA")
