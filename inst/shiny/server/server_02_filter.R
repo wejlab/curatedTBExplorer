@@ -5,15 +5,16 @@ my_data <- reactiveVal(NULL)
 
 # reactive Value to store selected filters
 selected_filters <- reactiveValues(filters = NULL)
+subset_SE <- reactiveVal(NULL)
+reset_trigger <- reactiveVal(FALSE)  # Reactive value to trigger UI reset
 
 # Render the selected studies text
 output$selected_studies_text <- renderText({
 
   # paste("Selected Studies: ", paste(vals$selected_studies, collapse = ", "))
 
-  # Attempted to use default if selected_studies aren't available, but it didn't display for some reason
-  # Though I did check and the defaultStudy reactive value is filled correctly
-  if (!is.null(vals$selected_studies)) {
+  # Displays downloaded study names or default study if none downloaded
+  if (!is.null(names(vals$MAEList))) {
     paste("Selected Studies: ", paste(names(vals$MAEList), collapse = ", "))
   }
   else {
@@ -28,7 +29,7 @@ reactive({ # apparently need to be wrapped in reactive to work
   # Combine the studies together in a single SE object
   combined_studies <- combine_objects(object_list, experiment_name = "assay_curated", update_genes = FALSE)
 })
-
+############# Dropdwowns #######################
 observe({
   filter_by <- input$filter_by
 
@@ -46,28 +47,7 @@ observe({
   }
 })
 
-##FOLLOWING CODE IS FOR ADDING FILTERS TO LIST
-
-# UI for displaying selected filters as bubbles
-output$selected_filters_ui <- renderUI({
-  filters <- selected_filters$filters
-
-  # List to store UI elements for each filter
-  filter_bubbles <- lapply(seq_along(filters), function(i) {
-    tagList(
-      div(
-        paste(filters[[i]]$filter_by, ":", filters[[i]]$sub_filter),
-        class = "filter-bubble",
-        actionButton(paste0("remove_filter_btn_", i), "x", class = "btn btn-danger btn-sm remove-filter-btn")
-      ),
-      br()
-    )
-  })
-
-  # Wrap filter bubbles in a div
-  div(filter_bubbles)
-})
-
+############### Add Filter Button ####################
 
 # Add a new filter when the user clicks on "Add Filter" button
 observeEvent(input$add_filter_btn, {
@@ -75,15 +55,39 @@ observeEvent(input$add_filter_btn, {
   print(input$sub_filter)
   filters <- selected_filters$filters
   new_filter_index <- length(filters) + 1
-
+  
   # Create a new filter object and add it to selected_filters
   selected_filters$filters[[new_filter_index]] <- list(
     filter_by = input$filter_by,
     sub_filter = input$sub_filter
   )
+  ############# Add Filter to List ####################
+  # UI for displaying selected filters as bubbles
+  output$selected_filters_ui <- renderUI({
+    filters <- selected_filters$filters
+    
+    if (reset_trigger()) {
+      filters <- NULL
+      reset_trigger(FALSE)  # Reset the trigger after resetting the UI
+    }
+    # List to store UI elements for each filter
+    filter_bubbles <- lapply(seq_along(filters), function(i) {
+      tagList(
+        div(
+          paste(filters[[i]]$filter_by, ":", filters[[i]]$sub_filter),
+          class = "filter-bubble",
+          actionButton(paste0("remove_filter_btn_", i), "x", class = "btn btn-danger btn-sm remove-filter-btn")
+        ),
+        br()
+      )
+    })
+    
+    # Wrap filter bubbles in a div
+    div(filter_bubbles)
+  })
 })
 
-
+############### Apply Filter Button ####################
 observeEvent(input$filter_apply_btn, {
   print("Filter button clicked")
   #filtered_data <- combined_studies
@@ -109,11 +113,19 @@ observeEvent(input$filter_apply_btn, {
     }
 
   }
-
   my_data(as.data.frame(colData(subset_SE)))
 })
+########### Reset Button ###################
+observeEvent(input$filter_reset_btn, {
+  # Reset selected filters to NULL
+  selected_filters$filters <- NULL
+  
+  # Clear the UI element where the bubbles appeared
+  output$selected_filters_ui <- renderUI({})
+  reset_trigger(TRUE)
+})
 
-
+############# Summary Table ####################
 output$filter_summary_table <- renderDT(
   {
     datatable(my_data(), options = list(
@@ -133,3 +145,28 @@ output$filter_summary_table <- renderDT(
 
   }
 )
+########### Visualize Tab ################
+
+# Generate the visualization based on user inputs
+observeEvent(input$visualize_btn, {
+  filter_by <- input$visualize_filter_by
+  
+  data <- my_data()
+  
+  if (!is.null(filter_by)) {
+    # Generate the top graph
+    output$top_visualization <- renderPlot({
+      ggplot(data = data, aes_string(x = filter_by)) + 
+        geom_bar() +
+        labs(x = filter_by, y = "Frequency", title = "Top Plot")
+    })
+    
+    # Generate the bottom graph
+    output$bottom_visualization <- renderPlot({
+      ggplot(data = data, aes(x = filter_by, fill = filter_by)) + 
+        geom_bar() +
+        coord_polar(theta = "y") +
+        labs(x = "", y = "", title = "Bottom Plot")
+    })
+  }
+})
