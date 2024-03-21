@@ -6,18 +6,7 @@
 # Fix issue where if selections are made, then user changes table options, deselection occurs on ui side
 
 # Reactive values for various tasks
-selected_studies <- reactiveVal(NULL) # this is used to update the selected studies accordingly
-continue_clicked <- reactiveVal(FALSE) # stores if Continue button is clicked
-multithread_value <- reactiveVal(TRUE)
-curated_only <- reactiveVal(TRUE)
-local_download <- reactiveVal(FALSE)
-
-
-# emptyList <- list()
-
-# Creates reactive values for later use
 vals <- reactiveValues(
-
   # Holds list of MAEs that are locally downloaded by user
   localMAEList = list(),
 
@@ -25,7 +14,22 @@ vals <- reactiveValues(
   MAEList = list(),
 
   # Holds list of MAEs to download
-  selectedDownloadList = list()
+  selectedDownloadList = list(),
+
+  # this is used to update the selected studies accordingly
+  selected_studies = NULL,
+
+  # stores if Continue button is clicked
+  continue_clicked = FALSE,
+
+  # holds multithreading value
+  multithread_value = TRUE,
+
+  # holds curated only value
+  curated_only = TRUE,
+
+  # holds local download value
+  local_download = FALSE
 )
 
 # Error handling for downloading issues
@@ -109,44 +113,44 @@ output$study_table <- renderDT({
 
   # Datatable setup
   datatable(selected_study_data,
-    options = list(
-      pageLength = nrow(selected_study_data),
-      dom = "t",
-      lengthMenu = c(5, 10, 15, 20),
-      scrollX = TRUE,
-      scrollY = "65vh", # Set the height to 50% of the viewport height
-      initComplete = JS(
-        "function(settings, json) {",
-        "$(this.api().table().header()).css({'background-color': '#4C516D', 'color': '#fff'});",
-        "}"
-      ),
-      rowCallback = JS(
-        "function(row, data, index) {",
-        "$(row).addClass('study-row');",
-        "$(row).on('click', function() {",
-        "Shiny.setInputValue('selected_study', data[1]);",
-        "});",
-        "}"
-      )
-    ),
-    selection = "multiple"
+            options = list(
+              pageLength = nrow(selected_study_data),
+              dom = "t",
+              lengthMenu = c(5, 10, 15, 20),
+              scrollX = TRUE,
+              scrollY = "65vh", # Set the height to 50% of the viewport height
+              initComplete = JS(
+                "function(settings, json) {",
+                "$(this.api().table().header()).css({'background-color': '#4C516D', 'color': '#fff'});",
+                "}"
+              ),
+              rowCallback = JS(
+                "function(row, data, index) {",
+                "$(row).addClass('study-row');",
+                "$(row).on('click', function() {",
+                "Shiny.setInputValue('selected_study', data[1]);",
+                "});",
+                "}"
+              )
+            ),
+            selection = "multiple"
   )
 })
 
 # Observes the checkbox for the multithread or not
 observeEvent(input$dLMultiThread, {
-  multithread_value(input$dLMultiThread)
+  vals$multithread_value <- input$dLMultiThread
 })
 
 # Observes the checkbox for curated or not
 observeEvent(input$dLCurated, {
-  curated_only(input$dLCurated)
+  vals$curated_only <- input$dLCurated
   # View(curated_only())
 })
 
 # Observes the checkbox for local download or not
 observeEvent(input$dLLocal, {
-  local_download(input$dLLocal)
+  vals$local_download <- input$dLLocal
   # View(local_download())
 })
 
@@ -161,10 +165,10 @@ observeEvent(input$clearLocalDownload, {
 
 # If continue button pressed, downloads study data for selected studies accordingly
 observeEvent(input$continue, {
-  continue_clicked(TRUE)
+  vals$continue_clicked <- TRUE
 
   # Executes only if there are studies selected
-  if (!is.null(selected_studies())) {
+  if (!is.null(vals$selected_studies)) {
     # If local download coincides with studies in the selected_studies() download list,
     # it removes them from selected_studies() and adds the local download to the MAEList
     # for (studyName in selected_studies()) {
@@ -176,12 +180,11 @@ observeEvent(input$continue, {
 
     # Adds progress message
     withProgress(message = "Downloading Datasets...", value = 0, {
-      n <- length(selected_studies())
-      curated_only_value <- curated_only()
-      dLLocal_value <- local_download()
-
+      n <- length(vals$selected_studies)
+      curated_only_value <- vals$curated_only
+      dLLocal_value <- vals$local_download
       # Only allows multithreading if 4 or more studies selected
-      if (multithread_value() && n >= 4) {
+      if (vals$multithread_value && n >= 4) {
         cat("Multi-thread download starting...")
 
         # Clusters from snow created, loaded the curatedTBData since clusters need new libraries
@@ -189,7 +192,7 @@ observeEvent(input$continue, {
         clusterEvalQ(cl, library(curatedTBData))
 
         # 4 clusters download and insert study data into the MAEList reactive value with parLapply
-        selected_studies_info <- parLapply(cl, selected_studies(), function(study_id) {
+        selected_studies_info <- parLapply(cl, vals$selected_studies, function(study_id) {
           vals$MAEList <- c(vals$MAEList, curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value))
         })
 
@@ -201,7 +204,7 @@ observeEvent(input$continue, {
         cat("Single-thread download starting...")
 
         # Downloads and inserts study data into the MAEList reactive value with lapply
-        selected_studies_info <- lapply(selected_studies(), function(study_id) {
+        selected_studies_info <- lapply(vals$selected_studies, function(study_id) {
 
           # Updates progress bar message
           setProgress(message = paste("Downloading...", study_id))
@@ -265,10 +268,10 @@ observeEvent(input$continue, {
 # not currently working - Andrew
 # believe we need to change the selected_studies to work with the selected_studies() as I did for download
 output$selected_studies_table <- renderDT({
-  if (!is.null(input$selected_studies)) {
+  if (!is.null(vals$selected_studies)) {
     data.frame(
-      Study = input$selected_studies,
-      Value = rnorm(length(input$selected_studies))
+      Study = vals$selected_studies,
+      Value = rnorm(length(vals$selected_studies))
     )
   }
 })
@@ -279,12 +282,12 @@ output$selected_studies_table <- renderDT({
 # it stays in the selected_studies(), leading to unexpected behavior
 observeEvent(input$selected_study, {
   current_selection <- isolate(input$selected_study)
-  current_studies <- selected_studies()
+  current_studies <- vals$selected_studies
   # uses the setdiff function to set the selected studies correctly
   if (current_selection %in% current_studies) {
-    selected_studies(setdiff(current_studies, current_selection))
+    vals$selected_studies <- setdiff(current_studies, current_selection)
   } else {
-    selected_studies(c(current_studies, current_selection))
+    vals$selected_studies <- c(current_studies, current_selection)
   }
   # allows you to see the selected studies
   # View(selected_studies())
