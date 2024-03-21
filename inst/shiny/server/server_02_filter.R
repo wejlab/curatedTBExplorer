@@ -1,33 +1,32 @@
 # Reactive values for various tasks
-selected_studies <- reactiveVal(NULL) # this is used to update the selected studies accordingly
+# selected_studies <- reactiveVal(NULL) # this is used to update the selected studies accordingly
 # continue_clicked <- reactiveVal(FALSE)  # stores if Continue button is clicked
 my_data <- reactiveVal(NULL)
+
 # reactive Value to store selected filters
 selected_filters <- reactiveValues(filters = NULL)
 
-
-
 # Render the selected studies text
 output$selected_studies_text <- renderText({
-  paste("Selected Studies: ", paste(selected_studies(), collapse = ", "))
+  paste("Selected Studies: ", paste(vals$selected_studies, collapse = ", "))
 })
 
 reactive({ # apparently need to be wrapped in reactive to work
-  
+
   # move the selected studies in a single object list
-  object_list <- curatedTBData(selected_studies(), dry.run = FALSE, curated.only = TRUE)
+  object_list <- curatedTBData(vals$selected_studies, dry.run = FALSE, curated.only = TRUE)
   # Combine the studies together in a single SE object
   combined_studies <- combine_objects(object_list, experiment_name = "assay_curated", update_genes = FALSE)
 })
 
 observe({
   filter_by <- input$filter_by
-  
+
   if (!is.null(filter_by)) {
     column_index <- which(colnames(colData(combined_studies)) == filter_by)
     column_values <- colData(combined_studies)[, column_index]
     unique_column_values <- unique(column_values)
-    
+
     # Render the dynamic selectInput based on the selected filter_by choice
     output$dynamic_filter <- renderUI({
       tagList(
@@ -42,7 +41,7 @@ observe({
 # UI for displaying selected filters as bubbles
 output$selected_filters_ui <- renderUI({
   filters <- selected_filters$filters
-  
+
   # List to store UI elements for each filter
   filter_bubbles <- lapply(seq_along(filters), function(i) {
     tagList(
@@ -54,7 +53,7 @@ output$selected_filters_ui <- renderUI({
       br()
     )
   })
-  
+
   # Wrap filter bubbles in a div
   div(filter_bubbles)
 })
@@ -66,7 +65,7 @@ output$selected_filters_ui <- renderUI({
 # }, {
 #   filters <- selected_filters$filters
 #   for (i in seq_along(filters)) {
-# 
+#
 #     if (!is.null(selected_filters) && !is.null(input[[paste0("remove_filter_btn_", i)]])) {
 #       selected_filters$filters <- filters[-i]
 #       break
@@ -80,14 +79,14 @@ observeEvent(input$add_filter_btn, {
   print(input$sub_filter)
   filters <- selected_filters$filters
   new_filter_index <- length(filters) + 1
-  
+
   # Create a new filter object and add it to selected_filters
   selected_filters$filters[[new_filter_index]] <- list(
     filter_by = input$filter_by,
     sub_filter = input$sub_filter
   )
 })
-# 
+#
 # observe({
 #   filters <- selected_filters$filters()
 #   for (i in seq_along(filters)) {
@@ -140,9 +139,9 @@ observeEvent(input$filter_apply_btn, {
       subset_SE <- subset_SE[, eval(parse(text = paste0("subset_SE$", filter_by))) == sub_filter]# subset the filter value in SE obj
       #subset_SE <- combined_studies[combined_studies[[filter_by]] == sub_filter, ]
     }
-    
+
   }
-   
+
   my_data(as.data.frame(colData(subset_SE)))
 })
 
@@ -150,7 +149,7 @@ observeEvent(input$filter_apply_btn, {
 # observeEvent(input$filter_apply_btn, {
 #   print("Filter button clicked")
 #   filters <- selected_filters$filters
-#   
+#
 #   if (is.null(filters) || length(filters) == 0) {
 #     print("No filters selected")
 #     subset_SE <- combined_studies
@@ -163,7 +162,7 @@ observeEvent(input$filter_apply_btn, {
 #       subset_SE <- subset_SE[subset_SE[[filter_by]] == sub_filter, ]
 #     }
 #   }
-#   
+#
 #   my_data(as.data.frame(colData(subset_SE)))
 # })
 
@@ -180,9 +179,9 @@ output$filter_summary_table <- renderDT(
         "}"
       ),
       rowCallback = JS(
-        
+
       )
     ))
-    
+
   }
 )
