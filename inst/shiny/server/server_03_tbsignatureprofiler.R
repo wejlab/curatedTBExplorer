@@ -61,6 +61,9 @@ observeEvent(input$genHeatmap, {
     # note: want to output to user in the future
     print("You must run the TB Signature Profiler First!")
   } else {
+    View(names(TBsignatures))
+    View(vals$colData)
+    View(vals$SEList)
     colors <- RColorBrewer::brewer.pal(6, "Spectral")
     col.me <- circlize::colorRamp2(seq(from = -2, to = 2, length.out = 6), colors)
     #outputs heatmap using all signatures
@@ -70,7 +73,7 @@ observeEvent(input$genHeatmap, {
         signatureHeatmap(tb_profiler_result()[[2]],
                          name = "Heatmap of Signatures",
                          signatureColNames = names(TBsignatures),
-                         annotationColNames = "PatientID",
+                         annotationColNames = "TBStatus",
                          scale = TRUE,
                          showColumnNames = TRUE,
                          choose_color = col.me
@@ -97,22 +100,11 @@ shiny::observe({
   updateSelectInput(session, "boxCovariate" ,choices = vals$covars)
 })
 # observer for the boxplots button
-# note: not working yet
 observeEvent(input$genBoxplots, {
   # checks to ensure that the tb sig profiler has already been ran
   if (is.null(tb_profiler_result())) {
     print("You must run the TB Signature Profiler First!")
   } else {
-    # dervied from the TBSignatureProfiler Vignette
-    # output$boxplot_result <- renderPlot({
-    #   signatureBoxplot(
-    #     inputData = tb_profiler_result()[[2]],
-    #     name = "Boxplots of Signatures, ssGSEA",
-    #     # signatureColNames = names(TBsignatures),
-    #     signatureColNames = input$box_profiles,
-    #     annotationColName = "PatientID", rotateLabels = FALSE
-    #   )
-    # })
     output$boxplot_result <- renderPlot({
       isolate({
         print(signatureBoxplot(tb_profiler_result()[[2]],
