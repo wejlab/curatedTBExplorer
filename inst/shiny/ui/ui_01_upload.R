@@ -11,7 +11,7 @@ tabPanel(
       3,
 
       # Upload file block
-      fileInput("file1", "Upload file"),
+      # fileInput("file1", "Upload file"),
 
       # Table Options
       h5("Table Options: "),
