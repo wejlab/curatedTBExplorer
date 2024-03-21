@@ -193,139 +193,128 @@ observeEvent(input$clearLocalDownload, {
   localMAEListPath <- file.path(extdataDir, "localMAEList.rds")
   saveRDS(list(), file = localMAEListPath)
   cat("Cleared Local Download\n")
-  View(vals$localMAEList)
+  # View(vals$localMAEList)
 })
 
 # If continue button pressed, downloads study data for selected studies accordingly
 observeEvent(input$continue, {
   vals$continue_clicked <- TRUE
 
-  observe({
-    # Executes only if there are studies selected
-    if (!is.null(vals$selected_studies)) {
-      cat("Selected Studies: ", names(vals$selected_studies), "\n")
+  # Executes only if there are studies selected
+  if (!is.null(vals$selected_studies)) {
+    cat("Selected Studies: ", names(vals$selected_studies), "\n")
 
-      # Holds studies that need to be downloaded
-      studies_to_download <- vals$selected_studies
+    # Holds studies that need to be downloaded
+    studies_to_download <- vals$selected_studies
 
-      # Holds studies that are already locally available
-      studies_from_local <- list()
+    # Holds studies that are already locally available
+    studies_from_local <- list()
 
-      # Extract study names from localMAEList
-      local_studies <- names(vals$localMAEList)
-      View(local_studies)
-      View(vals$selected_studies)
+    # Extract study names from localMAEList
+    local_studies <- names(vals$localMAEList)
+    View(local_studies)
+    View(vals$selected_studies)
 
-      studies_to_download <- vals$selected_studies[!(vals$selected_studies %in% local_studies)]
+    studies_to_download <- vals$selected_studies[!(vals$selected_studies %in% local_studies)]
 
-      # Check if selected studies are already locally available
-      # for (studyName in names(vals$selected_studies)) {
-      #   if (studyName %in% local_studies) {
-      #     studies_from_local[[studyName]] <- vals$localMAEList[[studyName]]
-      #     # Remove the study from studies_to_download
-      #     studies_to_download <- studies_to_download[!studies_to_download %in% studyName]
-      #   }
-      # }
-
-      View(studies_to_download)
+    # View(studies_to_download)
 
 
-      # Adds studies from local to MAEList
-      # vals$MAEList <- c(vals$MAEList, studies_from_local)
+    # Adds studies from local to MAEList
+    # vals$MAEList <- c(vals$MAEList, studies_from_local)
 
-      # Iterate over studies in localMAEList
-      for (studyName in as.vector(vals$selected_studies)) {
-        if (studyName %in% names(vals$localMAEList)) {
-          vals$MAEList[[studyName]] <- vals$localMAEList[[studyName]]
-        }
+    # Iterate over studies in localMAEList
+    for (studyName in as.vector(vals$selected_studies)) {
+      if (studyName %in% names(vals$localMAEList)) {
+        vals$MAEList[[studyName]] <- vals$localMAEList[[studyName]]
       }
-
-
-
-      # If there are studies left to download
-      if (length(studies_to_download) > 0) {
-        # Adds progress message
-        withProgress(message = "Downloading Datasets...", value = 0, {
-          n <- length(studies_to_download)
-          curated_only_value <- vals$curated_only
-          dLLocal_value <- vals$local_download
-
-          if (vals$multithread_value && n >= 4) {
-            cat("Multi-thread download starting...\n")
-
-            # Clusters from snow created, loaded the curatedTBData since clusters need new libraries
-            cl <- makeCluster(4)
-            clusterEvalQ(cl, library(curatedTBData))
-
-            # 4 clusters download and insert study data into the MAEList reactive value with parLapply
-            selected_studies_info <- parLapply(cl, studies_to_download, function(study_id) {
-              tempMAEList <- list()
-              tempMAEList <- c(tempMAEList, curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value))
-              return(tempMAEList)
-            })
-
-
-            # Ends the clusters when done
-            stopCluster(cl)
-
-            vals$MAEList <- unlist(selected_studies_info, recursive = FALSE)
-
-            cat("Multi-thread download finished\n")
-          } else {
-            cat("Single-thread download starting...\n")
-
-            # Downloads and inserts study data into the MAEList reactive value with lapply
-            selected_studies_info <- lapply(studies_to_download, function(study_id) {
-              # Stores downloaded study data into result
-              study_data <- curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value)
-
-              # Adds downloaded study data to MAEList
-              vals$MAEList <- c(vals$MAEList, study_data)
-
-              # Converts all downloaded MAEs into a list of SEs
-              result_se <- toSE(study_data)
-
-              # Executes block if SEList is null
-              if (!is.null(vals$SEList)) {
-                temp <- mergeSEs(list(se1 = vals$SEList, se2 = result_se))
-                vals$SEList <- temp
-              } else {
-                vals$SEList <- result_se
-                vals$colData <- colData(vals$SEList)
-                vals$covars <- colnames(colData(vals$SEList))
-              }
-
-              return(study_data)
-            })
-          }
-
-          if (dLLocal_value) {
-            cat("Local download starting...\n")
-
-            # Compare vals$MAEList to vals$localMAEList and add any missing studies to localMAEList
-            studies_to_add_locally <- vals$MAEList[!names(vals$MAEList) %in% names(vals$localMAEList)]
-            vals$localMAEList <- c(vals$localMAEList, studies_to_add_locally)
-
-            # Adding studies from studies_to_download to localMAEList.rds file
-            extdataDir <- system.file("extdata", package = "curatedTBExplorer")
-            localMAEListPath <- file.path(extdataDir, "localMAEList.rds")
-            saveRDS(vals$localMAEList, file = localMAEListPath)
-            cat("Local download finished\n")
-          }
-
-          # Completes Progress Message
-          incProgress(n / n, message = "Finished Downloading")
-        })
-      } else {
-        cat("All selected studies are already available locally. Skipping download step.\n")
-      }
-    } else {
-      cat("Please select a study first\n")
     }
-    View(vals$MAEList)
-    View(vals$localMAEList)
-    View(vals$defaultStudy)
-  })
+
+
+
+    # If there are studies left to download
+    if (length(studies_to_download) > 0) {
+      # Adds progress message
+      withProgress(message = "Downloading Datasets...", value = 0, {
+        n <- length(studies_to_download)
+        curated_only_value <- vals$curated_only
+        dLLocal_value <- vals$local_download
+
+        if (vals$multithread_value && n >= 4) {
+          cat("Multi-thread download starting...\n")
+
+          # Clusters from snow created, loaded the curatedTBData since clusters need new libraries
+          cl <- makeCluster(4)
+          clusterEvalQ(cl, library(curatedTBData))
+
+          # 4 clusters download and insert study data into the MAEList reactive value with parLapply
+          selected_studies_info <- parLapply(cl, studies_to_download, function(study_id) {
+            tempMAEList <- list()
+            tempMAEList <- c(tempMAEList, curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value))
+            return(tempMAEList)
+          })
+
+
+          # Ends the clusters when done
+          stopCluster(cl)
+
+          vals$MAEList <- unlist(selected_studies_info, recursive = FALSE)
+
+          cat("Multi-thread download finished\n")
+        } else {
+          cat("Single-thread download starting...\n")
+
+          # Downloads and inserts study data into the MAEList reactive value with lapply
+          selected_studies_info <- lapply(studies_to_download, function(study_id) {
+            # Stores downloaded study data into result
+            study_data <- curatedTBData(study_id, dry.run = FALSE, curated.only = curated_only_value)
+
+            # Adds downloaded study data to MAEList
+            vals$MAEList <- c(vals$MAEList, study_data)
+
+            # Converts all downloaded MAEs into a list of SEs
+            result_se <- toSE(study_data)
+
+            # Executes block if SEList is null
+            if (!is.null(vals$SEList)) {
+              temp <- mergeSEs(list(se1 = vals$SEList, se2 = result_se))
+              vals$SEList <- temp
+            } else {
+              vals$SEList <- result_se
+              vals$colData <- colData(vals$SEList)
+              vals$covars <- colnames(colData(vals$SEList))
+            }
+
+            return(study_data)
+          })
+        }
+
+        if (dLLocal_value) {
+          cat("Local download starting...\n")
+
+          # Compare vals$MAEList to vals$localMAEList and add any missing studies to localMAEList
+          studies_to_add_locally <- vals$MAEList[!names(vals$MAEList) %in% names(vals$localMAEList)]
+          vals$localMAEList <- c(vals$localMAEList, studies_to_add_locally)
+
+          # Adding studies from studies_to_download to localMAEList.rds file
+          extdataDir <- system.file("extdata", package = "curatedTBExplorer")
+          localMAEListPath <- file.path(extdataDir, "localMAEList.rds")
+          saveRDS(vals$localMAEList, file = localMAEListPath)
+          cat("Local download finished\n")
+        }
+
+        # Completes Progress Message
+        incProgress(n / n, message = "Finished Downloading")
+      })
+    } else {
+      cat("All selected studies are already available locally. Skipping download step.\n")
+    }
+  } else {
+    cat("Please select a study first\n")
+  }
+  # View(vals$MAEList)
+  # View(vals$localMAEList)
+  # View(vals$defaultStudy)
 })
 
 
