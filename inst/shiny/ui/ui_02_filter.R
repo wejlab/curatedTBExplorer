@@ -53,10 +53,22 @@ tabPanel(
         ),
         width = 8
       )
+    ),
+    tabPanel(
+      "Visualize",
+      sidebarPanel(
+        # Dropdown box for selecting variable to filter by
+        selectInput("visualize_filter_by", "Filter By",
+                    choices = c(colnames(colData(combined_studies)))
+        ),
+        actionButton("visualize_btn", "Visualize")
+      ),
+      mainPanel(
+        # Placeholder for the visualization output
+        plotOutput("top_visualization"),
+        plotOutput("bottom_visualization")
+      )
     )
   ),
-  tabPanel(
-    "Categorize",
-    # code for the "Categorize" sub-tab
-  )
+
 )
