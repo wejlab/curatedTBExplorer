@@ -47,11 +47,11 @@ tryCatch(
 
     # Reads .rds file into localMAEList reactive value
     vals$localMAEList <- readRDS(localMAEListDir)
-    cat("Added local download to localMAEList rective value")
+    cat("Added local download to localMAEList reactive value\n")
   },
   error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
-    cat("Might be due to not installing via devtools::install_github(\"wejlab/curatedTBExplorer\")")
+    cat("Might be due to not installing via devtools::install_github(\"wejlab/curatedTBExplorer\")\n")
   }
 )
 
@@ -128,7 +128,13 @@ output$study_table <- renderDT({
                 "function(row, data, index) {",
                 "$(row).addClass('study-row');",
                 "$(row).on('click', function() {",
-                "Shiny.setInputValue('selected_study', data[1]);",
+                "var selected = $(this).hasClass('selected');",
+                "var study = data[1];",
+                "if (selected) {",
+                "Shiny.setInputValue('selected_study', study);",
+                "} else {",
+                "Shiny.setInputValue('deselected_study', study);",
+                "}",
                 "});",
                 "}"
               )
@@ -160,7 +166,8 @@ observeEvent(input$clearLocalDownload, {
   extdataDir <- system.file("extdata", package = "curatedTBExplorer")
   localMAEListPath <- file.path(extdataDir, "localMAEList.rds")
   saveRDS(list(), file = localMAEListPath)
-  cat("Cleared Local Download")
+  cat("Cleared Local Download\n")
+  cat(names(vals$localMAEList))
 })
 
 # If continue button pressed, downloads study data for selected studies accordingly
@@ -185,7 +192,7 @@ observeEvent(input$continue, {
       dLLocal_value <- vals$local_download
       # Only allows multithreading if 4 or more studies selected
       if (vals$multithread_value && n >= 4) {
-        cat("Multi-thread download starting...")
+        cat("Multi-thread download starting...\n")
 
         # Clusters from snow created, loaded the curatedTBData since clusters need new libraries
         cl <- makeCluster(4)
@@ -199,9 +206,9 @@ observeEvent(input$continue, {
         # Ends the clusters when done
         stopCluster(cl)
 
-        cat("Multi-thread download finished")
+        cat("Multi-thread download finished\n")
       } else {
-        cat("Single-thread download starting...")
+        cat("Single-thread download starting...\n")
 
         # Downloads and inserts study data into the MAEList reactive value with lapply
         selected_studies_info <- lapply(vals$selected_studies, function(study_id) {
@@ -238,13 +245,13 @@ observeEvent(input$continue, {
 
       #
       if (dLLocal_value) {
-        cat("Local download starting...")
+        cat("Local download starting...\n")
 
         # Adding current MAEList to localMAEList.rds file
         extdataDir <- system.file("extdata", package = "curatedTBExplorer")
         localMAEListPath <- file.path(extdataDir, "localMAEList.rds")
         saveRDS(vals$MAEList, file = localMAEListPath)
-        cat("Local download finished")
+        cat("Local download finished\n")
       }
       View(vals$localMAEList)
 
@@ -259,7 +266,7 @@ observeEvent(input$continue, {
     # View(vals$SEList)
     # View(vals$MAEList)
   } else {
-    cat("Please select a study first")
+    cat("Please select a study first\n")
   }
 })
 
@@ -283,12 +290,25 @@ output$selected_studies_table <- renderDT({
 observeEvent(input$selected_study, {
   current_selection <- isolate(input$selected_study)
   current_studies <- vals$selected_studies
-  # uses the setdiff function to set the selected studies correctly
+
+  # Check if the current selection is in the list of selected studies
   if (current_selection %in% current_studies) {
-    vals$selected_studies <- setdiff(current_studies, current_selection)
+    # If it is, remove it from the list
+    vals$selected_studies <- current_studies[current_studies != current_selection]
   } else {
+    # If it's not, add it to the list
     vals$selected_studies <- c(current_studies, current_selection)
   }
-  # allows you to see the selected studies
-  # View(selected_studies())
 })
+
+observeEvent(input$deselected_study, {
+  current_deselection <- isolate(input$deselected_study)
+  current_studies <- vals$selected_studies
+
+  # Check if the deselected study is in the list of selected studies
+  if (current_deselection %in% current_studies) {
+    # If it is, remove it from the list
+    vals$selected_studies <- current_studies[current_studies != current_deselection]
+  }
+})
+
