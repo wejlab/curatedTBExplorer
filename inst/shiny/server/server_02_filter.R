@@ -11,9 +11,8 @@ output$selected_studies_text <- renderText({
 
   # paste("Selected Studies: ", paste(vals$selected_studies, collapse = ", "))
 
-  # Attempted to use default if selected_studies aren't available, but it didn't display for some reason
-  # Though I did check and the defaultStudy reactive value is filled correctly
-  if (!is.null(vals$selected_studies)) {
+  # Displays downloaded study names or default study if none downloaded
+  if (!is.null(names(vals$MAEList))) {
     paste("Selected Studies: ", paste(names(vals$MAEList), collapse = ", "))
   }
   else {
