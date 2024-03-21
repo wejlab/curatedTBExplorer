@@ -3,30 +3,30 @@ tabPanel(
   "Machine Learing",
   tabsetPanel(
     tabPanel(
-      "Algorithm 1",
+      "Elastic Net Regression",
       sidebarPanel(
-        "Algorithm 1"
+        "Elastic Net Regression"
       )
       
     ),
     tabPanel(
-      "Algorithm 2",
+      "Neural Networks",
       sidebarPanel(
-        "Algorithm 2"
+        "Neural Networks"
       )
     ),
     
     tabPanel(
-      "Algorithm 3",
+      "Random Forests",
       sidebarPanel(
-        "Algorithm 3"
+        "Random Forests"
       )
     ),
     
     tabPanel(
-      "Algorithm 4",
+      "Support Vector Machines",
       sidebarPanel(
-        "Algorithm 4"
+        "Support Vector Machines"
       )
     )
   )
