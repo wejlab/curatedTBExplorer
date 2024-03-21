@@ -8,7 +8,17 @@ selected_filters <- reactiveValues(filters = NULL)
 
 # Render the selected studies text
 output$selected_studies_text <- renderText({
-  paste("Selected Studies: ", paste(vals$selected_studies, collapse = ", "))
+
+  # paste("Selected Studies: ", paste(vals$selected_studies, collapse = ", "))
+
+  # Attempted to use default if selected_studies aren't available, but it didn't display for some reason
+  # Though I did check and the defaultStudy reactive value is filled correctly
+  if (!is.null(vals$selected_studies)) {
+    paste("Selected Studies: ", paste(names(vals$MAEList), collapse = ", "))
+  }
+  else {
+    paste("Selected Studies: ", paste(names(vals$defaultStudy), collapse = ", "))
+  }
 })
 
 reactive({ # apparently need to be wrapped in reactive to work
