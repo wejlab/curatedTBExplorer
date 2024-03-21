@@ -57,21 +57,7 @@ output$selected_filters_ui <- renderUI({
   # Wrap filter bubbles in a div
   div(filter_bubbles)
 })
-#Remove a filter when the user clicks on the "x" button
-# observeEvent({
-#   lapply(seq_along(selected_filters$filters), function(i) {
-#     input[[paste0("remove_filter_btn_", i)]]
-#   })
-# }, {
-#   filters <- selected_filters$filters
-#   for (i in seq_along(filters)) {
-#
-#     if (!is.null(selected_filters) && !is.null(input[[paste0("remove_filter_btn_", i)]])) {
-#       selected_filters$filters <- filters[-i]
-#       break
-#     }
-#   }
-# })
+
 
 # Add a new filter when the user clicks on "Add Filter" button
 observeEvent(input$add_filter_btn, {
@@ -86,35 +72,7 @@ observeEvent(input$add_filter_btn, {
     sub_filter = input$sub_filter
   )
 })
-#
-# observe({
-#   filters <- selected_filters$filters()
-#   for (i in seq_along(filters)) {
-#     observeEvent(input[[paste0("remove_filter_btn_", i)]], {
-#       selected_filters$filters <- filters[-i]
-#     })
-#   }
-# })
 
-
-
-
-
-
-
-
-###################
-
-# observeEvent(input$filter_apply_btn, {
-#   print("Filter button clicked")
-#   filter_by <- input$filter_by
-#   sub_filter <- input$sub_filter # Retrieve value of subfilter from input
-#   # Subset our SE in specific category
-#   subset_SE <- combined_studies[combined_studies[[filter_by]] == sub_filter, ] # subset the filter value in SE obj
-#   print("the code ran this far")
-#   my_data(as.data.frame(colData(subset_SE)))
-# })
-# Apply filters and update my_data when the user clicks on the "Apply Filter" button
 
 observeEvent(input$filter_apply_btn, {
   print("Filter button clicked")
@@ -145,26 +103,6 @@ observeEvent(input$filter_apply_btn, {
   my_data(as.data.frame(colData(subset_SE)))
 })
 
-
-# observeEvent(input$filter_apply_btn, {
-#   print("Filter button clicked")
-#   filters <- selected_filters$filters
-#
-#   if (is.null(filters) || length(filters) == 0) {
-#     print("No filters selected")
-#     subset_SE <- combined_studies
-#   } else {
-#     print("Applying filters")
-#     subset_SE <- combined_studies
-#     for (filter in filters) {
-#       filter_by <- filter$filter_by
-#       sub_filter <- filter$sub_filter
-#       subset_SE <- subset_SE[subset_SE[[filter_by]] == sub_filter, ]
-#     }
-#   }
-#
-#   my_data(as.data.frame(colData(subset_SE)))
-# })
 
 output$filter_summary_table <- renderDT(
   {
