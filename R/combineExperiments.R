@@ -4,9 +4,12 @@
 #'
 #' @return A summarized experiment object
 #'
-#' @param
+#' @param datasets
 #'
-#' @examples
+#' @examples 
+#' \dontrun{
+#'   combinedExperiments <- combineExperiments(datasets)
+#' }
 #'
 #' @export
 

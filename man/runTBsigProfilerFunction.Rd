@@ -4,12 +4,19 @@
 \alias{runTBsigProfilerFunction}
 \title{Runs the TBSignatureProfiler using selected datasets, profiles, and assays}
 \usage{
-runTBsigProfilerFunction(selected_dataset, selected_profiles)
+runTBsigProfilerFunction(
+  selected_dataset,
+  selected_profiles,
+  selected_assay,
+  selected_algorithm
+)
 }
 \arguments{
 \item{selected_dataset}{The selected dataset (summarized experiment) to be viewed. Required.}
 
 \item{selected_profiles}{The group of selected profiles to be viewed. Required.}
+
+\item{selected_assay}{The assay used in the profiler. Required.}
 }
 \value{
 A datatable with results
