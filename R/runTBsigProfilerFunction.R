@@ -5,14 +5,14 @@
 #'
 #' @return A datatable with results
 #'
-#' @param selected_dataset The selected dataset (summarized experiment) to be viewed. Required.
-#' @param selected_profiles The group of selected profiles to be viewed. Required.
+#' @param selected_dataset The selected dataset (summarized experiment object) to be viewed. Required.
+#' @param selected_profiles The group of selected profiles (Anderson_42/Berry_393/etc) to be viewed. Required.
 #' @param selected_assay The assay used in the profiler. Required.
-#' @param selected_algorithm The algorithm to be used in the tbSigProfiler. Required
+#' @param selected_algorithm The algorithm (GSVA/ssGSEA) to be used in the tbSigProfiler. Required
 #'
 #' @examples
 #' \dontrun{
-#' runTBsigProfilerFunction(SE, profiles, assay, algorithm)
+#' runTBsigProfilerFunction(selected_dataset, selected_profiles, selected_assay, selected_algorithm)
 #' }
 #'
 #' @export
