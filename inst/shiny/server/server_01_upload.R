@@ -305,7 +305,9 @@ observeEvent(input$continue, {
         # combined_studies <- combine_objects(object_list, experiment_name = "assay_curated", update_genes = FALSE)
         # View(combined_studies)
         # View(vals$SEList)
-        vals$SEList <- combine_objects(vals$MAEList, experiment_name = "assay_curated", update_genes = FALSE)
+        if (length(vals$MAEList) > 1) {
+          vals$SEList <- combine_objects(vals$MAEList, experiment_name = "assay_curated", update_genes = FALSE)
+        }
         vals$colData <- colData(vals$SEList)
         vals$covars <- colnames(colData(vals$SEList))
         vals$datassays <- names(assays(vals$SEList))
