@@ -19,10 +19,16 @@ outcomeChoice2 <- reactive({
 
 # Code for Random Forests
 observeEvent(input$continueRF, {
+  #will need to change to use please' code output
+  mlList <- vals$SEList
   # Might need to check the SEList
   # DE_analyze(vals$SEList, 'limma', "logCPM")
   View(vals$SEList)
 
+  #grab the unique studies from the mlList
+  study_info <- colData(mlList)$Study
+  unique_study_values <- unique(study_info)
+  View(unique_study_values)
 })
 
 
@@ -38,7 +44,11 @@ observeEvent(input$continueRF, {
 # This is especially important since each model has their own specific settings that need to be filled out seperately
 
 # Wait, what is batch? Prof Johnson says it's the study, but what if there are multiple?
+reactive ({
+  View(names$SEList)
+})
 
+# test <- DE_analyze(vals$SEList, 'limma', )
 
 
 
