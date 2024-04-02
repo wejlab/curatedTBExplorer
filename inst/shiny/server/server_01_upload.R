@@ -310,7 +310,11 @@ observeEvent(input$continue, {
         }
         vals$colData <- colData(vals$SEList)
         vals$covars <- colnames(colData(vals$SEList))
+        vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",
+                               log = TRUE)
         vals$datassays <- names(assays(vals$SEList))
+        View(vals$datassays[[4]])
+        View(assays(vals$SEList))
         # Completes Progress Message
         incProgress(n / n, message = "Finished Downloading")
       })
