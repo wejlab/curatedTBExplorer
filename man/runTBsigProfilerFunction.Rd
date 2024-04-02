@@ -12,13 +12,13 @@ runTBsigProfilerFunction(
 )
 }
 \arguments{
-\item{selected_dataset}{The selected dataset (summarized experiment) to be viewed. Required.}
+\item{selected_dataset}{The selected dataset (summarized experiment object) to be viewed. Required.}
 
-\item{selected_profiles}{The group of selected profiles to be viewed. Required.}
+\item{selected_profiles}{The group of selected profiles (Anderson_42/Berry_393/etc) to be viewed. Required.}
 
 \item{selected_assay}{The assay used in the profiler. Required.}
 
-\item{selected_algorithm}{The algorithm to be used in the tbSigProfiler. Required}
+\item{selected_algorithm}{The algorithm (GSVA/ssGSEA) to be used in the tbSigProfiler. Required}
 }
 \value{
 A datatable with results
@@ -29,7 +29,7 @@ to be pulled into a datatable, allowing for easy searching, sorting, and visuali
 }
 \examples{
 \dontrun{
-runTBsigProfilerFunction(SE, profiles, assay, algorithm)
+runTBsigProfilerFunction(selected_dataset, selected_profiles, selected_assay, selected_algorithm)
 }
 
 }
