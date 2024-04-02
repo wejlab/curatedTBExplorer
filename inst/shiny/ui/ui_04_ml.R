@@ -12,6 +12,8 @@ tabPanel(
            ),
     column(width = 9,
            "Training & Testing Dataset Selection",
+           selectizeInput("selectedTrainingData", "Training Datasets", choices = unique_study_values, multiple = TRUE),
+
            DTOutput("trainingDatasetTable"),
            DTOutput("testingDatasetTable")
            )

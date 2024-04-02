@@ -17,6 +17,27 @@ outcomeChoice2 <- reactive({
   input$oc2
 })
 
+# output$trainingDatasetTable <- renderDT({
+#   data.frame(StudyName = unique_study_values, Selected = FALSE)
+# },
+# options = list(
+#   columnDefs = list(
+#     list(className)
+#   )
+# )
+# )
+
+# output$trainingDatasetTable <- renderDT({
+#
+# })
+
+
+
+
+
+
+
+
 # Code for Random Forests
 observeEvent(input$continueRF, {
   # Might need to check the SEList
@@ -24,6 +45,8 @@ observeEvent(input$continueRF, {
   View(vals$SEList)
 
 })
+
+
 
 
 
@@ -55,7 +78,9 @@ observeEvent(input$continueRF, {
 
 
 
+observeEvent(input$continueSVM, {
 
+})
 # Code for Elastic Net Regression
 
 
@@ -63,12 +88,16 @@ observeEvent(input$continueRF, {
 
 
 
+observeEvent(input$continueEN, {
 
+})
 
 # Code for Neural Networks
 
 
+observeEvent(input$continueNN, {
 
+})
 
 
 
