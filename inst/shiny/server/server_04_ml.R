@@ -19,19 +19,23 @@ outcomeChoice2 <- reactive({
 
 # Code for Random Forests
 observeEvent(input$continueRF, {
-  #will need to change to use please' code output
-  mlList <- vals$SEList
+
   # Might need to check the SEList
   # DE_analyze(vals$SEList, 'limma', "logCPM")
   View(vals$SEList)
 
-  #grab the unique studies from the mlList
-  study_info <- colData(mlList)$Study
-  unique_study_values <- unique(study_info)
-  View(unique_study_values)
 })
 
-
+observe ({
+  if(!is.null(vals$SEList)){
+    #will need to change to use please' code output
+    mlList <- vals$SEList
+    #grab the unique studies from the mlList
+    study_info <- colData(mlList)$Study
+    unique_study_values <- unique(study_info)
+    View(unique_study_values)
+  }
+})
 
 
 ################# Couple of Questions #############################
