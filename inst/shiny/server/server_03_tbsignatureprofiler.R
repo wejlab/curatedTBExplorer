@@ -38,7 +38,7 @@ shiny::observe({
 
 shiny::observe({
   updateSelectInput(session, "assay", choices = vals$datassays)
-  View(vals$datassays)
+  # View(vals$datassays)
 })
 
 observeEvent(input$begin, {
@@ -63,9 +63,9 @@ observeEvent(input$genHeatmap, {
     # note: want to output to user in the future
     print("You must run the TB Signature Profiler First!")
   } else {
-    View(names(TBsignatures))
-    View(vals$colData)
-    View(vals$SEList)
+    # View(names(TBsignatures))
+    # View(vals$colData)
+    # View(vals$SEList)
     colors <- RColorBrewer::brewer.pal(6, "Spectral")
     col.me <- circlize::colorRamp2(seq(from = -2, to = 2, length.out = 6), colors)
     #outputs heatmap using all signatures
