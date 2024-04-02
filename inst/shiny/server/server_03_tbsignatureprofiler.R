@@ -14,6 +14,8 @@ tb_profiler_result <- reactiveVal(NULL)
 # })
 
 #Select which Assays (if any) to create
+
+#want to change this creation to be present on the filter page
 observeEvent(input$makeAssay, {
   if(input$selectAssay == "Log Counts"){
     vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",

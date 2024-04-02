@@ -37,7 +37,7 @@ shiny::observe({
 })
 
 
-############# Dropdwowns #######################
+############# Dropdowns #######################
 observe({
   filter_by <- input$filter_by
 
