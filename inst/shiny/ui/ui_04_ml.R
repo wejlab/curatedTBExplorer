@@ -44,21 +44,22 @@ tabPanel(
         # Input for batch size
         numericInput("batch_size", "Batch Size:", value = 32, min = 1, max = 256),
         # Button to start training
-      actionButton("continueNN", "Continue")
-    ),
-    tabPanel(
-      "Random Forests",
-      sidebarPanel(
-        "Random Forests"
+        actionButton("continueNN", "Continue")
       ),
-      actionButton("continueRF", "Continue")
-    ),
-    tabPanel(
-      "Support Vector Machines",
-      sidebarPanel(
-        "Support Vector Machines"
+      tabPanel(
+        "Random Forests",
+        sidebarPanel(
+          "Random Forests"
+        ),
+        actionButton("continueRF", "Continue")
       ),
-      actionButton("continueSVM", "Continue")
+      tabPanel(
+        "Support Vector Machines",
+        sidebarPanel(
+          "Support Vector Machines"
+        ),
+        actionButton("continueSVM", "Continue")
+      )
     )
   )
 )
