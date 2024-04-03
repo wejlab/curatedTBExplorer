@@ -10,14 +10,17 @@ rv <- reactiveValues(
   testingSE = NULL,
 )
 
+# Updates outcome choice 1 reactive based on user selection
 outcomeChoice1 <- reactive({
   input$oc1
 })
 
+# Updates outcome choice 2 reactive based on user selection
 outcomeChoice2 <- reactive({
   input$oc2
 })
 
+# Splits the SEList based on selected training and testing data
 observeEvent(input$confirmDataset, {
   selectedTrainingList <- input$selectedTrainingData
   selectedTestingList <- input$selectedTestingData
@@ -31,14 +34,7 @@ observeEvent(input$confirmDataset, {
   # View(rv$testingSE)
 })
 
-# Code for Random Forests
-observeEvent(input$continueRF, {
-  # Might need to check the SEList
-  # DE_analyze(vals$SEList, 'limma', "logCPM")
-  View(vals$SEList)
-  View(rv$trainingSE)
-})
-
+# Updates displayed study data to allow user to select
 observe({
   if (!is.null(vals$SEList)) {
     # will need to change to use please' code output
@@ -53,14 +49,20 @@ observe({
   }
 })
 
+# Just for checking work
 reactive({
-  View(names$SEList)
+  # View(names$SEList)
+})
+
+# Code for Random Forests
+observeEvent(input$continueRF, {
+  # Might need to check the SEList
+  # DE_analyze(vals$SEList, 'limma', "logCPM")
+  View(vals$SEList)
+  View(rv$trainingSE)
 })
 
 # test <- DE_analyze(vals$SEList, 'limma', )
-
-
-
 
 
 # Code for Support Vector Machines
