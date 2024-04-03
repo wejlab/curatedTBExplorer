@@ -8,7 +8,6 @@ rv <- reactiveValues(
   # Results of user choice
   trainingSE = NULL,
   testingSE = NULL,
-
 )
 
 outcomeChoice1 <- reactive({
@@ -24,29 +23,27 @@ observeEvent(input$confirmDataset, {
   selectedTestingList <- input$selectedTestingData
 
   subsetByStudy <- colData(vals$SEList)[colData(vals$SEList)$Study %in% selectedTrainingList, , drop = FALSE]
-  rv$trainingSE <- vals$SEList[, colData(vals$SEList)$Study %in% selectedTrainingList ]
+  rv$trainingSE <- vals$SEList[, colData(vals$SEList)$Study %in% selectedTrainingList]
   # View(rv$trainingSE)
 
   subsetByStudy <- colData(vals$SEList)[colData(vals$SEList)$Study %in% selectedTestingList, , drop = FALSE]
-  rv$testingSE <- vals$SEList[, colData(vals$SEList)$Study %in% selectedTestingList ]
+  rv$testingSE <- vals$SEList[, colData(vals$SEList)$Study %in% selectedTestingList]
   # View(rv$testingSE)
-
 })
 
 # Code for Random Forests
 observeEvent(input$continueRF, {
-
   # Might need to check the SEList
   # DE_analyze(vals$SEList, 'limma', "logCPM")
   View(vals$SEList)
   View(rv$trainingSE)
 })
 
-observe ({
-  if(!is.null(vals$SEList)){
-    #will need to change to use please' code output
+observe({
+  if (!is.null(vals$SEList)) {
+    # will need to change to use please' code output
     mlList <- vals$SEList
-    #grab the unique studies from the mlList
+    # grab the unique studies from the mlList
     study_info <- colData(mlList)$Study
     unique_study_values <- unique(study_info)
     updateSelectizeInput(session, "selectedTrainingData", choices = unique_study_values)
@@ -56,7 +53,7 @@ observe ({
   }
 })
 
-reactive ({
+reactive({
   View(names$SEList)
 })
 
@@ -97,10 +94,3 @@ observeEvent(input$continueEN, {
 observeEvent(input$continueNN, {
 
 })
-
-
-
-
-
-
-
