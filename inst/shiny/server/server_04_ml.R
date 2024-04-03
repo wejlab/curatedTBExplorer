@@ -91,7 +91,56 @@ observeEvent(input$continueEN, {
 })
 
 # Code for Neural Networks
+# Define server logic for the "Machine Learning" tab
+server <- function(input, output, session) {
+  # Define a reactive value to store the trained model
+  trained_model <- reactiveVal(NULL)
 
+  # Function to train the neural network
+  train_neural_network <- function() {
+    # Place for neural network training code here
+    # This will involve defining and training a neural network model using the specified parameters
+
+    # For demonstration purposes, let's just print a message indicating training started
+    print("Neural network training started...")
+
+    # Simulate training process for demonstration
+    Sys.sleep(5)  # Simulate training process taking 5 seconds
+
+    # After training is complete, store the trained model
+    trained_model(list(
+      num_layers = input$num_layers,
+      num_neurons = input$num_neurons,
+      learning_rate = input$learning_rate,
+      epochs = input$epochs,
+      batch_size = input$batch_size
+    ))
+
+    # Print a message indicating training completed
+    print("Neural network training completed.")
+  }
+
+  # Observer to trigger neural network training when the button is clicked
+  observeEvent(input$train_nn, {
+    train_neural_network()
+  })
+
+  # Output to display training progress or results
+  output$nn_output <- renderPrint({
+    # If the model is trained, display the training configuration
+    if (!is.null(trained_model())) {
+      cat("Neural Network Configuration:\n")
+      cat(paste("Number of Hidden Layers:", trained_model()$num_layers), "\n")
+      cat(paste("Number of Neurons per Hidden Layer:", trained_model()$num_neurons), "\n")
+      cat(paste("Learning Rate:", trained_model()$learning_rate), "\n")
+      cat(paste("Number of Epochs:", trained_model()$epochs), "\n")
+      cat(paste("Batch Size:", trained_model()$batch_size), "\n")
+    } else {
+      # If the model is not trained yet, display a message
+      "Neural network not trained yet."
+    }
+  })
+}
 
 observeEvent(input$continueNN, {
 
