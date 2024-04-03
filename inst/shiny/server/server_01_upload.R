@@ -307,11 +307,15 @@ observeEvent(input$continue, {
         # View(vals$SEList)
         if (length(vals$MAEList) > 1) {
           vals$SEList <- combine_objects(vals$MAEList, experiment_name = "assay_curated", update_genes = FALSE)
+          vals$SEList <- mkAssay(vals$SEList, input_name = "assay1")
+        }
+        else {
+          vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated",
+                                 log = TRUE)
         }
         vals$colData <- colData(vals$SEList)
         vals$covars <- colnames(colData(vals$SEList))
-        vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",
-                               log = TRUE)
+
         vals$datassays <- names(assays(vals$SEList))
         # Completes Progress Message
         incProgress(n / n, message = "Finished Downloading")
