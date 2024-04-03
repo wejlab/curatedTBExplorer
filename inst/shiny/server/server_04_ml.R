@@ -54,22 +54,10 @@ observe({
     #HIV vs non HIV?
     #batch needs to be a factor -> study needs to be present
     #conditions should also be a factor, ptb, ltbi -> user will choose this
-    # test_batch_qc <- DE_analyze(mlList, 'limma', 'GSE73408', "TBStatus", 'log_assay1_cpm')
-    #thursday normal time
 
-    batch <- as.factor(unique_study_values[[1]])
-    conditions <- as.factor("TBStatus" == "PTB")
-    # View(as.data.frame(colData(mlList)[conditions]))
-    # View(as.data.frame(colData(mlList)[batch]))
-    # View(as.data.frame(colData(mlList)[c(conditions, batch)]))
-    # View(colnames(colData(se)))
-    # View(as.data.frame(mlList)[c(as.factor("TBStatus"), as.factor("Study"))])
-    # View(as.data.frame(colData(mlList)[c("TBStatus", "Study")]))
-
-
-    # test_batch_qc <- DE_analyze(mlList, 'limma', batch, conditions, 'log_assay1_cpm')
-    test_batch_qc <- DE_analyze(mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
-    View(test_batch_qc)
+    #note that "study" and "tbstatus" are going to be available for user input -> need to change here
+    vals$DE <- DE_analyze(mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
+    View(vals$DE)
 
   }
 })
