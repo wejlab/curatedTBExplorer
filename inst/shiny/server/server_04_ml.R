@@ -34,33 +34,76 @@ observeEvent(input$confirmDataset, {
   # View(rv$testingSE)
 })
 
-# Updates displayed study data to allow user to select
+
 observe({
   if (!is.null(vals$SEList)) {
-    # will need to change to use please' code output
-    mlList <- vals$SEList
-    # grab the unique studies from the mlList
-    study_info <- colData(mlList)$Study
-    unique_study_values <- unique(study_info)
-    updateSelectizeInput(session, "selectedTrainingData", choices = unique_study_values)
-    updateSelectizeInput(session, "selectedTestingData", choices = unique_study_values)
-    # setdiff
-    View(unique_study_values)
+    #Update selectize input
+    isolate({
+      vals$mlList <- vals$SEList
+      study_info <- colData(vals$mlList)$Study
+      unique_study_values <- unique(study_info)
+      updateSelectizeInput(session, "selectedTrainingData", choices = unique_study_values)
+      updateSelectizeInput(session, "selectedTestingData", choices = unique_study_values)
+    })
+
+    #code for the differetial expression analysis
+    isolate({
+      vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
+      vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
+      vals$filtered <- lapply(vals$DE, function(df) {
+        df %>%
+          filter(padj <= 0.05)
+      })
+      vals$filtered <- lapply(vals$filtered, function(df) {
+        df %>%
+          arrange(abs(log2FoldChange))
+      })
+      vals$filtered <- lapply(vals$filtered, function(df) {
+        df %>%
+          slice_head(n = 500)
+      })
+      View(vals$filtered)
 
 
-    #progression vs non progression
-    #Ptb vs ltbi or other conditions
-    #treatment response info? -> reoccurance or not
-    #HIV vs non HIV?
-    #batch needs to be a factor -> study needs to be present
-    #conditions should also be a factor, ptb, ltbi -> user will choose this
-
-    #note that "study" and "tbstatus" are going to be available for user input -> need to change here
-    vals$DE <- DE_analyze(mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
-    View(vals$DE)
-
+      # filtered_genes <- rownames(vals$filtered)
+      # View(filtered_genes)
+      # # filtered_SEList <- SummarizedExperiment(assays(filtered_SEList))
+      #
+      # filteredColdata <- vals$SEList[filtered_genes, ]
+      # filteredAssays <- assays(vals$SEList[filtered_genes, ])
+      # View(filteredColdata)
+      # View(filteredAssays)
+      # Subset assays from vals$SEList
+      # filtered_assays <- assays(vals$SEList)[filtered_genes, , drop=FALSE]
+      # # Subset row metadata from vals$SEList
+      # filtered_row_metadata <- rowData(vals$SEList)[filtered_genes, , drop=FALSE]
+      # # Create a new SummarizedExperiment with filtered assay data and row metadata
+      # vals$SEListFiltered <- SummarizedExperiment(assays = filtered_assays, rowData = filtered_row_metadata)
+      #
+      # # Check if the assay data is preserved
+      # View(assays(vals$SEListFiltered))
+      #
+      #
+      # vals$SEListFiltered <- vals$SEList[filtered_genes, ]
+      # View(assays(vals$SEList))
+      # View(vals$SEListFiltered)
+      #
+      # vals$assays <- assays(vals$SEListFiltered)
+      # View(assays(vals$SEListFiltered))
+      # View(assays(vals$SEListFiltered[[1]]))
+      # View(assays(vals$SEListFiltered)[[1]])
+      # View(SummarizedExperiment(vals$SEListFiltered))
+    })
   }
 })
+
+
+
+
+
+
+
+
 
 # Just for checking work
 reactive({
@@ -90,7 +133,49 @@ observeEvent(input$continueRF, {
 
 
 observeEvent(input$continueSVM, {
+  # assay_data <- SummarizedExperiment(assays(intersectRows(vals$SEListFiltered)))
+  # View(vals$filtered[[2]])
+  # assay_data <- vals$filtered[[2]]
+  # View(assays(vals$SEListFiltered))
+  # assay_data <- assay(vals$SEListFiltered)
+  # View(assay_data)
+  assay_data <- vals$assays
+  # View(assay_data$listData)
+  View(as.data.frame(assay_data@listData[[4]]))
+  # View(assay_data$log_assay1_cpm)
+  col_data <- colData(vals$SEListFiltered)
 
+  # Combine assay and colData
+  # data <- data.frame(TBStatus = col_data$TBStatus,
+  #                    t(assay_data))
+
+  data <- cbind(TBStatus = col_data$TBStatus, t(assay_data))
+  View(assay_data)
+  View(assay_data[[4]])
+  View(data)
+
+  # Define the classes (hard-coded)
+  group1 <- c("PTB", "od", "control")
+  group2 <- c("lTBI", "od", "control")
+
+  # Perform SVM model training
+  ctrl <- trainControl(method = "cv", number = 10)
+  print("works")
+  svm_model <- train(TBStatus ~ .,
+                     data = data,
+                     method = "svmLinear",
+                     trControl = ctrl)
+  print("Works after svm model")
+  # Make predictions on testing set
+  predictions <- predict(svm_model, testing_data[, -which(names(testing_data) == "TBStatus")])
+
+  # Create confusion matrix
+  confusion_matrix <- table(predictions, testing_data$TBStatus)
+  print(confusion_matrix)
+
+  # Calculate accuracy
+  accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+  print(paste("Accuracy In Testing:", accuracy))
 })
 # Code for Elastic Net Regression
 

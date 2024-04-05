@@ -13,6 +13,7 @@ library(shinyWidgets)
 library(snow)
 library(SummarizedExperiment)
 library(TBSignatureProfiler)
+library(caret)
 
 
 # Get the list of available studies
