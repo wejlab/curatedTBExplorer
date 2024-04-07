@@ -25,15 +25,29 @@ observeEvent(input$confirmDataset, {
   selectedTrainingList <- input$selectedTrainingData
   selectedTestingList <- input$selectedTestingData
 
+  #############################################################################
+  # NEED TO ADD SOMETHING TO FILTER OUT ALL THE COLUMNS/ROWS WITH UNNEEDED GENE DATA
+  # SHOULD ALSO HOPEFULLY BE THE SPOT WHERE DIFFERENTIAL ANALYSIS HAPPENS.
+  #############################################################################
+
+  # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
   subsetByStudy <- colData(vals$SEList)[colData(vals$SEList)$Study %in% selectedTrainingList, , drop = FALSE]
-  rv$trainingSE <- vals$SEList[, colData(vals$SEList)$Study %in% selectedTrainingList]
+
+  tempTrainingSE <- vals$SEList[, colData(vals$SEList)$Study %in% selectedTrainingList]
+
+  rv$trainingSE <- tempTrainingSE
   # View(rv$trainingSE)
 
+  # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
   subsetByStudy <- colData(vals$SEList)[colData(vals$SEList)$Study %in% selectedTestingList, , drop = FALSE]
+
   rv$testingSE <- vals$SEList[, colData(vals$SEList)$Study %in% selectedTestingList]
   # View(rv$testingSE)
-})
 
+
+
+
+})
 
 observe({
   if (!is.null(vals$SEList)) {
@@ -50,19 +64,42 @@ observe({
     isolate({
       vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
       vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
+
+      ##########################################################################
+      # WE MIGHT NEED TO BIND THE LIST OF GENE RATINGS FROM DE_ANALYZE TO THE
+      # LIST OF GENES IN OUR SUMMARIZED EXPERIMENTS
+      ##########################################################################
+
+      ##########################################################################
+      # NEED TO ADD ERROR HANDLING HERE SO WE SKIP THIS LAPPLY IF vals$filtered
+      # HAS A LIST IN IT LESS THAN 500 (these are just like notes btw)
+      ##########################################################################
+
       vals$filtered <- lapply(vals$DE, function(df) {
         df %>%
           filter(padj <= 0.05)
       })
+
       vals$filtered <- lapply(vals$filtered, function(df) {
         df %>%
           arrange(abs(log2FoldChange))
       })
+
       vals$filtered <- lapply(vals$filtered, function(df) {
         df %>%
           slice_head(n = 500)
       })
       View(vals$filtered)
+
+
+
+
+
+
+
+
+
+
 
 
       # filtered_genes <- rownames(vals$filtered)
@@ -111,6 +148,17 @@ reactive({
 })
 
 # Code for Random Forests
+
+# Training to see which nodesize is best for the random forest
+# nodesize <- seq(1, 51, 10)
+# acc <- sapply(nodesize, function(ns){
+#   train(y ~ ., method = "rf", data = mnist_27$train,
+#         tuneGrid = data.frame(mtry = 2),
+#         nodesize = ns)$results$Accuracy
+# })
+
+
+
 observeEvent(input$continueRF, {
   # Might need to check the SEList
   # DE_analyze(vals$SEList, 'limma', "logCPM")
@@ -118,20 +166,8 @@ observeEvent(input$continueRF, {
   View(rv$trainingSE)
 })
 
-# test <- DE_analyze(vals$SEList, 'limma', )
-
 
 # Code for Support Vector Machines
-
-
-
-
-
-
-
-
-
-
 observeEvent(input$continueSVM, {
   # assay_data <- SummarizedExperiment(assays(intersectRows(vals$SEListFiltered)))
   # View(vals$filtered[[2]])
