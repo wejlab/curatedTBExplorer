@@ -6,6 +6,11 @@ tabPanel(
       width = 3,
       "General Settings",
       style = "background-color: #EDF1F1;",
+
+      ##########################################################################
+      # NEED TO CHANGE THE selectInput CHOICES SO THEY INCLUDE MORE OPTIONS
+      # LIKE HIV vs NO HIV
+      ##########################################################################
       selectInput("oc1", "Outcome", choices = c("LTBI", "PTB", "Control", "OD")),
       selectInput("oc2", "Compared Outcome", choices = c("LTBI", "PTB", "Control", "OD")),
       numericInput("featureSelectionCount", "Feature Count", value = 500, min = 0, step = 1),
@@ -17,8 +22,6 @@ tabPanel(
       selectizeInput("selectedTrainingData", "Training Datasets", choices = list(), multiple = TRUE),
       selectizeInput("selectedTestingData", "Testing Datasets", choices = list(), multiple = TRUE),
       actionButton("confirmDataset", "Confirm Datasets")
-      # DTOutput("trainingDatasetTable"),
-      # DTOutput("testingDatasetTable")
     )
   ),
   tabsetPanel(
@@ -26,9 +29,9 @@ tabPanel(
     tabPanel(
       "Elastic Net Regression",
       sidebarPanel(
-        "Elastic Net Regression"
-      ),
-      actionButton("continueEN", "Continue")
+        "Elastic Net Regression",
+        actionButton("continueEN", "Continue")
+      )
     ),
     tabPanel(
       "Neural Networks",
@@ -50,16 +53,17 @@ tabPanel(
     tabPanel(
       "Random Forests",
       sidebarPanel(
-        "Random Forests"
-      ),
-      actionButton("continueRF", "Continue")
+        "Random Forests",
+        actionButton("continueRF", "Continue")
+      )
+
     ),
     tabPanel(
       "Support Vector Machines",
       sidebarPanel(
-        "Support Vector Machines"
-      ),
-      actionButton("continueSVM", "Continue")
+        "Support Vector Machines",
+        actionButton("continueSVM", "Continue")
+      )
     )
   )
 )
