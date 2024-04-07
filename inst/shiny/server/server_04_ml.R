@@ -25,28 +25,87 @@ observeEvent(input$confirmDataset, {
   selectedTrainingList <- input$selectedTrainingData
   selectedTestingList <- input$selectedTestingData
 
-  #############################################################################
-  # NEED TO ADD SOMETHING TO FILTER OUT ALL THE COLUMNS/ROWS WITH UNNEEDED GENE DATA
-  # SHOULD ALSO HOPEFULLY BE THE SPOT WHERE DIFFERENTIAL ANALYSIS HAPPENS.
-  #############################################################################
+  # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
+  vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
+
+  # Running DE_analyze function from BATCHQC
+  vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
+
+  ##########################################################################
+  # NEED TO ADD ERROR HANDLING HERE SO WE SKIP THIS LAPPLY IF vals$filtered
+  # HAS A LIST IN IT LESS THAN 500 (these are just like notes btw)
+  ##########################################################################
+
+  # Filters out when padj is less than or equal to 0.05
+  vals$filtered <- lapply(vals$DE, function(df) {
+    df %>%
+      filter(padj <= 0.05)
+  })
+
+  # Sorts by log2FoldChange
+  vals$filtered <- lapply(vals$filtered, function(df) {
+    df %>%
+      arrange(abs(log2FoldChange))
+  })
+
+  # Only keeps highest 500 values (Is this highest 500 log2FoldChange )
+  vals$filtered <- lapply(vals$filtered, function(df) {
+    df %>%
+      slice_head(n = 500)
+  })
+
+  # Filters Summarized Experiment so only coinciding genes get kept
+  filtered_genes <- rownames(vals$filtered$TBStatusTBYes)
+  limitedSE <- vals$mlList[filtered_genes, , drop = FALSE]
+
+  # View(limitedSE)
+  # View(vals$mlList)
+
+
+  ##############################################################################
+  # filtered_genes <- rownames(vals$filtered)
+  # View(filtered_genes)
+  # # filtered_SEList <- SummarizedExperiment(assays(filtered_SEList))
+  #
+  # filteredColdata <- vals$SEList[filtered_genes, ]
+  # filteredAssays <- assays(vals$SEList[filtered_genes, ])
+  # View(filteredColdata)
+  # View(filteredAssays)
+  # Subset assays from vals$SEList
+  # filtered_assays <- assays(vals$SEList)[filtered_genes, , drop=FALSE]
+  # # Subset row metadata from vals$SEList
+  # filtered_row_metadata <- rowData(vals$SEList)[filtered_genes, , drop=FALSE]
+  # # Create a new SummarizedExperiment with filtered assay data and row metadata
+  # vals$SEListFiltered <- SummarizedExperiment(assays = filtered_assays, rowData = filtered_row_metadata)
+  #
+  # # Check if the assay data is preserved
+  # View(assays(vals$SEListFiltered))
+  #
+  #
+  # vals$SEListFiltered <- vals$SEList[filtered_genes, ]
+  # View(assays(vals$SEList))
+  # View(vals$SEListFiltered)
+  #
+  # vals$assays <- assays(vals$SEListFiltered)
+  # View(assays(vals$SEListFiltered))
+  # View(assays(vals$SEListFiltered[[1]]))
+  # View(assays(vals$SEListFiltered)[[1]])
+  # View(SummarizedExperiment(vals$SEListFiltered))
+  ##############################################################################
 
   # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
-  subsetByStudy <- colData(vals$SEList)[colData(vals$SEList)$Study %in% selectedTrainingList, , drop = FALSE]
+  subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTrainingList, , drop = FALSE]
 
-  tempTrainingSE <- vals$SEList[, colData(vals$SEList)$Study %in% selectedTrainingList]
+  tempTrainingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTrainingList]
 
   rv$trainingSE <- tempTrainingSE
-  # View(rv$trainingSE)
+  View(rv$trainingSE)
 
   # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
-  subsetByStudy <- colData(vals$SEList)[colData(vals$SEList)$Study %in% selectedTestingList, , drop = FALSE]
+  subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTestingList, , drop = FALSE]
 
-  rv$testingSE <- vals$SEList[, colData(vals$SEList)$Study %in% selectedTestingList]
-  # View(rv$testingSE)
-
-
-
-
+  rv$testingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTestingList]
+  View(rv$testingSE)
 })
 
 observe({
@@ -58,78 +117,6 @@ observe({
       unique_study_values <- unique(study_info)
       updateSelectizeInput(session, "selectedTrainingData", choices = unique_study_values)
       updateSelectizeInput(session, "selectedTestingData", choices = unique_study_values)
-    })
-
-    #code for the differetial expression analysis
-    isolate({
-      vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
-      vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
-
-      ##########################################################################
-      # WE MIGHT NEED TO BIND THE LIST OF GENE RATINGS FROM DE_ANALYZE TO THE
-      # LIST OF GENES IN OUR SUMMARIZED EXPERIMENTS
-      ##########################################################################
-
-      ##########################################################################
-      # NEED TO ADD ERROR HANDLING HERE SO WE SKIP THIS LAPPLY IF vals$filtered
-      # HAS A LIST IN IT LESS THAN 500 (these are just like notes btw)
-      ##########################################################################
-
-      vals$filtered <- lapply(vals$DE, function(df) {
-        df %>%
-          filter(padj <= 0.05)
-      })
-
-      vals$filtered <- lapply(vals$filtered, function(df) {
-        df %>%
-          arrange(abs(log2FoldChange))
-      })
-
-      vals$filtered <- lapply(vals$filtered, function(df) {
-        df %>%
-          slice_head(n = 500)
-      })
-      View(vals$filtered)
-
-
-
-
-
-
-
-
-
-
-
-
-      # filtered_genes <- rownames(vals$filtered)
-      # View(filtered_genes)
-      # # filtered_SEList <- SummarizedExperiment(assays(filtered_SEList))
-      #
-      # filteredColdata <- vals$SEList[filtered_genes, ]
-      # filteredAssays <- assays(vals$SEList[filtered_genes, ])
-      # View(filteredColdata)
-      # View(filteredAssays)
-      # Subset assays from vals$SEList
-      # filtered_assays <- assays(vals$SEList)[filtered_genes, , drop=FALSE]
-      # # Subset row metadata from vals$SEList
-      # filtered_row_metadata <- rowData(vals$SEList)[filtered_genes, , drop=FALSE]
-      # # Create a new SummarizedExperiment with filtered assay data and row metadata
-      # vals$SEListFiltered <- SummarizedExperiment(assays = filtered_assays, rowData = filtered_row_metadata)
-      #
-      # # Check if the assay data is preserved
-      # View(assays(vals$SEListFiltered))
-      #
-      #
-      # vals$SEListFiltered <- vals$SEList[filtered_genes, ]
-      # View(assays(vals$SEList))
-      # View(vals$SEListFiltered)
-      #
-      # vals$assays <- assays(vals$SEListFiltered)
-      # View(assays(vals$SEListFiltered))
-      # View(assays(vals$SEListFiltered[[1]]))
-      # View(assays(vals$SEListFiltered)[[1]])
-      # View(SummarizedExperiment(vals$SEListFiltered))
     })
   }
 })
