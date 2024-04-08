@@ -51,7 +51,7 @@ observeEvent(input$confirmDataset, {
   # Only keeps highest 500 values (Is this highest 500 log2FoldChange )
   vals$filtered <- lapply(vals$filtered, function(df) {
     df %>%
-      slice_head(n = 500)
+      slice_head(n = input$featureSelectionCount)
   })
 
   # Filters Summarized Experiment so only coinciding genes get kept
