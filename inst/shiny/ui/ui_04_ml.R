@@ -1,6 +1,6 @@
 # machine learning tab panel
 tabPanel(
-  "Machine Learing",
+  "Machine Learning",
   fluidRow(
     column(
       width = 3,
