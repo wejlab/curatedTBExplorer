@@ -15,11 +15,10 @@ Description:
 License: MIT + file LICENSE
 URL: https://github.com/wejlab/curatedTBExplorer
 Depends: 
-    R (>= 4.3.2),
-    TBSignatureProfiler,
-    curatedTBData
+    R (>= 4.3.2)
 Imports: 
     BiocManager, 
+    curatedTBData,
     DESeq2, 
     GenomicRanges, 
     ggplot2, 
@@ -29,7 +28,8 @@ Imports:
     SummarizedExperiment, 
     shiny, 
     shinyjs, 
-    shinyWidgets
+    shinyWidgets, 
+    TBSignatureProfiler
 Suggests: 
     dplyr, 
     DT, 
