@@ -25,11 +25,16 @@ observeEvent(input$confirmDataset, {
   selectedTrainingList <- input$selectedTrainingData
   selectedTestingList <- input$selectedTestingData
 
+  vals$statusList <- vals$mlList$TBStatus
+
   # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
   vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
 
+  View(vals$mlList$TBStatus)
   # Running DE_analyze function from BATCHQC
   vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
+
+  View(vals$DE)
 
   ##########################################################################
   # NEED TO ADD ERROR HANDLING HERE SO WE SKIP THIS LAPPLY IF vals$filtered
@@ -56,56 +61,23 @@ observeEvent(input$confirmDataset, {
 
   # Filters Summarized Experiment so only coinciding genes get kept
   filtered_genes <- rownames(vals$filtered$TBStatusTBYes)
+  # vals$mlList <-
   limitedSE <- vals$mlList[filtered_genes, , drop = FALSE]
 
   # View(limitedSE)
-  # View(vals$mlList)
-
-
-  ##############################################################################
-  # filtered_genes <- rownames(vals$filtered)
-  # View(filtered_genes)
-  # # filtered_SEList <- SummarizedExperiment(assays(filtered_SEList))
-  #
-  # filteredColdata <- vals$SEList[filtered_genes, ]
-  # filteredAssays <- assays(vals$SEList[filtered_genes, ])
-  # View(filteredColdata)
-  # View(filteredAssays)
-  # Subset assays from vals$SEList
-  # filtered_assays <- assays(vals$SEList)[filtered_genes, , drop=FALSE]
-  # # Subset row metadata from vals$SEList
-  # filtered_row_metadata <- rowData(vals$SEList)[filtered_genes, , drop=FALSE]
-  # # Create a new SummarizedExperiment with filtered assay data and row metadata
-  # vals$SEListFiltered <- SummarizedExperiment(assays = filtered_assays, rowData = filtered_row_metadata)
-  #
-  # # Check if the assay data is preserved
-  # View(assays(vals$SEListFiltered))
-  #
-  #
-  # vals$SEListFiltered <- vals$SEList[filtered_genes, ]
-  # View(assays(vals$SEList))
-  # View(vals$SEListFiltered)
-  #
-  # vals$assays <- assays(vals$SEListFiltered)
-  # View(assays(vals$SEListFiltered))
-  # View(assays(vals$SEListFiltered[[1]]))
-  # View(assays(vals$SEListFiltered)[[1]])
-  # View(SummarizedExperiment(vals$SEListFiltered))
-  ##############################################################################
+  View(vals$mlList)
 
   # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
-  subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTrainingList, , drop = FALSE]
+  # subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTrainingList, , drop = FALSE]
 
-  tempTrainingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTrainingList]
-
-  rv$trainingSE <- tempTrainingSE
+  rv$trainingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTrainingList]
   View(rv$trainingSE)
 
   # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
-  subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTestingList, , drop = FALSE]
+  # subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTestingList, , drop = FALSE]
 
   rv$testingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTestingList]
-  View(rv$testingSE)
+  # View(rv$testingSE)
 })
 
 observe({
@@ -121,36 +93,53 @@ observe({
   }
 })
 
-
-
-
-
-
-
-
-
 # Just for checking work
 reactive({
   # View(names$SEList)
 })
 
 # Code for Random Forests
-
-# Training to see which nodesize is best for the random forest
-# nodesize <- seq(1, 51, 10)
-# acc <- sapply(nodesize, function(ns){
-#   train(y ~ ., method = "rf", data = mnist_27$train,
-#         tuneGrid = data.frame(mtry = 2),
-#         nodesize = ns)$results$Accuracy
-# })
-
-
-
 observeEvent(input$continueRF, {
-  # Might need to check the SEList
-  # DE_analyze(vals$SEList, 'limma', "logCPM")
-  View(vals$SEList)
-  View(rv$trainingSE)
+  rfSE <- rv$trainingSE
+
+  # Setting control settings for random forest model
+  control <- trainControl(
+    method = "cv",
+    number = input$foldCount,
+    verboseIter = TRUE,
+    classProbs = TRUE
+  )
+
+  # Sets the different node sizes so we can tell which node count works best
+  nodesize <- seq(1, 51, 10)
+
+  # Random Viewing stuff to check my work
+  View(vals$mlList)
+  View(rfSE)
+  View(rfSE$TBStatus)
+  View(factor(rfSE$TBStatus))
+  View(rfSE@assays@data@listData$log_assay1_cpm)
+
+  rfData <- cbind(TBStatus = rfSE$TBStatus, t(rfSE@assays@data@listData$log_assay1_cpm))
+  View(rfData)
+
+  # Repeats training for each nodesize
+  acc <- sapply(nodesize, function(ns) {
+    # Trains random forest model
+    train(
+      TBStatus ~ ., # String that tells which column to look into for outcome
+      method = "rf",# selects random forests method
+      ######## REALLY MIGHT NEED TO APPEND TBSTATUS ROW TO DATAFRAME
+      data = rfData, # Should be a dataframe containing all the data
+      trControl = control,
+      tuneGrid = data.frame(mtry = 2),
+      nodesize = ns)$results$Accuracy
+  })
+
+  # Plots how accurate the random forest is depending on how many trees used
+  plot(nodesize, acc)
+
+  # confusionMatrix(predict)
 })
 
 
