@@ -106,6 +106,22 @@ observeEvent(input$confirmDataset, {
 
   rv$testingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTestingList]
   View(rv$testingSE)
+
+  #data loaded for training
+  training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
+  col_data <- colData(rv$trainingSE)
+  col_data$TBStatus <- factor(col_data$TBStatus, levels = c("TBYes", "TBNo"))
+  #data is our training dataframe
+  rv$trainingData <- data.frame(TBStatus = col_data$TBStatus, t(training_assay_data))
+  rv$trainingData$TBStatus <- factor(rv$trainingData$TBStatus, levels = c("TBYes", "TBNo"))
+
+  #data for testing
+  testing_assay_data <- rv$testingSE@assays@data@listData$log_assay1_cpm
+  testing_col_data <- colData(rv$testingSE)
+  testing_col_data$TBStatus <- factor(testing_col_data$TBStatus, levels = c("TBYes", "TBNo"))
+  rv$testData <- data.frame(TBStatus = testing_col_data$TBStatus, t(testing_assay_data))
+  rv$testData$TBStatus <- factor(rv$testData$TBStatus, levels = c("TBYes", "TBNo"))
+
 })
 
 observe({
@@ -156,49 +172,83 @@ observeEvent(input$continueRF, {
 
 # Code for Support Vector Machines
 observeEvent(input$continueSVM, {
-  # assay_data <- SummarizedExperiment(assays(intersectRows(vals$SEListFiltered)))
-  # View(vals$filtered[[2]])
-  # assay_data <- vals$filtered[[2]]
-  # View(assays(vals$SEListFiltered))
-  # assay_data <- assay(vals$SEListFiltered)
-  # View(assay_data)
-  assay_data <- vals$assays
-  # View(assay_data$listData)
-  View(as.data.frame(assay_data@listData[[4]]))
-  # View(assay_data$log_assay1_cpm)
-  col_data <- colData(vals$SEListFiltered)
+    #data loaded for training
+    # training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
+    # col_data <- colData(rv$trainingSE)
+    # col_data$TBStatus <- factor(col_data$TBStatus, levels = c("TBYes", "TBNo"))
+    # #data is our training dataframe
+    # data <- data.frame(TBStatus = col_data$TBStatus, t(training_assay_data))
+    # data$TBStatus <- factor(data$TBStatus, levels = c("TBYes", "TBNo"))
+    # View(data)
 
-  # Combine assay and colData
-  # data <- data.frame(TBStatus = col_data$TBStatus,
-  #                    t(assay_data))
+    #cross validation and SVM training
+    ctrl <- trainControl(method = "cv", number = 10)
+    svm_model <- caret::train(TBStatus ~ .,
+                       data = rv$trainingData,
+                       method = "svmLinear",
+                       # method = "svmRadial",
+                       trControl = ctrl)
 
-  data <- cbind(TBStatus = col_data$TBStatus, t(assay_data))
-  View(assay_data)
-  View(assay_data[[4]])
-  View(data)
+    importance <- varImp(svm_model)
 
-  # Define the classes (hard-coded)
-  group1 <- c("PTB", "od", "control")
-  group2 <- c("lTBI", "od", "control")
+    # Plot variable importance
+    plot(importance)
+    View(plot(importance))
+    View(importance)
 
-  # Perform SVM model training
-  ctrl <- trainControl(method = "cv", number = 10)
-  print("works")
-  svm_model <- train(TBStatus ~ .,
-                     data = data,
-                     method = "svmLinear",
-                     trControl = ctrl)
-  print("Works after svm model")
-  # Make predictions on testing set
-  predictions <- predict(svm_model, testing_data[, -which(names(testing_data) == "TBStatus")])
+    #testing data handling
+    # testing_assay_data <- rv$testingSE@assays@data@listData$log_assay1_cpm
+    # testing_col_data <- colData(rv$testingSE)
+    # testing_col_data$TBStatus <- factor(testing_col_data$TBStatus, levels = c("TBYes", "TBNo"))
+    # testData <- data.frame(TBStatus = testing_col_data$TBStatus, t(testing_assay_data))
+    # testData$TBStatus <- factor(testData$TBStatus, levels = c("TBYes", "TBNo"))
 
-  # Create confusion matrix
-  confusion_matrix <- table(predictions, testing_data$TBStatus)
-  print(confusion_matrix)
+    #create predictions based on the testing data/ svm training
+    predictions <- predict(svm_model, rv$testData)
+    View(predictions)
+    print(predictions)
 
-  # Calculate accuracy
-  accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-  print(paste("Accuracy In Testing:", accuracy))
+    #confusion matrix
+    confusion_matrix <- table(predictions, rv$testData$TBStatus)
+    print(confusion_matrix)
+
+    #accuracy
+    accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+    print(paste("Accuracy In Testing:", accuracy))
+    View(confusion_matrix)
+
+
+    # Perform Recursive Feature Elimination (RFE) for feature selection
+    # rfe_ctrl <- rfeControl(functions = svmFuncs,
+    #                        method = "cv",
+    #                        number = 10)
+    #
+    # # Perform feature selection with RFE
+    # rfe_model <- rfe(data[, -1],  # Exclude the target variable
+    #                  data$TBStatus,
+    #                  sizes = c(1:ncol(data)-1),  # Range of feature subset sizes
+    #                  rfeControl = rfe_ctrl)
+    #
+    # # Get the optimal subset of features
+    # optimal_features <- predictors(rfe_model)
+    #
+    # # Retrain the SVM model using only the optimal subset of features
+    # svm_model_optimal <- train(TBStatus ~ .,
+    #                            data = data[, c("TBStatus", optimal_features)],
+    #                            method = "svmLinear",
+    #                            trControl = ctrl)
+    #
+    # # Make predictions on testing set using the model with optimal features
+    # predictions_optimal <- predict(svm_model_optimal, testData[, c("TBStatus", optimal_features)])
+    #
+    # # Create confusion matrix
+    # confusion_matrix_optimal <- table(predictions_optimal, testData$TBStatus)
+    #
+    # # Calculate accuracy
+    # accuracy_optimal <- sum(diag(confusion_matrix_optimal)) / sum(confusion_matrix_optimal)
+    # print(paste("Accuracy In Testing with Optimal Features:", accuracy_optimal))
+
+
 })
 # Code for Elastic Net Regression
 
