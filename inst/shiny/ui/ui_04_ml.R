@@ -63,6 +63,9 @@ tabPanel(
       sidebarPanel(
         "Support Vector Machines",
         actionButton("continueSVM", "Continue")
+      ),
+      mainPanel(
+        plotOutput("svmImportancePlot", width = "100%", height = "5000px")
       )
     )
   )

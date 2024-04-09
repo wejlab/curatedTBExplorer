@@ -30,11 +30,11 @@ observeEvent(input$confirmDataset, {
   # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
   vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
 
-  View(vals$mlList$TBStatus)
+  # View(vals$mlList$TBStatus)
   # Running DE_analyze function from BATCHQC
   vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
 
-  View(vals$DE)
+  # View(vals$DE)
 
   ##########################################################################
   # NEED TO ADD ERROR HANDLING HERE SO WE SKIP THIS LAPPLY IF vals$filtered
@@ -65,19 +65,19 @@ observeEvent(input$confirmDataset, {
   limitedSE <- vals$mlList[filtered_genes, , drop = FALSE]
 
   # View(limitedSE)
-  View(vals$mlList)
+  # View(vals$mlList)
 
   # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
   # subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTrainingList, , drop = FALSE]
 
   rv$trainingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTrainingList]
-  View(rv$trainingSE)
+  # View(rv$trainingSE)
 
   # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
   # subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTestingList, , drop = FALSE]
 
   rv$testingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTestingList]
-  View(rv$testingSE)
+  # View(rv$testingSE)
 
   #data loaded for training
   training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
@@ -170,11 +170,14 @@ observeEvent(input$continueSVM, {
                        trControl = ctrl)
 
     importance <- varImp(svm_model)
+    # View(importance)
+    output$svmImportancePlot <- renderPlot({
+      plot(importance)
+    })
 
-    # Plot variable importance
-    plot(importance)
-    View(plot(importance))
-    View(importance)
+    top_genes <- importance$importance[1:10,  , drop = FALSE]
+    View(top_genes)
+    print(top_genes)
 
     #create predictions based on the testing data/ svm training
     predictions <- predict(svm_model, rv$testData)
