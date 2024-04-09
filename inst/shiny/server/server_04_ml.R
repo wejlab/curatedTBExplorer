@@ -161,15 +161,6 @@ observeEvent(input$continueRF, {
 
 # Code for Support Vector Machines
 observeEvent(input$continueSVM, {
-    #data loaded for training
-    # training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
-    # col_data <- colData(rv$trainingSE)
-    # col_data$TBStatus <- factor(col_data$TBStatus, levels = c("TBYes", "TBNo"))
-    # #data is our training dataframe
-    # data <- data.frame(TBStatus = col_data$TBStatus, t(training_assay_data))
-    # data$TBStatus <- factor(data$TBStatus, levels = c("TBYes", "TBNo"))
-    # View(data)
-
     #cross validation and SVM training
     ctrl <- trainControl(method = "cv", number = 10)
     svm_model <- caret::train(TBStatus ~ .,
@@ -185,13 +176,6 @@ observeEvent(input$continueSVM, {
     View(plot(importance))
     View(importance)
 
-    #testing data handling
-    # testing_assay_data <- rv$testingSE@assays@data@listData$log_assay1_cpm
-    # testing_col_data <- colData(rv$testingSE)
-    # testing_col_data$TBStatus <- factor(testing_col_data$TBStatus, levels = c("TBYes", "TBNo"))
-    # testData <- data.frame(TBStatus = testing_col_data$TBStatus, t(testing_assay_data))
-    # testData$TBStatus <- factor(testData$TBStatus, levels = c("TBYes", "TBNo"))
-
     #create predictions based on the testing data/ svm training
     predictions <- predict(svm_model, rv$testData)
     View(predictions)
@@ -205,38 +189,6 @@ observeEvent(input$continueSVM, {
     accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
     print(paste("Accuracy In Testing:", accuracy))
     View(confusion_matrix)
-
-
-    # Perform Recursive Feature Elimination (RFE) for feature selection
-    # rfe_ctrl <- rfeControl(functions = svmFuncs,
-    #                        method = "cv",
-    #                        number = 10)
-    #
-    # # Perform feature selection with RFE
-    # rfe_model <- rfe(data[, -1],  # Exclude the target variable
-    #                  data$TBStatus,
-    #                  sizes = c(1:ncol(data)-1),  # Range of feature subset sizes
-    #                  rfeControl = rfe_ctrl)
-    #
-    # # Get the optimal subset of features
-    # optimal_features <- predictors(rfe_model)
-    #
-    # # Retrain the SVM model using only the optimal subset of features
-    # svm_model_optimal <- train(TBStatus ~ .,
-    #                            data = data[, c("TBStatus", optimal_features)],
-    #                            method = "svmLinear",
-    #                            trControl = ctrl)
-    #
-    # # Make predictions on testing set using the model with optimal features
-    # predictions_optimal <- predict(svm_model_optimal, testData[, c("TBStatus", optimal_features)])
-    #
-    # # Create confusion matrix
-    # confusion_matrix_optimal <- table(predictions_optimal, testData$TBStatus)
-    #
-    # # Calculate accuracy
-    # accuracy_optimal <- sum(diag(confusion_matrix_optimal)) / sum(confusion_matrix_optimal)
-    # print(paste("Accuracy In Testing with Optimal Features:", accuracy_optimal))
-
 
 })
 # Code for Elastic Net Regression
