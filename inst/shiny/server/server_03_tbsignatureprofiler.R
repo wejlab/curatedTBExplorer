@@ -36,10 +36,9 @@ shiny::observe({
   updateSelectInput(session, "boxCovariate", choices = vals$covars)
 })
 
+#updates the selection chocies after TBSignatures updates
 shiny::observe({
-  print("entered observe within server 3")
   TBsignatures <- rv$TBsignatures_reactive
-  # View(TBsignatures)
   updatePickerInput(session, "profiles", choices = names(TBsignatures))
   updatePickerInput(session, "signatures", choices = names(TBsignatures))
   updatePickerInput(session, "box_profiles", choices = names(TBsignatures))

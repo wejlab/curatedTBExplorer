@@ -175,15 +175,36 @@ observeEvent(input$continueSVM, {
       plot(importance)
     })
 
-    #grabs the top genes from the importance matrix
-    top_genes <- importance$importance[1:10,  , drop = FALSE]
-    # View(top_genes)
 
-    #this sends the top_genes to the TBsignatureprofiler
+    #gene selection
+    #included are the top 5, ten, any genes above 90, and any above 80, for comparison purposes
+    #grabs the top genes from the importance matrix
+    sorted_data <- importance$importance[order(importance$importance$TBYes, decreasing = TRUE), ]
+    #select the top 5 genes after sorting
+    top_five <- sorted_data[1:5, , drop = FALSE]
+    # View(top)
+    #select the top 10 genes after sorting
+    top_genes <- sorted_data[1:10, , drop = FALSE]
+    # View(top_genes)
+    #select any genes which are greater than 90
+    genes_above_90 <- importance$importance[importance$importance$TBYes >= 90, , drop = FALSE]
+    # View(genes_above_90)
+    #and select any genes which are greater than 80
+    genes_above_80 <- importance$importance[importance$importance$TBYes >= 80, , drop = FALSE]
+    # View(genes_above_80)
+
+
+    #this sends the identified genes to the TBsignatureprofiler
     TBsignatures_reactive <- reactive({
+      top_five <- as.list(rownames(top_five))
+      top_five_list <- CharacterList(top_five)
       top_genes <- as.list(rownames(top_genes))
       top_genes_list <- CharacterList(top_genes)
-      TBsignatures <- c(TBsignatures, list(TopGenes = top_genes_list@unlistData))
+      genes_above_90 <- as.list(rownames(genes_above_90))
+      genes_above_90_list <- CharacterList(genes_above_90)
+      genes_above_80 <- as.list(rownames(genes_above_80))
+      genes_above_80_list <- CharacterList(genes_above_80)
+      TBsignatures <- c(TBsignatures, list(TopFive = top_five_list@unlistData), list(TopGenes = top_genes_list@unlistData), list(GenesAbove90 =genes_above_90_list@unlistData), list(GenesAbove80 = genes_above_80_list@unlistData))
     })
     observe({
       TBsignatures <- TBsignatures_reactive()
