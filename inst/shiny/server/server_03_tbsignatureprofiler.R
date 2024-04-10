@@ -37,6 +37,15 @@ shiny::observe({
 })
 
 shiny::observe({
+  print("entered observe within server 3")
+  TBsignatures <- rv$TBsignatures_reactive
+  # View(TBsignatures)
+  updatePickerInput(session, "profiles", choices = names(TBsignatures))
+  updatePickerInput(session, "signatures", choices = names(TBsignatures))
+  updatePickerInput(session, "box_profiles", choices = names(TBsignatures))
+})
+
+shiny::observe({
   updateSelectInput(session, "assay", choices = vals$datassays)
   # View(vals$datassays)
 })
@@ -48,7 +57,7 @@ observeEvent(input$begin, {
   selected_algorithm <- input$algorithm
 
   print("entered")
-  tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay, selected_algorithm))
+  tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay, selected_algorithm, rv$TBsignatures_reactive))
   print("exit")
   # renders the dt
   output$ssgsea_table <- renderDT({
@@ -74,7 +83,7 @@ observeEvent(input$genHeatmap, {
       output$heatmap_result <- renderPlot({
         signatureHeatmap(tb_profiler_result()[[2]],
                          name = "Heatmap of Signatures",
-                         signatureColNames = names(TBsignatures),
+                         signatureColNames = names(rv$TBsignatures_reactive),
                          annotationColNames = "TBStatus",
                          scale = TRUE,
                          showColumnNames = TRUE,

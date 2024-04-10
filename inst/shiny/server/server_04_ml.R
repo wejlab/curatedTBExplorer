@@ -175,13 +175,25 @@ observeEvent(input$continueSVM, {
       plot(importance)
     })
 
+    #grabs the top genes from the importance matrix
     top_genes <- importance$importance[1:10,  , drop = FALSE]
-    View(top_genes)
-    print(top_genes)
+    # View(top_genes)
+
+    #this sends the top_genes to the TBsignatureprofiler
+    TBsignatures_reactive <- reactive({
+      top_genes <- as.list(rownames(top_genes))
+      top_genes_list <- CharacterList(top_genes)
+      TBsignatures <- c(TBsignatures, list(TopGenes = top_genes_list@unlistData))
+    })
+    observe({
+      TBsignatures <- TBsignatures_reactive()
+      rv$TBsignatures_reactive <- TBsignatures_reactive()
+    })
+
 
     #create predictions based on the testing data/ svm training
     predictions <- predict(svm_model, rv$testData)
-    View(predictions)
+    # View(predictions)
     print(predictions)
 
     #confusion matrix
@@ -191,7 +203,7 @@ observeEvent(input$continueSVM, {
     #accuracy
     accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
     print(paste("Accuracy In Testing:", accuracy))
-    View(confusion_matrix)
+    # View(confusion_matrix)
 
 })
 # Code for Elastic Net Regression

@@ -6,9 +6,10 @@
 #' @return A datatable with results
 #'
 #' @param selected_dataset The selected dataset (summarized experiment object) to be viewed. Required.
-#' @param selected_profiles The group of selected profiles (Anderson_42/Berry_393/etc) to be viewed. Required.
-#' @param selected_assay The assay used in the profiler. Required.
+#' @param selected_profiles The group of selected profiles (Anderson_42/Berry_393/etc) to be viewed. Allows for only select profiles to appear within dt output. Required.
+#' @param selected_assay The assay used in the profiler (counts, log counts, etc). Required.
 #' @param selected_algorithm The algorithm (GSVA/ssGSEA) to be used in the tbSigProfiler. Required
+#' @param selected_signatures The signatures that are available for the profiler to run on. Necessary, as updates to TBsignatures occur within this app. Required.
 #'
 #' @examples
 #' \dontrun{
@@ -21,18 +22,19 @@
   #need to check if the assay_curated corresponds to log_counts like I think it does
 
 #derived from the TBSignatureProfiler Vignette
-runTBsigProfilerFunction <- function(selected_dataset, selected_profiles, selected_assay, selected_algorithm) {
+runTBsigProfilerFunction <- function(selected_dataset, selected_profiles, selected_assay, selected_algorithm, selected_signatures) {
   appDir <- system.file("shiny", package = "curatedTBExplorer")
   if (appDir == "") {
     stop("Could not find my function. Try re-installing 'curatedTBExplorer'.", call. = FALSE)
   }
   #runs the tbsigprofiler using the parameter info
   #still need to add info to capture the desired algorithm, assays, etc
+
   out <- capture.output({
     profiler_result <- runTBsigProfiler(
       input = selected_dataset,         #input is the selected_dataset parameter
       useAssay = selected_assay,
-      signatures = TBsignatures,
+      signatures = selected_signatures,
       algorithm = selected_algorithm,
       combineSigAndAlgorithm = TRUE,
       parallel.sz = 4,
