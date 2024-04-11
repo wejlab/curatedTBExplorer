@@ -54,9 +54,15 @@ tabPanel(
       "Random Forests",
       sidebarPanel(
         "Random Forests",
+        numericInput("numTrees", "Number of Trees Generated:", value = 500, min = 1),
+        numericInput("nodeSize", "Size of Each Node:", value = 5, min = 1),
         actionButton("continueRF", "Continue")
+      ),
+      mainPanel(
+        plotOutput("rfNumTreesPlot", width = "100%", height = "500px"),
+        plotOutput("rfNodeSizePlot", width = "100%", height = "500px"),
+        plotOutput("rfImportancePlot", width = "100%", height = "5000px")
       )
-
     ),
     tabPanel(
       "Support Vector Machines",

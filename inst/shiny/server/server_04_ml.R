@@ -126,49 +126,72 @@ observeEvent(input$continueRF, {
     classProbs = TRUE
   )
 
-  # Sets the different node sizes so we can tell which node count works best
-  nodesize <- seq(1, 51, 10)
-
-  # Random Viewing stuff to check my work
-  View(vals$mlList)
-  View(rfSE)
-  View(rfSE$TBStatus)
-  View(factor(rfSE$TBStatus))
-  View(rfSE@assays@data@listData$log_assay1_cpm)
-
-  rfData <- cbind(TBStatus = rfSE$TBStatus, t(rfSE@assays@data@listData$log_assay1_cpm))
-  View(rfData)
-
-  # Repeats training for each nodesize
-  acc <- sapply(nodesize, function(ns) {
-    # Trains random forest model
-    train(
-      TBStatus ~ ., # String that tells which column to look into for outcome
-      method = "rf",# selects random forests method
-      ######## REALLY MIGHT NEED TO APPEND TBSTATUS ROW TO DATAFRAME
-      data = rfData, # Should be a dataframe containing all the data
-      trControl = control,
+  withProgress(message = "Training Model...", value = 0, {
+    progress <- 0
+    rfModel <- caret::train(
+      TBStatus ~ .,
+      data = rv$trainingData,
+      method = "rf",
       tuneGrid = data.frame(mtry = 2),
-      nodesize = ns)$results$Accuracy
+      nodesize = input$nodeSize,
+      ntree = input$numTrees,
+      trControl = control)
+
+    rfImportance <- varImp(rfModel)
+
+    output$rfImportancePlot <- renderPlot({
+      plot(rfImportance)
+    })
   })
 
-  # Plots how accurate the random forest is depending on how many trees used
-  plot(nodesize, acc)
-
-  # confusionMatrix(predict)
+################################################################################
+# COMMENTED OUT SINCE IT ONLY DETECTS BEST NODESIZE
+################################################################################
+  # # Sets the different node sizes so we can tell which node count works best
+  # nodesize <- seq(1, 51, 1)
+  # acc <- NULL
+  # # Repeats training for each nodesize
+  # withProgress(message = "Training Model...", value = 0, {
+  #   progress <- 0
+  #   len <- length(nodesize)
+  #   acc <- sapply(nodesize, function(ns) {
+  #
+  #     progress <- progress + 1
+  #     print("error in incProgress")
+  #     incProgress(progress / len, detail = paste("Training Node-size", ns))
+  #
+  #     # Trains random forest model
+  #     return (caret::train(
+  #       TBStatus ~ ., # String that tells which column to look into for outcome
+  #       method = "rf",# selects random forests method
+  #       data = rv$trainingData, # Should be a dataframe containing all the data
+  #       trControl = control,
+  #       tuneGrid = data.frame(mtry = 2),
+  #       nodesize = ns)$results$Accuracy)
+  #   })
+  #
+  #   incProgress(len / len, message = "Finished Training")
+  #
+  # })
+  #
+  # # Plots how accurate the random forest is depending on how many trees used
+  # output$rfNodeSizePlot <- renderPlot({
+  #   plot(nodesize, acc)
+  #   lines(nodesize, acc, col = "blue")
+  # })
+################################################################################
 })
 
 
 # Code for Support Vector Machines
 observeEvent(input$continueSVM, {
     #cross validation and SVM training
-    ctrl <- trainControl(method = "cv", number = 10)
+    ctrl <- trainControl(method = "cv", number = input$foldCount)
     svm_model <- caret::train(TBStatus ~ .,
                        data = rv$trainingData,
                        method = "svmLinear",
                        # method = "svmRadial",
                        trControl = ctrl)
-
     importance <- varImp(svm_model)
     # View(importance)
     output$svmImportancePlot <- renderPlot({
