@@ -24,13 +24,16 @@ tabPanel(
       actionButton("confirmDataset", "Confirm Datasets")
     )
   ),
-  tabsetPanel(
+   tabsetPanel(
     # Contains general settings for the machine learning
     tabPanel(
       "Elastic Net Regression",
       sidebarPanel(
         "Elastic Net Regression",
         actionButton("continueEN", "Continue")
+      ),
+      mainPanel(
+        plotOutput("elasticNetImportancePlot", width = "100%", height = "5000px")
       )
     ),
     tabPanel(
