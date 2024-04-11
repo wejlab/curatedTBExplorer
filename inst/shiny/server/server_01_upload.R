@@ -323,6 +323,7 @@ observeEvent(input$continue, {
     } else {
       cat("All selected studies are already available locally. Skipping download step.\n")
     }
+    showNotification("Finished Downloading Studies", type = "message")
   } else {
     cat("Please select a study first\n")
   }

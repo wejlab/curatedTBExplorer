@@ -26,7 +26,6 @@ observeEvent(input$confirmDataset, {
   selectedTestingList <- input$selectedTestingData
 
   vals$statusList <- vals$mlList$TBStatus
-
   # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
   vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
 
@@ -142,6 +141,7 @@ observeEvent(input$continueRF, {
     output$rfImportancePlot <- renderPlot({
       plot(rfImportance)
     })
+    showNotification("Finished Generating Random Forest Model", type = "message")
   })
 
 ################################################################################

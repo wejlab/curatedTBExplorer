@@ -61,7 +61,7 @@ tabPanel(
       mainPanel(
         plotOutput("rfNumTreesPlot", width = "100%", height = "500px"),
         plotOutput("rfNodeSizePlot", width = "100%", height = "500px"),
-        plotOutput("rfImportancePlot", width = "100%", height = "5000px")
+        shinycssloaders::withSpinner(plotOutput("rfImportancePlot", width = "100%", height = "5000px"))
       )
     ),
     tabPanel(
