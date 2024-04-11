@@ -251,15 +251,25 @@ observeEvent(input$continueSVM, {
 
 })
 # Code for Elastic Net Regression
-
-
-
-
-
-
 observeEvent(input$continueEN, {
+  ctrl <- trainControl(method = "cv", number = input$foldCount)
+  elastic_net <- caret::train(TBStatus ~ .,
+                                    data = rv$trainingData,
+                                    method = "glmnet",
+                                    trControl = ctrl,
+                                    tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.001, 1, length = 100)))
+
+  importance <- varImp(elastic_net)
+  output$elasticNetImportancePlot <- renderPlot({
+    plot(importance)
+  })
+
+  # Create predictions based on the testing data/ elastic net training
+  predictions <- predict(elastic_net, rv$testData)
+  print(predictions)
 
 })
+
 
 # Code for Neural Networks
 # Define server logic for the "Machine Learning" tab
