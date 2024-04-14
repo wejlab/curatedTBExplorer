@@ -14,6 +14,9 @@ library(snow)
 library(SummarizedExperiment)
 library(TBSignatureProfiler)
 library(caret)
+library(sva)
+library(HGNChelper)
+
 
 
 # Get the list of available studies

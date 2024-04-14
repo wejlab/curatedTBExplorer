@@ -161,18 +161,24 @@ observeEvent(input$continueRF, {
 
 # Code for Support Vector Machines
 observeEvent(input$continueSVM, {
+    if(input$kernelType == "Linear"){
+      kType <- "svmLinear"
+    } else if(input$kernelType == "Radial"){
+      kType <- "svmRadial"
+    } else {
+      kType <- "svmPoly"
+    }
     #cross validation and SVM training
-    ctrl <- trainControl(method = "cv", number = 10)
+    ctrl <- trainControl(method = "cv", number = input$foldCount)
     svm_model <- caret::train(TBStatus ~ .,
                        data = rv$trainingData,
-                       method = "svmLinear",
-                       # method = "svmRadial",
+                       method = kType,
                        trControl = ctrl)
 
     importance <- varImp(svm_model)
     # View(importance)
     output$svmImportancePlot <- renderPlot({
-      plot(importance)
+      plot(importance, main = "Importance Plot")
     })
 
 
@@ -219,12 +225,14 @@ observeEvent(input$continueSVM, {
 
     #confusion matrix
     confusion_matrix <- table(predictions, rv$testData$TBStatus)
+    output$svmMatrix <- renderPlot({
+      plot(confusion_matrix, main = "Confusion Matrix", cex.main = 1.2)
+    })
     print(confusion_matrix)
 
     #accuracy
     accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
     print(paste("Accuracy In Testing:", accuracy))
-    # View(confusion_matrix)
 
 })
 # Code for Elastic Net Regression

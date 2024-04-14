@@ -5,13 +5,13 @@ tabPanel(
     tabPanel(
       "Profiler",
         sidebarPanel(
-        selectInput("selectAssay", "Make Assay",
-          choices = c("Log Counts","CPM","Log CPM"),
-          selected = "CPM"
-        ),
-        actionButton("makeAssay", "Create Assays"),
-
-        HTML("<br><br>"),
+        # selectInput("selectAssay", "Make Assay",
+        #   choices = c("Log Counts","CPM","Log CPM"),
+        #   selected = "CPM"
+        # ),
+        # actionButton("makeAssay", "Create Assays"),
+        #
+        # HTML("<br><br>"),
         selectInput("assay", "Select Assay for Profiler:",
                     choices = "assay1"
         ),

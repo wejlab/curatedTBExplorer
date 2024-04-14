@@ -16,21 +16,20 @@ tb_profiler_result <- reactiveVal(NULL)
 #Select which Assays (if any) to create
 
 #want to change this creation to be present on the filter page
-observeEvent(input$makeAssay, {
-  if(input$selectAssay == "Log Counts"){
-    vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",
-                           log = TRUE, counts_to_CPM = FALSE)
-    vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
-  } else if(input$selectAssay == "CPM"){
-    vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",)
-    vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
-  } else if(input$selectAssay == "Log CPM"){
-    vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",
-                           log = TRUE)
-    vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
-
-  }
-})
+# observeEvent(input$makeAssay, {
+#   if(input$selectAssay == "Log Counts"){
+#     vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",
+#                            log = TRUE, counts_to_CPM = FALSE)
+#     vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
+#   } else if(input$selectAssay == "CPM"){
+#     vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",)
+#     vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
+#   } else if(input$selectAssay == "Log CPM"){
+#     vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",
+#                            log = TRUE)
+#     vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
+#   }
+# })
 
 shiny::observe({
   updateSelectInput(session, "boxCovariate", choices = vals$covars)
