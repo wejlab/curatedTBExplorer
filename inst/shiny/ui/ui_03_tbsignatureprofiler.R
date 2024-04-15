@@ -16,6 +16,8 @@ tabPanel(
           "profiles", "Select Profiles", choices = names(TBsignatures),
           options = list("actions-box" = TRUE),
           multiple = TRUE, selected = NULL),
+        selectInput("columnInfo", "Select Column Data",
+                    choices = NULL),
         # Button to begin table generation
         actionButton("begin", "Run TBSignatureProfiler")
       ),

@@ -8,20 +8,26 @@ runTBsigProfilerFunction(
   selected_dataset,
   selected_profiles,
   selected_assay,
-  selected_algorithm
+  selected_algorithm,
+  selected_signatures,
+  selected_colData
 )
 }
 \arguments{
 \item{selected_dataset}{The selected dataset (summarized experiment object) to be viewed. Required.}
 
-\item{selected_profiles}{The group of selected profiles (Anderson_42/Berry_393/etc) to be viewed. Required.}
+\item{selected_profiles}{The group of selected profiles (Anderson_42/Berry_393/etc) to be viewed. Allows for only select profiles to appear within dt output. Required.}
 
-\item{selected_assay}{The assay used in the profiler. Required.}
+\item{selected_assay}{The assay used in the profiler (counts, log counts, etc). Required.}
 
 \item{selected_algorithm}{The algorithm (GSVA/ssGSEA) to be used in the tbSigProfiler. Required}
+
+\item{selected_signatures}{The signatures that are available for the profiler to run on. Necessary, as updates to TBsignatures occur within this app. Required.}
+
+\item{selected_colData}{Selects the specific info that is viewed in the data table output. For example: Age, TBStatus, Gender. Required.}
 }
 \value{
-A datatable with results
+A datatable with results on expression info, as well as ID and a single Column of interest
 }
 \description{
 The runTBsigProfilerFunction allows for different datasets, profiles, and assays
@@ -29,7 +35,7 @@ to be pulled into a datatable, allowing for easy searching, sorting, and visuali
 }
 \examples{
 \dontrun{
-runTBsigProfilerFunction(selected_dataset, selected_profiles, selected_assay, selected_algorithm)
+runTBsigProfilerFunction(selected_dataset, selected_profiles, selected_assay, selected_algorithm, selected_signatures, selected_colData)
 }
 
 }

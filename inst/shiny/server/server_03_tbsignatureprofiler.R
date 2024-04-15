@@ -11,10 +11,12 @@ shiny::observe({
 shiny::observe({
   if(!is.null(vals$SEList)){
     updateSelectInput(session, "column", choices = names(vals$SEList@colData@listData))
+    updateSelectInput(session, "columnInfo", choices = names(vals$SEList@colData@listData))
   }
 })
 
-#updates the selection chocies after TBSignatures updates
+
+#updates the selection choices after TBSignatures updates
 shiny::observe({
   TBsignatures <- rv$TBsignatures_reactive
   updatePickerInput(session, "profiles", choices = names(TBsignatures))
@@ -27,14 +29,16 @@ shiny::observe({
   # View(vals$datassays)
 })
 
+
 observeEvent(input$begin, {
   selected_dataset <- vals$SEList
   selected_profiles <- input$profiles
   selected_assay <- input$assay
   selected_algorithm <- input$algorithm
+  selected_colData <- input$columnInfo
 
   print("entered")
-  tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay, selected_algorithm, rv$TBsignatures_reactive))
+  tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay, selected_algorithm, rv$TBsignatures_reactive, selected_colData))
   print("exit")
   # renders the dt
   output$ssgsea_table <- renderDT({
