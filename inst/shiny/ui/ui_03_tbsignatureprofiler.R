@@ -5,13 +5,6 @@ tabPanel(
     tabPanel(
       "Profiler",
         sidebarPanel(
-        # selectInput("selectAssay", "Make Assay",
-        #   choices = c("Log Counts","CPM","Log CPM"),
-        #   selected = "CPM"
-        # ),
-        # actionButton("makeAssay", "Create Assays"),
-        #
-        # HTML("<br><br>"),
         selectInput("assay", "Select Assay for Profiler:",
                     choices = "assay1"
         ),
@@ -46,7 +39,13 @@ tabPanel(
             options = list("actions-box" = TRUE),
             multiple = TRUE, selected = NULL),
           ),
-        actionButton("genHeatmap", "Create Heatmap")
+          selectInput("column", "Select Columns:",
+            choices = NULL
+          ),
+          selectInput("annotations", "Show Annotations?",
+                      choices = c("TRUE", "FALSE")
+          ),
+          actionButton("genHeatmap", "Create Heatmap")
         ),
       # Displays generated heatmaps
       plotOutput("heatmap_result", height = "750")
@@ -64,7 +63,9 @@ tabPanel(
         actionButton("genBoxplots", "Create Boxplots"),
       ),
       # Displays generated boxplots
-      plotOutput("boxplot_result", height = "200")
+      # mainPanel(
+        plotOutput("boxplot_result")  # Set height to auto
+      # )
     )
   )
 )

@@ -3,36 +3,15 @@
 # allow for the plots in the heatmap to change based on filters from the filter page
 
 tb_profiler_result <- reactiveVal(NULL)
-# reactive ({
-#   vals$datassays <- names(assays(vals$SEList))
-#   View(vals$datassays)
-# })
-
-#need to get select All / deselect All working properly
-# observeEvent(input$selectAll, {
-#   selected_profiles <- names(TBsignatures)
-# })
-
-#Select which Assays (if any) to create
-
-#want to change this creation to be present on the filter page
-# observeEvent(input$makeAssay, {
-#   if(input$selectAssay == "Log Counts"){
-#     vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",
-#                            log = TRUE, counts_to_CPM = FALSE)
-#     vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
-#   } else if(input$selectAssay == "CPM"){
-#     vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",)
-#     vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
-#   } else if(input$selectAssay == "Log CPM"){
-#     vals$SEList <- mkAssay(vals$SEList, input_name = "assay1",
-#                            log = TRUE)
-#     vals$datassays <- names(SummarizedExperiment::assays(vals$SEList))
-#   }
-# })
 
 shiny::observe({
   updateSelectInput(session, "boxCovariate", choices = vals$covars)
+})
+
+shiny::observe({
+  if(!is.null(vals$SEList)){
+    updateSelectInput(session, "column", choices = names(vals$SEList@colData@listData))
+  }
 })
 
 #updates the selection chocies after TBSignatures updates
@@ -82,7 +61,7 @@ observeEvent(input$genHeatmap, {
         signatureHeatmap(tb_profiler_result()[[2]],
                          name = "Heatmap of Signatures",
                          signatureColNames = names(rv$TBsignatures_reactive),
-                         annotationColNames = "TBStatus",
+                         annotationColNames = input$column,
                          scale = TRUE,
                          showColumnNames = TRUE,
                          choose_color = col.me
@@ -95,10 +74,11 @@ observeEvent(input$genHeatmap, {
         signatureHeatmap(tb_profiler_result()[[2]],
                          name = "Heatmap of Signatures",
                          signatureColNames = input$signatures,
-                         annotationColNames = "PatientID",
+                         # annotationColNames = "PatientID",
+                         annotationColNames = input$column,
                          scale = TRUE,
-                         showColumnNames = TRUE,
-                         choose_color = col.me
+                         showColumnNames = input$annotations,
+                         choose_color = col.me,
         )
       })
     }
