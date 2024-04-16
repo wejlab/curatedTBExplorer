@@ -17,9 +17,9 @@ output$selected_studies_text <- renderText({
   if (!is.null(names(vals$MAEList))) {
     paste("Selected Studies: ", paste(names(vals$MAEList), collapse = ", "))
   }
-  else {
-    paste("Selected Studies: ", paste(names(vals$defaultStudy), collapse = ", "))
-  }
+  # else {
+  #   paste("Selected Studies: ", paste(names(vals$defaultStudy), collapse = ", "))
+  # }
 })
 
 reactive({ # apparently need to be wrapped in reactive to work

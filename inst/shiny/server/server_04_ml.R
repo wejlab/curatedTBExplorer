@@ -87,16 +87,16 @@ observeEvent(input$confirmDataset, {
 
   # View(vals$DE)
 
-  ##########################################################################
-  # NEED TO ADD ERROR HANDLING HERE SO WE SKIP THIS LAPPLY IF vals$filtered
-  # HAS A LIST IN IT LESS THAN 500 (these are just like notes btw)
-  ##########################################################################
-
   # Filters out when padj is less than or equal to 0.05
   vals$filtered <- lapply(vals$DE, function(df) {
     df %>%
       filter(padj <= 0.05)
   })
+
+  # Prevents the list of genes from going lower than 500
+  if(length(vals$filtered$TBStatusTBYes$padj) < 500) {
+    vals$filtered <- vals$DE
+  }
 
   # Sorts by log2FoldChange
   vals$filtered <- lapply(vals$filtered, function(df) {

@@ -4,7 +4,10 @@ tabPanel(
   fluidRow(
     column(
       width = 3,
-      "General Settings",
+      div(style = "border-bottom: 1px solid #ccc",
+          h3("General Training Settings: ")
+      ),
+      # "General Settings",
       style = "background-color: #EDF1F1;",
 
       ##########################################################################

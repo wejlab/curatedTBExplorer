@@ -32,7 +32,9 @@ vals <- reactiveValues(
   local_download = FALSE,
 
   # Holds default study
-  defaultStudy = NULL
+  defaultStudy = NULL,
+
+  continueClicks = 0
 )
 
 # Try catch error handling for local download
@@ -70,9 +72,11 @@ tryCatch(
     if (!file.exists(defaultStudyDir)) {
       saveRDS(list(), file = defaultStudyPath)
     }
+    defaultStudy <- readRDS(defaultStudyDir)
+    vals$MAEList <- defaultStudy
 
     # Reads .rds file into defaultStudy reactive value
-    vals$defaultStudy <- readRDS(defaultStudyDir)
+    vals$defaultStudy <- defaultStudy
     cat("Added GSE31348 study to defualtStudy reactive value\n")
   },
   error = function(e) {
@@ -194,6 +198,7 @@ observeEvent(input$clearLocalDownload, {
   saveRDS(list(), file = localMAEListPath)
   cat("Cleared Local Download\n")
   # View(vals$localMAEList)
+  View(vals$MAEList)
 })
 
 # If continue button pressed, downloads study data for selected studies accordingly
@@ -202,6 +207,15 @@ observeEvent(input$continue, {
 
   # Executes only if there are studies selected
   if (!is.null(vals$selected_studies)) {
+
+    # Updates the continueClick number by 1 if continue is clicked and has selected studies
+    vals$continueClicks <- vals$continueClicks + 1
+
+    # Removes default study when downloading for the first time
+    if(vals$continueClicks == 1) {
+      vals$MAEList <- list()
+    }
+
     cat("Selected Studies: ", names(vals$selected_studies), "\n")
 
     # Holds studies that need to be downloaded
@@ -212,18 +226,22 @@ observeEvent(input$continue, {
 
     # Extract study names from localMAEList
     local_studies <- names(vals$localMAEList)
+    current_studies <- names(vals$MAEList)
     # View(local_studies)
     # View(vals$selected_studies)
 
     studies_to_download <- vals$selected_studies[!(vals$selected_studies %in% local_studies)]
-
+    studies_to_download <- studies_to_download[!(studies_to_download %in% current_studies)]
     # View(studies_to_download)
+
+    print(vals$continueClicks)
+
 
 
     # Adds studies from local to MAEList
     # vals$MAEList <- c(vals$MAEList, studies_from_local)
 
-    # Iterate over studies in localMAEList
+    # Adds studies that are both in selected_studies and localMAEList to MAEList
     for (studyName in as.vector(vals$selected_studies)) {
       if (studyName %in% names(vals$localMAEList)) {
         vals$MAEList[[studyName]] <- vals$localMAEList[[studyName]]
@@ -234,6 +252,7 @@ observeEvent(input$continue, {
 
     # If there are studies left to download
     if (length(studies_to_download) > 0) {
+
       # Adds progress message
       withProgress(message = "Downloading Datasets...", value = 0, {
         n <- length(studies_to_download)
@@ -360,6 +379,7 @@ observeEvent(input$selected_study, {
   }
 })
 
+# Handles removal of studies from selected_studies list when studies are deselected
 observeEvent(input$deselected_study, {
   current_deselection <- isolate(input$deselected_study)
   current_studies <- vals$selected_studies
