@@ -1,4 +1,55 @@
 # Code For General Settings And Selecting Datasets
+
+#these observe blocks grab the available inputs for the prediction
+#they then dynamically change the outcome tabs as necessary, including an "all" option for oc2
+observe({
+  if (!is.null(vals$mlList)) {
+    col_data <- colData(vals$mlList)
+
+    #filter out columns that are ALL NA values (some NA values are allowed)
+    rv$non_na_cols <- col_data[, !apply(col_data, 2, function(x) all(is.na(x)))]
+    updateSelectInput(session, "mainPredictor", choices = names(rv$non_na_cols)[!(names(rv$non_na_cols) %in% c("Age", "PatientID"))])
+  }
+})
+
+observe({
+  selected_main_predictor <- input$mainPredictor
+
+  non_na_values <- isolate({
+    if (!(selected_main_predictor == "")) {
+      selected_column <- rv$non_na_cols[, selected_main_predictor, drop = FALSE]
+      unique_values <- na.omit(selected_column)
+      unique(unlist(unique_values))
+    } else {
+      NULL
+    }
+  })
+
+  #updated oc1
+  updateSelectInput(session, "oc1", choices = non_na_values)
+
+  #this if block grabs the choices that aren't selected in OC1, adds an ALL option if more than 1 oc2 option exists
+  if (!is.null(input$oc1)) {
+    oc1_value <- input$oc1
+    oc2_choices <- setdiff(non_na_values, oc1_value)
+
+    if (length(oc2_choices) > 1) {
+      updateSelectInput(session, "oc2", choices = c(oc2_choices, "All"))
+    } else {
+      updateSelectInput(session, "oc2", choices = oc2_choices)
+    }
+  } else {
+    if (length(non_na_values) > 1) {
+      updateSelectInput(session, "oc2", choices = c(non_na_values, "All"))
+    } else {
+      updateSelectInput(session, "oc2", choices = non_na_values)
+    }
+  }
+})
+
+
+
+
 rv <- reactiveValues(
   # Holds the users' choices for outcomes
   # Still need to figure out the format that this will come in
@@ -27,7 +78,8 @@ observeEvent(input$confirmDataset, {
 
   vals$statusList <- vals$mlList$TBStatus
   # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
-  vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
+  vals$mlList$TBStatusTrue <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
+  vals$mlList$TBStatusFalse <- factor(ifelse(vals$mlList$TBStatus == "LTBI", "TBYes", "TBNo"))
 
   # View(vals$mlList$TBStatus)
   # Running DE_analyze function from BATCHQC

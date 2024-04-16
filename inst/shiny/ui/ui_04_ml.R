@@ -11,8 +11,11 @@ tabPanel(
       # NEED TO CHANGE THE selectInput CHOICES SO THEY INCLUDE MORE OPTIONS
       # LIKE HIV vs NO HIV
       ##########################################################################
-      selectInput("oc1", "Outcome", choices = c("LTBI", "PTB", "Control", "OD")),
-      selectInput("oc2", "Compared Outcome", choices = c("LTBI", "PTB", "Control", "OD")),
+      # selectInput("oc1", "Outcome", choices = c("LTBI", "PTB", "Control", "OD")),
+      # selectInput("oc2", "Compared Outcome", choices = c("LTBI", "PTB", "Control", "OD")),
+      selectInput("mainPredictor", "Prediction Class", choices = NULL),
+      selectInput("oc1", "Outcome", choices = NULL),
+      selectInput("oc2", "Compared Outcome", choices = NULL),
       numericInput("featureSelectionCount", "Feature Count", value = 500, min = 0, step = 1),
       numericInput("foldCount", "Cross Validation Folds", value = 10, min = 0, step = 1)
     ),
@@ -75,7 +78,8 @@ tabPanel(
         actionButton("continueSVM", "Continue")
       ),
       mainPanel(
-        plotOutput("svmImportancePlot", width = "100%", height = "5000px"),
+        # plotOutput("svmImportancePlot", width = "100%", height = "5000px"),
+        plotOutput("svmImportancePlot", height = 5000),
         plotOutput("svmMatrix")
       )
     )

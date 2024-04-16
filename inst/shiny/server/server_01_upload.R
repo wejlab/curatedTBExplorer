@@ -2,7 +2,7 @@
 # Finish local download functionality
 # Perhaps allow specification of exact core (multithreading) usage
 # Add "default" dataset so summary can be viewed without downloading anything
-# Fix issue regarding deselecting datasets - works sometimes
+# Fix issue regarding deselecting datasets - works sometimes - solved
 # Fix issue where if selections are made, then user changes table options, deselection occurs on ui side
 
 # Reactive values for various tasks
@@ -333,17 +333,14 @@ observeEvent(input$continue, {
 })
 
 
-# render selected studies tables on the Summarize tab
-# not currently working - Andrew
-# believe we need to change the selected_studies to work with the selected_studies() as I did for download
-output$selected_studies_table <- renderDT({
-  if (!is.null(vals$selected_studies)) {
-    data.frame(
-      Study = vals$selected_studies,
-      Value = rnorm(length(vals$selected_studies))
-    )
-  }
-})
+# output$selected_studies_table <- renderDT({
+#   if (!is.null(vals$selected_studies)) {
+#     data.frame(
+#       Study = vals$selected_studies,
+#       Value = rnorm(length(vals$selected_studies))
+#     )
+#   }
+# })
 
 
 # added to ensure that every study that is clicked is added
