@@ -363,6 +363,7 @@ observeEvent(input$selected_study, {
   }
 })
 
+# Handles removal of studies from selected_studies list when studies are deselected
 observeEvent(input$deselected_study, {
   current_deselection <- isolate(input$deselected_study)
   current_studies <- vals$selected_studies
