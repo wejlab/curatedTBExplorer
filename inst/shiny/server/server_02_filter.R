@@ -24,12 +24,6 @@ reactive({ # apparently need to be wrapped in reactive to work
   # Combine the studies together in a single SE object
   # combined_studies <- combine_objects(object_list, experiment_name = "assay_curated", update_genes = FALSE)
 })
-# shiny::observe({
-#   if(!is.null(vals$SEList)){
-#     updateSelectInput(session, "filter_by" ,choices = vals$covars)
-#     updateSelectInput(session, "visualize_filter_by", choices = vals$covars)
-#   }
-# })
 
 observeEvent(vals$SEList, {
   if (!is.null(vals$SEList)) {
