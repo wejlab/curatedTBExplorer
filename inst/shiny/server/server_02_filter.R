@@ -1,42 +1,31 @@
 # Reactive values for various tasks
-# selected_studies <- reactiveVal(NULL) # this is used to update the selected studies accordingly
-# continue_clicked <- reactiveVal(FALSE)  # stores if Continue button is clicked
 my_data <- reactiveVal(NULL)
 
 # reactive Value to store selected filters
 selected_filters <- reactiveValues(filters = NULL)
+# Holds the subsetted SE
 subset_SE <- reactiveVal(NULL)
-reset_trigger <- reactiveVal(FALSE)  # Reactive value to trigger UI reset
+# Reactive value to trigger UI reset
+reset_trigger <- reactiveVal(FALSE)
 
 # Render the selected studies text
 output$selected_studies_text <- renderText({
-
-  # Displays downloaded study names or default study if none downloaded
   if (!is.null(names(vals$MAEList))) {
     paste("Selected Studies: ", paste(names(vals$MAEList), collapse = ", "))
   }
 })
 
-reactive({ # apparently need to be wrapped in reactive to work
-  combined_studies <- vals$SEList
-  # move the selected studies in a single object list
-  # object_list <- curatedTBData(vals$selected_studies, dry.run = FALSE, curated.only = TRUE)
-  # Combine the studies together in a single SE object
-  # combined_studies <- combine_objects(object_list, experiment_name = "assay_curated", update_genes = FALSE)
-})
-
+# Updates the Input choices depending on the SE created in first page
 observeEvent(vals$SEList, {
   if (!is.null(vals$SEList)) {
-    updateSelectInput(session, "filter_by" ,choices = vals$covars)
+    updateSelectInput(session, "filter_by", choices = vals$covars)
     updateSelectInput(session, "visualize_filter_by", choices = vals$covars)
   }
 })
 
-
 ############# Dropdowns #######################
 observe({
   filter_by <- input$filter_by
-
   if (!is.null(filter_by)) {
     column_index <- which(vals$covars == filter_by)
     column_values <- vals$colData[, column_index]
@@ -52,7 +41,6 @@ observe({
 })
 
 ############### Add Filter Button ####################
-
 # Add a new filter when the user clicks on "Add Filter" button
 observeEvent(input$add_filter_btn, {
   print(input$filter_by)
@@ -93,9 +81,13 @@ observeEvent(input$add_filter_btn, {
 
 ############### Apply Filter Button ####################
 observeEvent(input$filter_apply_btn, {
+
   print("Filter button clicked")
-  #filtered_data <- combined_studies
   filters <- selected_filters$filters
+
+  View(filters)
+
+
   if(is.null(filters)){
     print("selected filters is null")
     filter_by <- input$filter_by
@@ -104,21 +96,30 @@ observeEvent(input$filter_apply_btn, {
     #Explanation : the values of filter_by and sub_filter have quote around it, we need those quotes removed for only filter_by in order for this command to execute properly
   }
   else{
-    print("selected filters is not null")
-    print(filters)
-    subset_SE <- vals$SEList
-    for (filter in filters) {
-      print(filter$filter_by)
-      filter_by <- filter$filter_by
-      print(filter$sub_filter)
-      sub_filter <- filter$sub_filter
-      subset_SE <- subset_SE[, eval(parse(text = paste0("subset_SE$", filter_by))) == sub_filter]# subset the filter value in SE obj
-      #subset_SE <- combined_studies[combined_studies[[filter_by]] == sub_filter, ]
-    }
+    cat("Selected filters not null")
+    # cat(filters)
 
+    # Creates a temporary storage for SE
+    subset_SE <- vals$SEList
+
+    # Subsets the SE to only include what's listed in the filter
+    for (filter in filters) {
+
+      # Cleans filter and subfilter content
+      filter_by <- gsub("'", "", filter$filter_by)
+      sub_filter <- gsub("'", "", filter$sub_filter)
+
+      # Subsets the SE so it only contains the
+      subset_SE <- subset_SE[, !is.na(colData(subset_SE)[[filter_by]]) & colData(subset_SE)[[filter_by]] == sub_filter]
+    }
+    # View(subset_SE)
+    my_data(as.data.frame(colData(subset_SE)))
+
+    # Applies filtered changes to SEList
+    vals$SEList <- subset_SE
   }
-  my_data(as.data.frame(colData(subset_SE)))
 })
+
 ########### Reset Button ###################
 observeEvent(input$filter_reset_btn, {
   # Reset selected filters to NULL
@@ -130,8 +131,7 @@ observeEvent(input$filter_reset_btn, {
 })
 
 ############# Summary Table ####################
-output$filter_summary_table <- renderDT(
-  {
+output$filter_summary_table <- renderDT({
     datatable(my_data(), options = list(
       ordering = TRUE,
       pageLength = 10,
@@ -143,12 +143,9 @@ output$filter_summary_table <- renderDT(
         "}"
       ),
       rowCallback = JS(
-
       )
     ))
-
-  }
-)
+})
 ########### Visualize Tab ################
 
 # Generate the visualization based on user inputs
