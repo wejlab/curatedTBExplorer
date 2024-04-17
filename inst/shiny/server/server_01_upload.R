@@ -329,6 +329,11 @@ observeEvent(input$confirmStudiesBtn, {
           vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated", log = TRUE)
         }
         incProgress(2 / 2, message = "Studies Confirmed")
+
+        vals$colData <- colData(vals$SEList)
+        vals$covars <- colnames(colData(vals$SEList))
+        vals$datassays <- names(assays(vals$SEList))
+
         # View(vals$SEList)
       }, error = function(e) {
         cat("Error:", conditionMessage(e), "\n")

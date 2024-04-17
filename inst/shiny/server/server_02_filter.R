@@ -11,15 +11,10 @@ reset_trigger <- reactiveVal(FALSE)  # Reactive value to trigger UI reset
 # Render the selected studies text
 output$selected_studies_text <- renderText({
 
-  # paste("Selected Studies: ", paste(vals$selected_studies, collapse = ", "))
-
   # Displays downloaded study names or default study if none downloaded
   if (!is.null(names(vals$MAEList))) {
     paste("Selected Studies: ", paste(names(vals$MAEList), collapse = ", "))
   }
-  # else {
-  #   paste("Selected Studies: ", paste(names(vals$defaultStudy), collapse = ", "))
-  # }
 })
 
 reactive({ # apparently need to be wrapped in reactive to work
@@ -29,8 +24,15 @@ reactive({ # apparently need to be wrapped in reactive to work
   # Combine the studies together in a single SE object
   # combined_studies <- combine_objects(object_list, experiment_name = "assay_curated", update_genes = FALSE)
 })
-shiny::observe({
-  if(!is.null(vals$SEList)){
+# shiny::observe({
+#   if(!is.null(vals$SEList)){
+#     updateSelectInput(session, "filter_by" ,choices = vals$covars)
+#     updateSelectInput(session, "visualize_filter_by", choices = vals$covars)
+#   }
+# })
+
+observeEvent(vals$SEList, {
+  if (!is.null(vals$SEList)) {
     updateSelectInput(session, "filter_by" ,choices = vals$covars)
     updateSelectInput(session, "visualize_filter_by", choices = vals$covars)
   }
