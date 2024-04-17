@@ -26,6 +26,7 @@ vals <- reactiveValues(
   SEList = NULL,
 )
 
+# Variables to hold local downloaded and default studies
 locallyDownloadedStudies <- list()
 tempdefaultStudy <- list()
 
@@ -86,8 +87,7 @@ tryCatch(
   }
 )
 
-# Adding up the starting session
-
+# Sets up starting sessionMAEList with local and default studies
 if(length(intersect(names(tempdefaultStudy), names(locallyDownloadedStudies))) > 0) {
   vals$sessionMAEList <- c(tempdefaultStudy, locallyDownloadedStudies[!(names(locallyDownloadedStudies) %in% names(tempdefaultStudy))])
 } else {
@@ -232,12 +232,15 @@ observeEvent(input$downloadStudiesBtn, {
 
     # If there are studies left to download
     if (length(studies_to_download) > 0) {
+
       # Adds progress message
       withProgress(message = "Downloading Datasets...", value = 0, {
+
         n <- length(studies_to_download)
         curated_only_value <- vals$curated_only
         dLLocal_value <- vals$local_download
 
+        # Does Multi-thread download if 4 or more studies chosen. Single threaded otherwise.
         if (vals$multithread_value && n >= 4) {
           cat("Multi-thread download starting...\n")
 
@@ -270,6 +273,7 @@ observeEvent(input$downloadStudiesBtn, {
             # Adds downloaded study data to MAEList
             vals$sessionMAEList <- c(vals$sessionMAEList, study_data)
 
+            # Updates the progress bar
             incProgress(1 / n)
 
             return(study_data)
@@ -277,6 +281,8 @@ observeEvent(input$downloadStudiesBtn, {
         }
 
         if (dLLocal_value) {
+
+          # Updates progress bar
           cat("Local download starting...\n")
           incProgress(1/2, message = "Starting Local Download")
 
@@ -298,21 +304,27 @@ observeEvent(input$downloadStudiesBtn, {
       cat("All selected studies are already available locally. Skipping download step.\n")
     }
 
+    #
     updateSelectizeInput(session, "selectedActiveMAEList", choices = names(vals$sessionMAEList))
+
+    # Shows notification after finishing
     showNotification("Finished Downloading Studies", type = "message")
   } else {
     cat("Please select a study first\n")
   }
 })
 
+# Sets studies to use for rest of package
 observeEvent(input$confirmStudiesBtn, {
   withProgress(message = "Confirming Studies...", value = 0, {
+
     # Confirms that something is selected in the selectize
     if(length(input$selectedActiveMAEList) > 0) {
+
       # Compare vals$sessionMAEList to vals$localMAEList and add any missing studies to localMAEList
       vals$MAEList <- vals$sessionMAEList[input$selectedActiveMAEList]
-      # View(vals$MAEList)
-      # vals$MAEList <- input$selectedActiveMAEList
+
+      # Resets the SEList so we don't get compounding errors
       vals$SEList <- NULL
 
       # Error handling for if making assay doesn't work
@@ -330,11 +342,14 @@ observeEvent(input$confirmStudiesBtn, {
         }
         incProgress(2 / 2, message = "Studies Confirmed")
 
+        # Sets values for filter tab
         vals$colData <- colData(vals$SEList)
         vals$covars <- colnames(colData(vals$SEList))
         vals$datassays <- names(assays(vals$SEList))
 
-        # View(vals$SEList)
+        # Sets up the dataTable in filter page:
+        my_data(as.data.frame(colData(vals$SEList)))
+
       }, error = function(e) {
         cat("Error:", conditionMessage(e), "\n")
       })
@@ -372,6 +387,7 @@ observeEvent(input$deselected_study, {
   }
 })
 
+# Code for testing
 # output$test <- renderText({
 #   paste(
 #     "sessionMAEList: ", paste(names(vals$sessionMAEList), collapse = ", "), "\n",
