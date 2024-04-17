@@ -86,6 +86,16 @@ rv <- reactiveValues(
   testingSE = NULL,
 )
 
+observeEvent(vals$SEList, {
+  if (!is.null(vals$SEList)) {
+    vals$mlList <- vals$SEList
+    study_info <- colData(vals$mlList)$Study
+    unique_study_values <- unique(study_info)
+    updateSelectizeInput(session, "selectedTrainingData", choices = unique_study_values)
+    updateSelectizeInput(session, "selectedTestingData", choices = unique_study_values)
+  }
+})
+
 # Updates outcome choice 1 reactive based on user selection
 outcomeChoice1 <- reactive({
   input$oc1
@@ -100,6 +110,9 @@ outcomeChoice2 <- reactive({
 observeEvent(input$confirmDataset, {
   selectedTrainingList <- input$selectedTrainingData
   selectedTestingList <- input$selectedTestingData
+
+  View(selectedTrainingList)
+  View(selectedTestingList)
 
   vals$statusList <- vals$mlList$TBStatus
   # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
@@ -213,18 +226,15 @@ observeEvent(input$confirmDataset, {
 
 })
 
-observe({
+mlList <- reactive({
   if (!is.null(vals$SEList)) {
-    #Update selectize input
-    isolate({
-      vals$mlList <- vals$SEList
-      study_info <- colData(vals$mlList)$Study
-      unique_study_values <- unique(study_info)
-      updateSelectizeInput(session, "selectedTrainingData", choices = unique_study_values)
-      updateSelectizeInput(session, "selectedTestingData", choices = unique_study_values)
-    })
+    vals$SEList
+  } else {
+    NULL
   }
 })
+
+
 
 # Just for checking work
 reactive({

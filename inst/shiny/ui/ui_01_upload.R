@@ -7,7 +7,7 @@ tabPanel(
   sidebarLayout(
     sidebarPanel(
       div(style = "margin-top: -20px; border-bottom: 1px solid #ccc",
-        h3("Table Display Options: ")
+          h3("Table Display Options: ")
       ),
 
       # Checkbox inputs for choosing displayed columns on the table
@@ -50,7 +50,12 @@ tabPanel(
           HTML("<br>"),
 
           # Button to continue and download selected studies
-          div(style = "display:inline-block; float: right", actionButton("continue", "Continue"))
+          actionButton("downloadStudiesBtn", "Download Studies", style = "width: 100%"),
+
+          HTML("<hr>"),
+          selectizeInput("selectedActiveMAEList", "Select Datasets To Use", choices = list(), multiple = TRUE, width = "100%"),
+          actionButton("confirmStudiesBtn", "Confirm Selected Studies"),
+          # textOutput("test")
         )
       )
     )
