@@ -416,9 +416,12 @@ server <- function(input, output, session) {
 
   # Function to train the neural network
   train_neural_network <- function() {
-    # Place for neural network training code here
     # This will involve defining and training a neural network model using the specified parameters
-
+    nn_caret <- caret::train(Species~., data = rv$trainingData,
+                             method = "nnet", linout = TRUE,
+                             trace = FALSE)
+                             ps <- predict(nn_caret, rv$trainingData)
+                             confusionMatrix(ps, rv$trainingData$Species)$overall["Accuracy"]
     # For demonstration purposes, let's just print a message indicating training started
     print("Neural network training started...")
 
