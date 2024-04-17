@@ -53,6 +53,8 @@ tabPanel(
           actionButton("downloadStudiesBtn", "Download Studies", style = "width: 100%"),
 
           HTML("<hr>"),
+
+          # Displays selectize for selecting dataset to use
           selectizeInput("selectedActiveMAEList", "Select Datasets To Use", choices = list(), multiple = TRUE, width = "100%"),
           actionButton("confirmStudiesBtn", "Confirm Selected Studies"),
           # textOutput("test")
