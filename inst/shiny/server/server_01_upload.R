@@ -270,12 +270,15 @@ observeEvent(input$downloadStudiesBtn, {
             # Adds downloaded study data to MAEList
             vals$sessionMAEList <- c(vals$sessionMAEList, study_data)
 
+            incProgress(1 / n)
+
             return(study_data)
           })
         }
 
         if (dLLocal_value) {
           cat("Local download starting...\n")
+          incProgress(1/2, message = "Starting Local Download")
 
           # Compare vals$sessionMAEList to vals$localMAEList and add any missing studies to localMAEList
           studies_to_add_locally <- vals$sessionMAEList[!names(vals$sessionMAEList) %in% names(vals$localMAEList)]
@@ -303,38 +306,38 @@ observeEvent(input$downloadStudiesBtn, {
 })
 
 observeEvent(input$confirmStudiesBtn, {
-  # View(input$selectedActiveMAEList)
-  # View(vals$sessionMAEList)
+  withProgress(message = "Confirming Studies...", value = 0, {
+    # Confirms that something is selected in the selectize
+    if(length(input$selectedActiveMAEList) > 0) {
+      # Compare vals$sessionMAEList to vals$localMAEList and add any missing studies to localMAEList
+      vals$MAEList <- vals$sessionMAEList[input$selectedActiveMAEList]
+      # View(vals$MAEList)
+      # vals$MAEList <- input$selectedActiveMAEList
+      vals$SEList <- NULL
 
-  # Confirms that something is selected in the selectize
-  if(length(input$selectedActiveMAEList) > 0) {
-    # Compare vals$sessionMAEList to vals$localMAEList and add any missing studies to localMAEList
-    vals$MAEList <- vals$sessionMAEList[input$selectedActiveMAEList]
-    # View(vals$MAEList)
-    # vals$MAEList <- input$selectedActiveMAEList
-    vals$SEList <- NULL
+      # Error handling for if making assay doesn't work
+      tryCatch({
 
-    # Error handling for if making assay doesn't work
-    tryCatch({
-
-      # Converts MAEList to SEList differently depending on how it's done
-      if (length(vals$MAEList) > 1) {
-        vals$SEList <- combine_objects(vals$MAEList, experiment_name = "assay_curated", update_genes = FALSE)
-        vals$SEList <- mkAssay(vals$SEList, input_name = "assay1", log = TRUE)
-      } else {
-        vals$SEList <- toSE(vals$MAEList)
-        vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated", log = TRUE)
-      }
-
-      # View(vals$SEList)
-    }, error = function(e) {
-      cat("Error:", conditionMessage(e), "\n")
-    })
-
-  } else {
-    showNotification("Please select at least 1 study to use", type = "warning")
-  }
-
+        # Converts MAEList to SEList differently depending on how it's done
+        if (length(vals$MAEList) > 1) {
+          incProgress(1 / 2, message = "Converting Studies")
+          vals$SEList <- combine_objects(vals$MAEList, experiment_name = "assay_curated", update_genes = FALSE)
+          vals$SEList <- mkAssay(vals$SEList, input_name = "assay1", log = TRUE)
+        } else {
+          incProgress(1 / 2, message = "Converting Studies")
+          vals$SEList <- toSE(vals$MAEList)
+          vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated", log = TRUE)
+        }
+        incProgress(2 / 2, message = "Studies Confirmed")
+        # View(vals$SEList)
+      }, error = function(e) {
+        cat("Error:", conditionMessage(e), "\n")
+      })
+      showNotification("Studies Confirmed", type = "message")
+    } else {
+      showNotification("Please select at least 1 study to use", type = "warning")
+    }
+  })
 })
 
 # Handles addition of studies to selected_studies list when studies are selected
