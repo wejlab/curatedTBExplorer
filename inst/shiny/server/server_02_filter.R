@@ -148,27 +148,75 @@ output$filter_summary_table <- renderDT({
 })
 ########### Visualize Tab ################
 
-# Generate the visualization based on user inputs
+# Generates visualizations
 observeEvent(input$visualize_btn, {
   filter_by <- input$visualize_filter_by
 
-  data <- my_data()
+  data <- as.data.frame(vals$SEList@colData)
+  View(data)
 
   if (!is.null(filter_by)) {
     # Generate the top graph
     output$top_visualization <- renderPlot({
       ggplot(data = data, aes_string(x = filter_by)) +
         geom_bar() +
-        labs(x = filter_by, y = "Frequency", title = "Top Plot")
+        labs(x = filter_by, y = "Frequency", title = paste("Histogram of", filter_by, sep = " "))
     })
 
-    # Generate the bottom graph
-    output$bottom_visualization <- renderPlot({
-      ggplot(data = data, aes(x = filter_by, fill = filter_by)) +
-        geom_bar() +
-        coord_polar(theta = "y") +
-        labs(x = "", y = "", title = "Bottom Plot")
+    # For Categorical Data
+    # output$pieChart <- renderPlotly({
+    #   # # Getting the dataset
+    #   # values_list <- as.character(vals$SEList$filter_by)
+    #   #
+    #   # # Convert list to dataframe
+    #   # df <- data.frame(Category = values_list)
+    #   #
+    #   # # Filter out NA or non-finite values
+    #   # df <- df[!is.na(df$Category) & df$Category != "NA" & df$Category != "NaN", ]
+    #   #
+    #   # # Convert Category to factor
+    #   # df$Category <- as.factor(df$Category)
+    #   #
+    #   # # Summarize counts
+    #   # df_counts <- df %>%
+    #   #   group_by(Category) %>%
+    #   #   summarise(Count = n())
+    #   #
+    #   # plot_ly(
+    #   #   data = df_counts,
+    #   #   labels = ~Category,
+    #   #   values = ~Count,
+    #   #   type = "pie",
+    #   #   textinfo = "percent",
+    #   #   textposition = "inside",
+    #   #   hoverinfo = "label+percent"
+    #   # ) %>%
+    #   #   layout(title = "Pie Chart Example")
+    # })
+
+
+
+
+    # For Numerical Data
+    output$boxPlot <- renderPlot({
+
     })
+
   }
+})
+
+# Summary Stats Table
+output$summaryStatsTable <- renderTable({
+  dat <- list()
+  dat['Number of Samples'] <- round(length(vals$SEList@colData@rownames))
+  dat['Number of Covariates'] <- round(length(names(vals$SEList@colData)))
+  df <- as.data.frame(unlist(dat))
+
+  # Formatting
+  df$temp <- rownames(df)
+  colnames(df) <- c("", "Summary Statistics")
+  df <- df[,c(2,1)]
+  df[,2] <- as.character(round(df[,2]))
+  return(df)
 })
 

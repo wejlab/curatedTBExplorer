@@ -57,6 +57,10 @@ tabPanel(
     tabPanel(
       "Visualize",
       sidebarPanel(
+
+        # Summary Table
+        tableOutput("summaryStatsTable"),
+
         # Dropdown box for selecting variable to filter by
         selectInput("visualize_filter_by", "Filter By",
                     choices = NULL
@@ -64,9 +68,15 @@ tabPanel(
         actionButton("visualize_btn", "Visualize")
       ),
       mainPanel(
-        # Placeholder for the visualization output
-        plotOutput("top_visualization"),
-        plotOutput("bottom_visualization")
+        fluidRow(
+          column(6,
+            plotOutput("top_visualization"),
+            plotOutput("pieChart")
+          ),
+          column(6,
+            plotOutput("boxPlot")
+          )
+        )
       )
     )
   ),
