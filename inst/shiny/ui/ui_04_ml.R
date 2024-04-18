@@ -16,9 +16,9 @@ tabPanel(
       ##########################################################################
       # selectInput("oc1", "Outcome", choices = c("LTBI", "PTB", "Control", "OD")),
       # selectInput("oc2", "Compared Outcome", choices = c("LTBI", "PTB", "Control", "OD")),
-      selectInput("mainPredictor", "Prediction Class", choices = NULL),
-      selectInput("oc1", "Outcome", choices = NULL),
-      selectInput("oc2", "Compared Outcome", choices = NULL),
+      # selectInput("mainPredictor", "Prediction Class", choices = NULL),
+      # selectInput("oc1", "Outcome", choices = NULL),
+      # selectInput("oc2", "Compared Outcome", choices = NULL),
       numericInput("featureSelectionCount", "Feature Count", value = 500, min = 0, step = 1),
       numericInput("foldCount", "Cross Validation Folds", value = 10, min = 0, step = 1)
     ),
@@ -65,6 +65,7 @@ tabPanel(
         "Random Forests",
         numericInput("numTrees", "Number of Trees Generated:", value = 500, min = 1),
         numericInput("nodeSize", "Size of Each Node:", value = 5, min = 1),
+        numericInput("mtryInput", "mtry:", value = 2, min = 1),
         actionButton("continueRF", "Continue")
       ),
       mainPanel(

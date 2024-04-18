@@ -1,80 +1,4 @@
 # Code For General Settings And Selecting Datasets
-
-#these observe blocks grab the available inputs for the prediction
-#they then dynamically change the outcome tabs as necessary, including an "all" option for oc2
-observe({
-  if (!is.null(vals$mlList)) {
-    col_data <- colData(vals$mlList)
-
-    #filter out columns that are ALL NA values (some NA values are allowed)
-    rv$non_na_cols <- col_data[, !apply(col_data, 2, function(x) all(is.na(x)))]
-    updateSelectInput(session, "mainPredictor", choices = names(rv$non_na_cols)[!(names(rv$non_na_cols) %in% c("Age", "PatientID"))])
-  }
-})
-
-#if mainPredictor updates, the oc1 and oc2 dropdowns change accordingly
-observeEvent(input$mainPredictor, {
-  rv$selected_main_predictor <- input$mainPredictor
-  selected_column <- rv$non_na_cols[[rv$selected_main_predictor]]
-  non_na_values <- na.omit(selected_column)
-
-  updateSelectInput(session, "oc1", choices = unique(non_na_values))
-})
-
-#oc2 value shouldn't be oc1, this block ensures this isn't possible
-observeEvent(input$oc1, {
-  selected_column <- rv$non_na_cols[[rv$selected_main_predictor]]
-  non_na_values <- na.omit(selected_column)
-
-  oc1_val <- input$oc1
-  if(oc1_val != ""){
-    oc2_choices <- setdiff(non_na_values, oc1_val)
-  } else {
-    oc2_choices <- non_na_values
-  }
-
-  if (length(oc2_choices) > 1) {
-    oc2_choices <- c(oc2_choices, "All")
-  }
-
-  updateSelectInput(session, "oc2", choices = oc2_choices)
-})
-
-# observeEvent(input$oc2, {
-#   if(input$oc2 == "All") {
-#     # If oc2 is "All", compare oc1 to all other values in vals$mlList[[mainPredictor]]
-#     # oc1_value <- input$oc1
-#     # all_values <- unique(vals$mlList[[input$mainPredictor]])
-#     # all_values <- all_values[all_values != oc1_value]  # Exclude oc1 from comparison
-#     # vals$mlList[[input$mainPredictor]] <- factor(ifelse(vals$mlList[[input$mainPredictor]] == oc1_value, "Yes", "Ignore"))
-#     vals$mlList[[input$mainPredictor]] <- factor(ifelse(vals$mlList[[input$mainPredictor]] == input$oc1, "Yes", "No"))
-#   } else {
-#     # If oc2 is not "All", compare oc1 to oc2
-#     oc1_value <- input$oc1
-#     oc2_value <- input$oc2
-#     vals$mlList[[input$mainPredictor]] <- factor(ifelse(vals$mlList[[input$mainPredictor]] == oc1_value, "Yes", ifelse(vals$mlList[[input$mainPredictor]] == oc2_value, "No", "Ignore")))
-#   }
-# })
-
-
-#
-# observeEvent(input$oc2, {
-#   # print(input$oc2)
-#
-#   if(input$oc2 == "All") {
-#     print("test")
-#     main_val <- input$mainPredictor
-#     vals$mlList$selection <- factor(ifelse(vals$mlList[[main_val]] == input$oc1, "Yes", "No"))
-#     View(vals$mlList$selection)
-#   } else {
-#     print("not all")
-#   }
-#
-# })
-
-
-
-#do we still need this, as we update outcomeChoice1 and 2 below? - Andrew
 rv <- reactiveValues(
   # Holds the users' choices for outcomes
   # Still need to figure out the format that this will come in
@@ -85,16 +9,6 @@ rv <- reactiveValues(
   trainingSE = NULL,
   testingSE = NULL,
 )
-
-observeEvent(vals$SEList, {
-  if (!is.null(vals$SEList)) {
-    vals$mlList <- vals$SEList
-    study_info <- colData(vals$mlList)$Study
-    unique_study_values <- unique(study_info)
-    updateSelectizeInput(session, "selectedTrainingData", choices = unique_study_values)
-    updateSelectizeInput(session, "selectedTestingData", choices = unique_study_values)
-  }
-})
 
 # Updates outcome choice 1 reactive based on user selection
 outcomeChoice1 <- reactive({
@@ -114,56 +28,15 @@ observeEvent(input$confirmDataset, {
   View(selectedTrainingList)
   View(selectedTestingList)
 
-  vals$statusList <- vals$mlList$TBStatus
   # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
+  vals$statusList <- vals$mlList$TBStatus
 
+  # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
+  vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
 
-  # if(outcomeChoice2 == "All"){
-  #   # vals$mlList$selection <- factor(ifelse(vals$mlList$input$mainPredictor == input$oc1, "Yes", "No"))
-  #   View(vals$mlList[[input$mainPredictor]])
-  #   # vals$mlList$selection <- factor(ifelse(vals$mlList[[input$mainPredictor]] == input$oc1, "Yes", "No"))
-  #   vals$mlList$selection <- factor(ifelse(as.character(vals$mlList[[input$mainPredictor]]) == input$oc1, "Yes", "No"))
-  #   print("test")
-  # } else {
-  #   print("wrong input")
-  # }
-
-  # vals$mlList$TBStatusTrue <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
-  # vals$mlList$TBStatusFalse <- factor(ifelse(vals$mlList$TBStatus == "LTBI", "TBYes", "TBNo"))
-
-  # View(vals$mlList$TBStatus)
   # Running DE_analyze function from BATCHQC
-  # vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
-  print(input$oc1)
-  print(input$oc2)
+  vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
 
-
-  #########################
-  #here we need to grab Everything if the value is All, but only compare between two things if else
-  # if(input$oc2 == "All"){
-  #   vals$mlList[[input$mainPredictor]] <- factor(ifelse(vals$mlList[[input$mainPredictor]] == input$oc1, "Yes", "No"))
-  # } else {
-  #   print("not All")
-  # }
-
-  if(input$oc2 == "All") {
-    # If oc2 is "All", compare oc1 to all other values in vals$mlList[[mainPredictor]]
-    # oc1_value <- input$oc1
-    # all_values <- unique(vals$mlList[[input$mainPredictor]])
-    # all_values <- all_values[all_values != oc1_value]  # Exclude oc1 from comparison
-    # vals$mlList[[input$mainPredictor]] <- factor(ifelse(vals$mlList[[input$mainPredictor]] == oc1_value, "Yes", "Ignore"))
-    vals$mlList[[input$mainPredictor]] <- factor(ifelse(vals$mlList[[input$mainPredictor]] == input$oc1, "Yes", "No"))
-  } else {
-    # If oc2 is not "All", compare oc1 to oc2
-    oc1_value <- input$oc1
-    oc2_value <- input$oc2
-    vals$mlList[[input$mainPredictor]] <- factor(ifelse(vals$mlList[[input$mainPredictor]] == oc1_value, "Yes", ifelse(vals$mlList[[input$mainPredictor]] == oc2_value, "No", "Ignore")))
-  }
-
-
-  View(vals$mlList[[input$mainPredictor]])
-  vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", input$mainPredictor, 'log_assay1_cpm')
-  print("test")
   View(vals$DE)
 
   # Filters out when padj is less than or equal to 0.05
@@ -213,6 +86,7 @@ observeEvent(input$confirmDataset, {
   training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
   col_data <- colData(rv$trainingSE)
   col_data$TBStatus <- factor(col_data$TBStatus, levels = c("TBYes", "TBNo"))
+
   #data is our training dataframe
   rv$trainingData <- data.frame(TBStatus = col_data$TBStatus, t(training_assay_data))
   rv$trainingData$TBStatus <- factor(rv$trainingData$TBStatus, levels = c("TBYes", "TBNo"))
@@ -224,8 +98,24 @@ observeEvent(input$confirmDataset, {
   rv$testData <- data.frame(TBStatus = testing_col_data$TBStatus, t(testing_assay_data))
   rv$testData$TBStatus <- factor(rv$testData$TBStatus, levels = c("TBYes", "TBNo"))
 
+
+  View(rv$trainingSE)
+  View(rv$testingSE)
+
 })
 
+# Updates mlList and Selectize Inputs every time SEList is updated
+observeEvent(vals$SEList, {
+  if (!is.null(vals$SEList)) {
+    vals$mlList <- vals$SEList
+    study_info <- colData(vals$mlList)$Study
+    unique_study_values <- unique(study_info)
+    updateSelectizeInput(session, "selectedTrainingData", choices = unique_study_values)
+    updateSelectizeInput(session, "selectedTestingData", choices = unique_study_values)
+  }
+})
+
+# Sets mlList to reactive
 mlList <- reactive({
   if (!is.null(vals$SEList)) {
     vals$SEList
@@ -234,16 +124,14 @@ mlList <- reactive({
   }
 })
 
-
-
-# Just for checking work
-reactive({
-  # View(names$SEList)
-})
-
 # Code for Random Forests
 observeEvent(input$continueRF, {
   rfSE <- rv$trainingSE
+
+
+  ##############################################################################
+  print("Fine")
+  ##############################################################################
 
   # Setting control settings for random forest model
   control <- trainControl(
@@ -253,13 +141,18 @@ observeEvent(input$continueRF, {
     classProbs = TRUE
   )
 
+  ##############################################################################
+  print("Fine")
+  #########################ERRRORRR OCCURRS HERRRRRE#########################
+  ##############################################################################
+
   withProgress(message = "Training Model...", value = 0, {
     progress <- 0
     rfModel <- caret::train(
       TBStatus ~ .,
       data = rv$trainingData,
       method = "rf",
-      tuneGrid = data.frame(mtry = 2),
+      tuneGrid = data.frame(mtry = input$mtryInput),
       nodesize = input$nodeSize,
       ntree = input$numTrees,
       trControl = control)
@@ -271,6 +164,10 @@ observeEvent(input$continueRF, {
     })
     showNotification("Finished Generating Random Forest Model", type = "message")
   })
+
+  ##############################################################################
+  print("Fine")
+  ##############################################################################
 
 ################################################################################
 # COMMENTED OUT SINCE IT ONLY DETECTS BEST NODESIZE
@@ -313,78 +210,77 @@ observeEvent(input$continueRF, {
 
 # Code for Support Vector Machines
 observeEvent(input$continueSVM, {
-    if(input$kernelType == "Linear"){
-      kType <- "svmLinear"
-    } else if(input$kernelType == "Radial"){
-      kType <- "svmRadial"
-    } else {
-      kType <- "svmPoly"
-    }
-    #cross validation and SVM training
-    ctrl <- trainControl(method = "cv", number = input$foldCount)
-    svm_model <- caret::train(TBStatus ~ .,
-                       data = rv$trainingData,
-                       method = kType,
-                       trControl = ctrl)
-    importance <- varImp(svm_model)
-    # View(importance)
-    output$svmImportancePlot <- renderPlot({
-      plot(importance, main = "Importance Plot")
-    })
+  if(input$kernelType == "Linear"){
+    kType <- "svmLinear"
+  } else if(input$kernelType == "Radial"){
+    kType <- "svmRadial"
+  } else {
+    kType <- "svmPoly"
+  }
+  #cross validation and SVM training
+  ctrl <- trainControl(method = "cv", number = input$foldCount)
+  svm_model <- caret::train(TBStatus ~ .,
+                            data = rv$trainingData,
+                            method = kType,
+                            trControl = ctrl)
+  importance <- varImp(svm_model)
+  # View(importance)
+  output$svmImportancePlot <- renderPlot({
+    plot(importance, main = "Importance Plot")
+  })
 
 
-    #gene selection
-    #included are the top 5, ten, any genes above 90, and any above 80, for comparison purposes
-    #grabs the top genes from the importance matrix
-    #tbYes will need to change dependent on user selection further up -> will basically be OC1
-    sorted_data <- importance$importance[order(importance$importance$TBYes, decreasing = TRUE), ]
-    #select the top 5 genes after sorting
-    top_five <- sorted_data[1:5, , drop = FALSE]
-    # View(top)
-    #select the top 10 genes after sorting
-    top_genes <- sorted_data[1:10, , drop = FALSE]
-    # View(top_genes)
-    #select any genes which are greater than 90
-    genes_above_90 <- importance$importance[importance$importance$TBYes >= 90, , drop = FALSE]
-    # View(genes_above_90)
-    #and select any genes which are greater than 80
-    genes_above_80 <- importance$importance[importance$importance$TBYes >= 80, , drop = FALSE]
-    # View(genes_above_80)
+  #gene selection
+  #included are the top 5, ten, any genes above 90, and any above 80, for comparison purposes
+  #grabs the top genes from the importance matrix
+  sorted_data <- importance$importance[order(importance$importance$TBYes, decreasing = TRUE), ]
+  #select the top 5 genes after sorting
+  top_five <- sorted_data[1:5, , drop = FALSE]
+  # View(top)
+  #select the top 10 genes after sorting
+  top_genes <- sorted_data[1:10, , drop = FALSE]
+  # View(top_genes)
+  #select any genes which are greater than 90
+  genes_above_90 <- importance$importance[importance$importance$TBYes >= 90, , drop = FALSE]
+  # View(genes_above_90)
+  #and select any genes which are greater than 80
+  genes_above_80 <- importance$importance[importance$importance$TBYes >= 80, , drop = FALSE]
+  # View(genes_above_80)
 
 
-    #this sends the identified genes to the TBsignatureprofiler
-    TBsignatures_reactive <- reactive({
-      top_five <- as.list(rownames(top_five))
-      top_five_list <- CharacterList(top_five)
-      top_genes <- as.list(rownames(top_genes))
-      top_genes_list <- CharacterList(top_genes)
-      genes_above_90 <- as.list(rownames(genes_above_90))
-      genes_above_90_list <- CharacterList(genes_above_90)
-      genes_above_80 <- as.list(rownames(genes_above_80))
-      genes_above_80_list <- CharacterList(genes_above_80)
-      TBsignatures <- c(TBsignatures, list(TopFive = top_five_list@unlistData), list(TopGenes = top_genes_list@unlistData), list(GenesAbove90 =genes_above_90_list@unlistData), list(GenesAbove80 = genes_above_80_list@unlistData))
-    })
-    observe({
-      TBsignatures <- TBsignatures_reactive()
-      rv$TBsignatures_reactive <- TBsignatures_reactive()
-    })
+  #this sends the identified genes to the TBsignatureprofiler
+  TBsignatures_reactive <- reactive({
+    top_five <- as.list(rownames(top_five))
+    top_five_list <- CharacterList(top_five)
+    top_genes <- as.list(rownames(top_genes))
+    top_genes_list <- CharacterList(top_genes)
+    genes_above_90 <- as.list(rownames(genes_above_90))
+    genes_above_90_list <- CharacterList(genes_above_90)
+    genes_above_80 <- as.list(rownames(genes_above_80))
+    genes_above_80_list <- CharacterList(genes_above_80)
+    TBsignatures <- c(TBsignatures, list(TopFive = top_five_list@unlistData), list(TopGenes = top_genes_list@unlistData), list(GenesAbove90 =genes_above_90_list@unlistData), list(GenesAbove80 = genes_above_80_list@unlistData))
+  })
+  observe({
+    TBsignatures <- TBsignatures_reactive()
+    rv$TBsignatures_reactive <- TBsignatures_reactive()
+  })
 
 
-    #create predictions based on the testing data/ svm training
-    predictions <- predict(svm_model, rv$testData)
-    # View(predictions)
-    print(predictions)
+  #create predictions based on the testing data/ svm training
+  predictions <- predict(svm_model, rv$testData)
+  # View(predictions)
+  print(predictions)
 
-    #confusion matrix
-    confusion_matrix <- table(predictions, rv$testData$TBStatus)
-    output$svmMatrix <- renderPlot({
-      plot(confusion_matrix, main = "Confusion Matrix", cex.main = 1.2)
-    })
-    print(confusion_matrix)
+  #confusion matrix
+  confusion_matrix <- table(predictions, rv$testData$TBStatus)
+  output$svmMatrix <- renderPlot({
+    plot(confusion_matrix, main = "Confusion Matrix", cex.main = 1.2)
+  })
+  print(confusion_matrix)
 
-    #accuracy
-    accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-    print(paste("Accuracy In Testing:", accuracy))
+  #accuracy
+  accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+  print(paste("Accuracy In Testing:", accuracy))
 
 })
 # Code for Elastic Net Regression

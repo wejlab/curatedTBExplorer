@@ -346,6 +346,7 @@ observeEvent(input$confirmStudiesBtn, {
         vals$colData <- colData(vals$SEList)
         vals$covars <- colnames(colData(vals$SEList))
         vals$datassays <- names(assays(vals$SEList))
+        vals$backupSE <- vals$SEList
 
         # Sets up the dataTable in filter page:
         my_data(as.data.frame(colData(vals$SEList)))
@@ -354,6 +355,7 @@ observeEvent(input$confirmStudiesBtn, {
         cat("Error:", conditionMessage(e), "\n")
       })
       showNotification("Studies Confirmed", type = "message")
+      View(vals$SEList)
     } else {
       showNotification("Please select at least 1 study to use", type = "warning")
     }
