@@ -29,7 +29,8 @@ Imports:
     shiny, 
     shinyjs, 
     shinyWidgets, 
-    TBSignatureProfiler
+    TBSignatureProfiler, 
+    HGNChelper
 Suggests: 
     dplyr, 
     DT, 
