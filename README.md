@@ -13,6 +13,7 @@ BiocManager::install("MultiAssayExperiment")
 BiocManager::install("SummarizedExperiment")
 BiocManager::install("TBSignatureProfiler")
 BiocManager::install("curatedTBData")
+BiocManager::install("scran")
 ```
 
 
