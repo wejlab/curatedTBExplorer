@@ -30,7 +30,7 @@ tabPanel(
       actionButton("confirmDataset", "Confirm Datasets")
     )
   ),
-   tabsetPanel(
+  tabsetPanel(
     # Contains general settings for the machine learning
     tabPanel(
       "Elastic Net Regression",
@@ -69,9 +69,15 @@ tabPanel(
         actionButton("continueRF", "Continue")
       ),
       mainPanel(
-        plotOutput("rfNumTreesPlot", width = "100%", height = "500px"),
-        plotOutput("rfNodeSizePlot", width = "100%", height = "500px"),
-        shinycssloaders::withSpinner(plotOutput("rfImportancePlot", width = "100%", height = "5000px"))
+        fluidRow(
+          column(
+            6
+          ),
+          column(
+            6,
+            shinycssloaders::withSpinner(plotOutput("rfImportancePlot", width = "100%", height = "5000px"))
+          )
+        )
       )
     ),
     tabPanel(
@@ -87,5 +93,5 @@ tabPanel(
         plotOutput("svmMatrix")
       )
     )
-  )
+  ),
 )

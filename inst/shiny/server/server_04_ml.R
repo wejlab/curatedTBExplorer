@@ -25,8 +25,8 @@ observeEvent(input$confirmDataset, {
   selectedTrainingList <- input$selectedTrainingData
   selectedTestingList <- input$selectedTestingData
 
-  View(selectedTrainingList)
-  View(selectedTestingList)
+  # View(selectedTrainingList)
+  # View(selectedTestingList)
 
   # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
   vals$statusList <- vals$mlList$TBStatus
@@ -37,7 +37,7 @@ observeEvent(input$confirmDataset, {
   # Running DE_analyze function from BATCHQC
   vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
 
-  View(vals$DE)
+  # View(vals$DE)
 
   # Filters out when padj is less than or equal to 0.05
   vals$filtered <- lapply(vals$DE, function(df) {
@@ -99,9 +99,9 @@ observeEvent(input$confirmDataset, {
   rv$testData$TBStatus <- factor(rv$testData$TBStatus, levels = c("TBYes", "TBNo"))
 
 
-  View(rv$trainingSE)
-  View(rv$testingSE)
-
+  # View(rv$trainingSE)
+  # View(rv$testingSE)
+  showNotification("Dataset Confirmed", type = "message")
 })
 
 # Updates mlList and Selectize Inputs every time SEList is updated
@@ -126,28 +126,16 @@ mlList <- reactive({
 
 # Code for Random Forests
 observeEvent(input$continueRF, {
-  rfSE <- rv$trainingSE
-
-
-  ##############################################################################
-  print("Fine")
-  ##############################################################################
-
-  # Setting control settings for random forest model
-  control <- trainControl(
-    method = "cv",
-    number = input$foldCount,
-    verboseIter = TRUE,
-    classProbs = TRUE
-  )
-
-  ##############################################################################
-  print("Fine")
-  #########################ERRRORRR OCCURRS HERRRRRE#########################
-  ##############################################################################
 
   withProgress(message = "Training Model...", value = 0, {
-    progress <- 0
+    # Setting control settings for random forest model
+    control <- trainControl(
+      method = "cv",
+      number = input$foldCount
+      # verboseIter = TRUE,
+      # classProbs = TRUE
+    )
+
     rfModel <- caret::train(
       TBStatus ~ .,
       data = rv$trainingData,
@@ -155,56 +143,47 @@ observeEvent(input$continueRF, {
       tuneGrid = data.frame(mtry = input$mtryInput),
       nodesize = input$nodeSize,
       ntree = input$numTrees,
-      trControl = control)
+      trControl = control
+    )
 
     rfImportance <- varImp(rfModel)
+    importance <- rfImportance
+    View(rfImportance)
 
     output$rfImportancePlot <- renderPlot({
-      plot(rfImportance)
+      plot(rfImportance, main = "Random Forest Importance Plot")
     })
+
+    sorted_data <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
+
+    # View(sorted_data)
+    # View(as.data.frame(sorted_data))
+    top_five <- sorted_data[1:5, , drop = FALSE]
+    # View(top_five)
+    top_genes <- sorted_data[1:10, , drop = FALSE]
+    # View(top_genes)
+    genes_above_90 <- importance$importance[importance$importance$Overall >= 90, , drop = FALSE]
+    genes_above_80 <- importance$importance[importance$importance$Overall >= 80, , drop = FALSE]
+    #this sends the identified genes to the TBsignatureprofiler
+    TBsignatures_reactive <- reactive({
+      top_five <- as.list(rownames(top_five))
+      top_five_list <- CharacterList(top_five)
+      top_genes <- as.list(rownames(top_genes))
+      top_genes_list <- CharacterList(top_genes)
+      genes_above_90 <- as.list(rownames(genes_above_90))
+      genes_above_90_list <- CharacterList(genes_above_90)
+      genes_above_80 <- as.list(rownames(genes_above_80))
+      genes_above_80_list <- CharacterList(genes_above_80)
+      TBsignatures <- c(TBsignatures, list(TopFive_RF = top_five_list@unlistData), list(TopGenes_RF = top_genes_list@unlistData), list(GenesAbove90_RF =genes_above_90_list@unlistData), list(GenesAbove80_RF = genes_above_80_list@unlistData))
+    })
+
+    observe({
+      TBsignatures <- TBsignatures_reactive()
+      rv$TBsignatures_reactive <- TBsignatures_reactive()
+    })
+
     showNotification("Finished Generating Random Forest Model", type = "message")
   })
-
-  ##############################################################################
-  print("Fine")
-  ##############################################################################
-
-################################################################################
-# COMMENTED OUT SINCE IT ONLY DETECTS BEST NODESIZE
-################################################################################
-  # # Sets the different node sizes so we can tell which node count works best
-  # nodesize <- seq(1, 51, 1)
-  # acc <- NULL
-  # # Repeats training for each nodesize
-  # withProgress(message = "Training Model...", value = 0, {
-  #   progress <- 0
-  #   len <- length(nodesize)
-  #   acc <- sapply(nodesize, function(ns) {
-  #
-  #     progress <- progress + 1
-  #     print("error in incProgress")
-  #     incProgress(progress / len, detail = paste("Training Node-size", ns))
-  #
-  #     # Trains random forest model
-  #     return (caret::train(
-  #       TBStatus ~ ., # String that tells which column to look into for outcome
-  #       method = "rf",# selects random forests method
-  #       data = rv$trainingData, # Should be a dataframe containing all the data
-  #       trControl = control,
-  #       tuneGrid = data.frame(mtry = 2),
-  #       nodesize = ns)$results$Accuracy)
-  #   })
-  #
-  #   incProgress(len / len, message = "Finished Training")
-  #
-  # })
-  #
-  # # Plots how accurate the random forest is depending on how many trees used
-  # output$rfNodeSizePlot <- renderPlot({
-  #   plot(nodesize, acc)
-  #   lines(nodesize, acc, col = "blue")
-  # })
-################################################################################
 })
 
 
@@ -224,7 +203,7 @@ observeEvent(input$continueSVM, {
                             method = kType,
                             trControl = ctrl)
   importance <- varImp(svm_model)
-  # View(importance)
+  View(importance)
   output$svmImportancePlot <- renderPlot({
     plot(importance, main = "Importance Plot")
   })
@@ -234,6 +213,7 @@ observeEvent(input$continueSVM, {
   #included are the top 5, ten, any genes above 90, and any above 80, for comparison purposes
   #grabs the top genes from the importance matrix
   sorted_data <- importance$importance[order(importance$importance$TBYes, decreasing = TRUE), ]
+  View(as.data.frame(sorted_data))
   #select the top 5 genes after sorting
   top_five <- sorted_data[1:5, , drop = FALSE]
   # View(top)

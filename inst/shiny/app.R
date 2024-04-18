@@ -16,7 +16,7 @@ library(TBSignatureProfiler)
 library(caret)
 library(sva)
 library(HGNChelper)
-
+library(curatedTBExplorer)
 
 
 # Get the list of available studies
