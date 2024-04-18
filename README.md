@@ -12,7 +12,7 @@ BiocManager::install("GenomicRanges")
 BiocManager::install("MultiAssayExperiment")
 BiocManager::install("SummarizedExperiment")
 BiocManager::install("TBSignatureProfiler")
-BiocManager::install("curatedTBExplorer")
+BiocManager::install("curatedTBData")
 ```
 
 
