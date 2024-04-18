@@ -68,7 +68,7 @@ observeEvent(input$add_filter_btn, {
         div(
           paste(filters[[i]]$filter_by, ":", filters[[i]]$sub_filter),
           class = "filter-bubble",
-          actionButton(paste0("remove_filter_btn_", i), "x", class = "btn btn-danger btn-sm remove-filter-btn")
+          # actionButton(paste0("remove_filter_btn_", i), "x", class = "btn btn-danger btn-sm remove-filter-btn")
         ),
         br()
       )
@@ -128,6 +128,11 @@ observeEvent(input$filter_reset_btn, {
   # Clear the UI element where the bubbles appeared
   output$selected_filters_ui <- renderUI({})
   reset_trigger(TRUE)
+
+  # Resets all changes made
+  vals$SEList <- vals$backupSE
+
+  my_data(as.data.frame(colData(vals$SEList)))
 })
 
 ############# Summary Table ####################
