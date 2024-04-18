@@ -4,14 +4,24 @@
 
 tb_profiler_result <- reactiveVal(NULL)
 
-shiny::observe({
-  updateSelectInput(session, "boxCovariate", choices = vals$covars)
-})
+# shiny::observe({
+#   updateSelectInput(session, "boxCovariate", choices = vals$covars)
+# })
 
+# shiny::observe({
+#   if(!is.null(vals$SEList)){
+#     updateSelectInput(session, "column", choices = names(vals$SEList@colData@listData))
+#     updateSelectInput(session, "columnInfo", choices = names(vals$SEList@colData@listData))
+#   }
+# })
 shiny::observe({
-  if(!is.null(vals$SEList)){
-    updateSelectInput(session, "column", choices = names(vals$SEList@colData@listData))
-    updateSelectInput(session, "columnInfo", choices = names(vals$SEList@colData@listData))
+  if (!is.null(vals$SEList)) {
+    col_data <- vals$SEList@colData@listData
+    non_na_cols <- names(col_data)[sapply(col_data, function(x) any(!is.na(x)))]
+
+    updateSelectInput(session, "column", choices = non_na_cols)
+    updateSelectInput(session, "columnInfo", choices = non_na_cols)
+    updateSelectInput(session, "boxCovariate", choices = non_na_cols)
   }
 })
 
