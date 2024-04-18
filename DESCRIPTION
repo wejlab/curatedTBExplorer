@@ -18,18 +18,24 @@ Depends:
     R (>= 4.3.2)
 Imports: 
     BiocManager, 
+    caret,
     curatedTBData,
     DESeq2, 
     GenomicRanges, 
     ggplot2, 
+    HGNChelper, 
     MultiAssayExperiment, 
     pheatmap,
     RColorBrewer, 
+    SEtools, 
     SummarizedExperiment, 
     shiny, 
+    shinycssloaders, 
     shinyjs, 
+    shinythemes,
     shinyWidgets, 
     TBSignatureProfiler
+    
 Suggests: 
     dplyr, 
     DT, 
