@@ -22,15 +22,17 @@ Imports:
     DESeq2, 
     GenomicRanges, 
     ggplot2, 
+    HGNChelper, 
     MultiAssayExperiment, 
     pheatmap,
     RColorBrewer, 
+    SEtools, 
     SummarizedExperiment, 
     shiny, 
     shinyjs, 
     shinyWidgets, 
-    TBSignatureProfiler, 
-    HGNChelper
+    TBSignatureProfiler
+    
 Suggests: 
     dplyr, 
     DT, 
