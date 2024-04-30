@@ -20,7 +20,7 @@ BiocManager::install("SEtools")
 
 ## Installation
 
-The TBSignatureProfiler requires R Version 4.1.
+The curatedTBExplorer requires R Version 4.1.
 
 * Install the development version of the package from Github:
 
