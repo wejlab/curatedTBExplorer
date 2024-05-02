@@ -45,38 +45,46 @@ observe({
 observeEvent(input$add_filter_btn, {
   print(input$filter_by)
   print(input$sub_filter)
-  filters <- selected_filters$filters
-  new_filter_index <- length(filters) + 1
+  print(selected_filters$filters)
 
-  # Create a new filter object and add it to selected_filters
-  selected_filters$filters[[new_filter_index]] <- list(
-    filter_by = input$filter_by,
-    sub_filter = input$sub_filter
-  )
-  ############# Add Filter to List ####################
-  # UI for displaying selected filters as bubbles
-  output$selected_filters_ui <- renderUI({
+  if(input$filter_by == "" || input$sub_filter == "") {
+    showNotification("Please confirm a selected study first", type = "warning")
+  } else {
+    # print(input$filter_by)
+    # print(input$sub_filter)
     filters <- selected_filters$filters
+    new_filter_index <- length(filters) + 1
 
-    if (reset_trigger()) {
-      filters <- NULL
-      reset_trigger(FALSE)  # Reset the trigger after resetting the UI
-    }
-    # List to store UI elements for each filter
-    filter_bubbles <- lapply(seq_along(filters), function(i) {
-      tagList(
-        div(
-          paste(filters[[i]]$filter_by, ":", filters[[i]]$sub_filter),
-          class = "filter-bubble",
-          # actionButton(paste0("remove_filter_btn_", i), "x", class = "btn btn-danger btn-sm remove-filter-btn")
-        ),
-        br()
-      )
+    # Create a new filter object and add it to selected_filters
+    selected_filters$filters[[new_filter_index]] <- list(
+      filter_by = input$filter_by,
+      sub_filter = input$sub_filter
+    )
+    ############# Add Filter to List ####################
+    # UI for displaying selected filters as bubbles
+    output$selected_filters_ui <- renderUI({
+      filters <- selected_filters$filters
+
+      if (reset_trigger()) {
+        filters <- NULL
+        reset_trigger(FALSE)  # Reset the trigger after resetting the UI
+      }
+      # List to store UI elements for each filter
+      filter_bubbles <- lapply(seq_along(filters), function(i) {
+        tagList(
+          div(
+            paste(filters[[i]]$filter_by, ":", filters[[i]]$sub_filter),
+            class = "filter-bubble",
+            # actionButton(paste0("remove_filter_btn_", i), "x", class = "btn btn-danger btn-sm remove-filter-btn")
+          ),
+          br()
+        )
+      })
+
+      # Wrap filter bubbles in a div
+      div(filter_bubbles)
     })
-
-    # Wrap filter bubbles in a div
-    div(filter_bubbles)
-  })
+  }
 })
 
 ############### Apply Filter Button ####################
@@ -85,19 +93,15 @@ observeEvent(input$filter_apply_btn, {
   print("Filter button clicked")
   filters <- selected_filters$filters
 
-  View(filters)
-
-
   if(is.null(filters)){
-    print("selected filters is null")
-    filter_by <- input$filter_by
-    sub_filter <- input$sub_filter # Retrieve value of subfilter from input
-    subset_SE <- vals$SEList[, eval(parse(text = paste0("vals$SEList$", filter_by))) == sub_filter]# subset the filter value in SE obj
-    #Explanation : the values of filter_by and sub_filter have quote around it, we need those quotes removed for only filter_by in order for this command to execute properly
+    showNotification("Please add a filter first", type = "warning")
+    # print("selected filters is null")
+    # filter_by <- input$filter_by
+    # sub_filter <- input$sub_filter # Retrieve value of subfilter from input
+    # subset_SE <- vals$SEList[, eval(parse(text = paste0("vals$SEList$", filter_by))) == sub_filter]# subset the filter value in SE obj
+    # #Explanation : the values of filter_by and sub_filter have quote around it, we need those quotes removed for only filter_by in order for this command to execute properly
   }
   else{
-    cat("Selected filters not null")
-    # cat(filters)
 
     # Creates a temporary storage for SE
     subset_SE <- vals$SEList
@@ -122,17 +126,21 @@ observeEvent(input$filter_apply_btn, {
 
 ########### Reset Button ###################
 observeEvent(input$filter_reset_btn, {
-  # Reset selected filters to NULL
-  selected_filters$filters <- NULL
+  tryCatch({
+    # Reset selected filters to NULL
+    selected_filters$filters <- NULL
 
-  # Clear the UI element where the bubbles appeared
-  output$selected_filters_ui <- renderUI({})
-  reset_trigger(TRUE)
+    # Clear the UI element where the bubbles appeared
+    output$selected_filters_ui <- renderUI({})
+    reset_trigger(TRUE)
 
-  # Resets all changes made
-  vals$SEList <- vals$backupSE
+    # Resets all changes made
+    vals$SEList <- vals$backupSE
 
-  my_data(as.data.frame(colData(vals$SEList)))
+    my_data(as.data.frame(colData(vals$SEList)))
+  }, error = function(e) {
+    # cat("Error:", conditionMessage(e), "\n")
+  })
 })
 
 ############# Summary Table ####################
@@ -206,7 +214,6 @@ observeEvent(input$visualize_btn, {
     output$boxPlot <- renderPlot({
 
     })
-
   }
 })
 
