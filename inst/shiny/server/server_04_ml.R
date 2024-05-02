@@ -309,19 +309,22 @@ observeEvent(input$continueEN, {
 
 
 # Code for Neural Networks
-# Define server logic for the "Machine Learning" tab
-server <- function(input, output, session) {
-  # Define a reactive value to store the trained model
-  trained_model <- reactiveVal(NULL)
+# Define a reactive value to store the trained model
+trained_model <- reactiveVal(NULL)
 
-  # Function to train the neural network
-  train_neural_network <- function() {
+observeEvent(input$continueNN, {
+  tryCatch({
     # This will involve defining and training a neural network model using the specified parameters
     nn_caret <- caret::train(Species~., data = rv$trainingData,
                              method = "nnet", linout = TRUE,
                              trace = FALSE)
-                             ps <- predict(nn_caret, rv$trainingData)
-                             confusionMatrix(ps, rv$trainingData$Species)$overall["Accuracy"]
+    importance <- varImp(nn_caret)
+    output$nnImportancePlot <- renderPlor({
+      plot(importance)
+    })
+
+    ps <- predict(nn_caret, rv$trainingData)
+    confusionMatrix(ps, rv$trainingData$Species)$overall["Accuracy"]
     # For demonstration purposes, let's just print a message indicating training started
     print("Neural network training started...")
 
@@ -339,35 +342,25 @@ server <- function(input, output, session) {
 
     # Print a message indicating training completed
     print("Neural network training completed.")
-  }
-
-  # Observer to trigger neural network training when the button is clicked
-  observeEvent(input$train_nn, {
-    train_neural_network()
-  })
-
-  # Output to display training progress or results
-  output$nn_output <- renderPrint({
-    # If the model is trained, display the training configuration
-    if (!is.null(trained_model())) {
-      cat("Neural Network Configuration:\n")
-      cat(paste("Number of Hidden Layers:", trained_model()$num_layers), "\n")
-      cat(paste("Number of Neurons per Hidden Layer:", trained_model()$num_neurons), "\n")
-      cat(paste("Learning Rate:", trained_model()$learning_rate), "\n")
-      cat(paste("Number of Epochs:", trained_model()$epochs), "\n")
-      cat(paste("Batch Size:", trained_model()$batch_size), "\n")
-    } else {
-      # If the model is not trained yet, display a message
-      "Neural network not trained yet."
-    }
-  })
-}
-
-observeEvent(input$continueNN, {
-  tryCatch({
 
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
     showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
+})
+
+# Output to display training progress or results
+output$nn_output <- renderPrint({
+  # If the model is trained, display the training configuration
+  if (!is.null(trained_model())) {
+    cat("Neural Network Configuration:\n")
+    cat(paste("Number of Hidden Layers:", trained_model()$num_layers), "\n")
+    cat(paste("Number of Neurons per Hidden Layer:", trained_model()$num_neurons), "\n")
+    cat(paste("Learning Rate:", trained_model()$learning_rate), "\n")
+    cat(paste("Number of Epochs:", trained_model()$epochs), "\n")
+    cat(paste("Batch Size:", trained_model()$batch_size), "\n")
+  } else {
+    # If the model is not trained yet, display a message
+    "Neural network not trained yet."
+  }
 })
