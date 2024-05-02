@@ -57,6 +57,9 @@ tabPanel(
         numericInput("batch_size", "Batch Size:", value = 32, min = 1, max = 256),
         # Button to start training
         actionButton("continueNN", "Continue")
+      ),
+      mainPanel(
+        plotOutput("nnImportancePlot", height = "5000px")
       )
     ),
     tabPanel(
@@ -69,15 +72,8 @@ tabPanel(
         actionButton("continueRF", "Continue")
       ),
       mainPanel(
-        fluidRow(
-          column(
-            6
-          ),
-          column(
-            6,
-            shinycssloaders::withSpinner(plotOutput("rfImportancePlot", width = "100%", height = "5000px"))
-          )
-        )
+        shinycssloaders::withSpinner(plotOutput("rfImportancePlot", height = "5000px")),
+        shinycssloaders::withSpinner(plotOutput("rfMatrix"))
       )
     ),
     tabPanel(
