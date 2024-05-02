@@ -23,88 +23,97 @@ outcomeChoice2 <- reactive({
 # Splits the SEList based on selected training and testing data
 observeEvent(input$confirmDataset, {
   tryCatch({
-    selectedTrainingList <- input$selectedTrainingData
-    selectedTestingList <- input$selectedTestingData
 
-    # View(selectedTrainingList)
-    # View(selectedTestingList)
+    # Gives warning if selectedTrainingData or selectedTesting Data is empty
+    if (length(input$selectedTrainingData) <= 0) {
+      showNotification("Please select studies for training", type = "warning")
+    } else if (length(input$selectedTestingData) <= 0) {
+      showNotification("Please select studies for testing", type = "warning")
+    } else {
+      selectedTrainingList <- input$selectedTrainingData
+      selectedTestingList <- input$selectedTestingData
 
-    # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
-    vals$statusList <- vals$mlList$TBStatus
+      # View(selectedTrainingList)
+      # View(selectedTestingList)
 
-    # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
-    vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
+      # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
+      vals$statusList <- vals$mlList$TBStatus
 
-    # Running DE_analyze function from BATCHQC
-    vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
+      # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
+      vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
 
-    # View(vals$DE)
+      # Running DE_analyze function from BATCHQC
+      vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
 
-    # Filters out when padj is less than or equal to 0.05
-    vals$filtered <- lapply(vals$DE, function(df) {
-      df %>%
-        filter(padj <= 0.05)
-    })
+      # View(vals$DE)
 
-    # Prevents the list of genes from going lower than 500
-    if(length(vals$filtered$TBStatusTBYes$padj) < 500) {
-      vals$filtered <- vals$DE
+      # Filters out when padj is less than or equal to 0.05
+      vals$filtered <- lapply(vals$DE, function(df) {
+        df %>%
+          filter(padj <= 0.05)
+      })
+
+      # Prevents the list of genes from going lower than 500
+      if(length(vals$filtered$TBStatusTBYes$padj) < 500) {
+        vals$filtered <- vals$DE
+      }
+
+      # Sorts by log2FoldChange
+      vals$filtered <- lapply(vals$filtered, function(df) {
+        df %>%
+          arrange(abs(log2FoldChange))
+      })
+
+      # Only keeps highest 500 values (Is this highest 500 log2FoldChange )
+      vals$filtered <- lapply(vals$filtered, function(df) {
+        df %>%
+          slice_head(n = input$featureSelectionCount)
+      })
+
+      # Filters Summarized Experiment so only coinciding genes get kept
+      filtered_genes <- rownames(vals$filtered$TBStatusTBYes)
+      # vals$mlList <-
+      limitedSE <- vals$mlList[filtered_genes, , drop = FALSE]
+
+      # View(limitedSE)
+      # View(vals$mlList)
+
+      # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
+      # subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTrainingList, , drop = FALSE]
+
+      rv$trainingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTrainingList]
+      # View(rv$trainingSE)
+
+      # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
+      # subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTestingList, , drop = FALSE]
+
+      rv$testingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTestingList]
+      # View(rv$testingSE)
+
+      #data loaded for training
+      training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
+      col_data <- colData(rv$trainingSE)
+      col_data$TBStatus <- factor(col_data$TBStatus, levels = c("TBYes", "TBNo"))
+
+      #data is our training dataframe
+      rv$trainingData <- data.frame(TBStatus = col_data$TBStatus, t(training_assay_data))
+      rv$trainingData$TBStatus <- factor(rv$trainingData$TBStatus, levels = c("TBYes", "TBNo"))
+
+      #data for testing
+      testing_assay_data <- rv$testingSE@assays@data@listData$log_assay1_cpm
+      testing_col_data <- colData(rv$testingSE)
+      testing_col_data$TBStatus <- factor(testing_col_data$TBStatus, levels = c("TBYes", "TBNo"))
+      rv$testData <- data.frame(TBStatus = testing_col_data$TBStatus, t(testing_assay_data))
+      rv$testData$TBStatus <- factor(rv$testData$TBStatus, levels = c("TBYes", "TBNo"))
+
+
+      # View(rv$trainingSE)
+      # View(rv$testingSE)
+      showNotification("Dataset Confirmed", type = "message")
     }
-
-    # Sorts by log2FoldChange
-    vals$filtered <- lapply(vals$filtered, function(df) {
-      df %>%
-        arrange(abs(log2FoldChange))
-    })
-
-    # Only keeps highest 500 values (Is this highest 500 log2FoldChange )
-    vals$filtered <- lapply(vals$filtered, function(df) {
-      df %>%
-        slice_head(n = input$featureSelectionCount)
-    })
-
-    # Filters Summarized Experiment so only coinciding genes get kept
-    filtered_genes <- rownames(vals$filtered$TBStatusTBYes)
-    # vals$mlList <-
-    limitedSE <- vals$mlList[filtered_genes, , drop = FALSE]
-
-    # View(limitedSE)
-    # View(vals$mlList)
-
-    # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
-    # subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTrainingList, , drop = FALSE]
-
-    rv$trainingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTrainingList]
-    # View(rv$trainingSE)
-
-    # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
-    # subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTestingList, , drop = FALSE]
-
-    rv$testingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTestingList]
-    # View(rv$testingSE)
-
-    #data loaded for training
-    training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
-    col_data <- colData(rv$trainingSE)
-    col_data$TBStatus <- factor(col_data$TBStatus, levels = c("TBYes", "TBNo"))
-
-    #data is our training dataframe
-    rv$trainingData <- data.frame(TBStatus = col_data$TBStatus, t(training_assay_data))
-    rv$trainingData$TBStatus <- factor(rv$trainingData$TBStatus, levels = c("TBYes", "TBNo"))
-
-    #data for testing
-    testing_assay_data <- rv$testingSE@assays@data@listData$log_assay1_cpm
-    testing_col_data <- colData(rv$testingSE)
-    testing_col_data$TBStatus <- factor(testing_col_data$TBStatus, levels = c("TBYes", "TBNo"))
-    rv$testData <- data.frame(TBStatus = testing_col_data$TBStatus, t(testing_assay_data))
-    rv$testData$TBStatus <- factor(rv$testData$TBStatus, levels = c("TBYes", "TBNo"))
-
-
-    # View(rv$trainingSE)
-    # View(rv$testingSE)
-    showNotification("Dataset Confirmed", type = "message")
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
 })
 
@@ -190,6 +199,7 @@ observeEvent(input$continueRF, {
     })
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
 })
 
@@ -270,6 +280,7 @@ observeEvent(input$continueSVM, {
     print(paste("Accuracy In Testing:", accuracy))
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
 })
 # Code for Elastic Net Regression
@@ -292,6 +303,7 @@ observeEvent(input$continueEN, {
     print(predictions)
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
 })
 
@@ -356,5 +368,6 @@ observeEvent(input$continueNN, {
 
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
 })

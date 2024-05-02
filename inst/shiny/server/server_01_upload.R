@@ -54,7 +54,7 @@ tryCatch(
   },
   error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
-    cat("Might be due to not installing via devtools::install_github(\"wejlab/curatedTBExplorer\")\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   }
 )
 
@@ -84,6 +84,7 @@ tryCatch(
   error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
     cat("Might be due to not installing via devtools::install_github(\"wejlab/curatedTBExplorer\")\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   }
 )
 
@@ -302,6 +303,7 @@ observeEvent(input$downloadStudiesBtn, {
       })
     } else {
       cat("All selected studies are already available locally. Skipping download step.\n")
+      showNotification("Selected studies already downloaded", type = "message")
     }
 
     #
@@ -311,6 +313,7 @@ observeEvent(input$downloadStudiesBtn, {
     showNotification("Finished Downloading Studies", type = "message")
   } else {
     cat("Please select a study first\n")
+    showNotification("Please select a study first", type = "warning")
   }
 })
 
@@ -353,11 +356,12 @@ observeEvent(input$confirmStudiesBtn, {
 
       }, error = function(e) {
         cat("Error:", conditionMessage(e), "\n")
+        showNotification(paste("Error:", conditionMessage(e)), type = "error")
       })
       showNotification("Studies Confirmed", type = "message")
-      View(vals$SEList)
+      # View(vals$SEList)
     } else {
-      showNotification("Please select at least 1 study to use", type = "warning")
+      showNotification("Please select at study first", type = "warning")
     }
   })
 })
