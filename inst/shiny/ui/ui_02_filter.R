@@ -16,30 +16,20 @@ tabPanel(
         selectInput("filter_by", "Filter By",
                     choices = NULL
         ),
-        #Those values are :
-        # print(c(colnames(colData(combined_studies))))
-        # [1] "Age"                     "Gender"                  "Ethnicity"
-        # [4] "TBStatus"                "GeographicalRegion"      "BcgVaccinated"
-        # [7] "BirthRegion"             "TST"                     "Tissue"
-        # [10] "HIVStatus"               "MeasurementTime"         "PatientID"
-        # [13] "PneumoniaStatus"         "exposure_latent"         "index_case_disease_site"
-        # [16] "smear_of_index_case"     "modal_x_ray_grade"       "SputumSmearStatus"
-        # [19] "sputum_culture"          "bal_smear"               "bal_culture"
-        # [22] "isolate_sensitivity"     "DiabetesStatus"          "Treatment"
-        # [25] "Study"                   "QFT_GIT"                 "HealthControl"
-        # [28] "StillStatus"             "AdultSLE_Status"         "PediatricSLE_Status"
-        # [31] "StaphStatus"             "StrepStatus"
-
 
         # This will outputa dynamic field with a conditional selectInput and filter button created in server file
         uiOutput("dynamic_filter"),
         br(),
+
         # Add Filter button
         actionButton("add_filter_btn", "Add Filter", class = "btn btn-primary"),
+
+        # Displays selected filters
         uiOutput("selected_filters_ui"),
 
-        #APPLY FILTER BUTTON
+        # APPLY FILTER BUTTON
         actionButton("filter_apply_btn", "Apply Filter", class = "btn-primary"),
+
         # Reset filter button
         actionButton("filter_reset_btn", "Reset"),
         br()
