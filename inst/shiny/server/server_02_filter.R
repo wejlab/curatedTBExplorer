@@ -33,9 +33,17 @@ observe({
 
     # Render the dynamic selectInput based on the selected filter_by choice
     output$dynamic_filter <- renderUI({
+      if (filter_by == "Age") {
+        sliderInput("sub_filter", "Select Age Range:",
+                    min = min(unique_column_values, na.rm = TRUE),
+                    max = max(unique_column_values, na.rm = TRUE),
+                    value = c(min(unique_column_values, na.rm = TRUE), max(unique_column_values, na.rm = TRUE))
+        )
+      } else {
       tagList(
         selectInput("sub_filter", filter_by, choices = unique_column_values),
       )
+      }
     })
   }
 })
@@ -47,19 +55,25 @@ observeEvent(input$add_filter_btn, {
   print(input$sub_filter)
   print(selected_filters$filters)
 
-  if(input$filter_by == "" || input$sub_filter == "") {
+  if(input$filter_by == "" || (input$filter_by!="Age" && input$sub_filter == "")) {
     showNotification("Please confirm a selected study first", type = "warning")
   } else {
-    # print(input$filter_by)
-    # print(input$sub_filter)
     filters <- selected_filters$filters
     new_filter_index <- length(filters) + 1
 
     # Create a new filter object and add it to selected_filters
+    #But adapt to range for "age" filter
+    if (input$filter_by == "Age") {
+      selected_filters$filters[[new_filter_index]] <- list(
+        filter_by = input$filter_by,
+        sub_filter = list(min = input$sub_filter[1], max = input$sub_filter[2])
+      )
+    } else {
     selected_filters$filters[[new_filter_index]] <- list(
       filter_by = input$filter_by,
       sub_filter = input$sub_filter
     )
+    }
     ############# Add Filter to List ####################
     # UI for displaying selected filters as bubbles
     output$selected_filters_ui <- renderUI({
@@ -72,11 +86,20 @@ observeEvent(input$add_filter_btn, {
       # List to store UI elements for each filter
       filter_bubbles <- lapply(seq_along(filters), function(i) {
         tagList(
+          if (filters[[i]]$filter_by == "Age") {
+            div(
+              paste(filters[[i]]$filter_by, ":",
+                    filters[[i]]$sub_filter$min, "to", filters[[i]]$sub_filter$max),
+              class = "filter-bubble",
+            )
+      } else {
           div(
             paste(filters[[i]]$filter_by, ":", filters[[i]]$sub_filter),
             class = "filter-bubble",
             # actionButton(paste0("remove_filter_btn_", i), "x", class = "btn btn-danger btn-sm remove-filter-btn")
-          ),
+          )
+          }
+        ,
           br()
         )
       })
@@ -95,12 +118,7 @@ observeEvent(input$filter_apply_btn, {
 
   if(is.null(filters)){
     showNotification("Please add a filter first", type = "warning")
-    # print("selected filters is null")
-    # filter_by <- input$filter_by
-    # sub_filter <- input$sub_filter # Retrieve value of subfilter from input
-    # subset_SE <- vals$SEList[, eval(parse(text = paste0("vals$SEList$", filter_by))) == sub_filter]# subset the filter value in SE obj
-    # #Explanation : the values of filter_by and sub_filter have quote around it, we need those quotes removed for only filter_by in order for this command to execute properly
-  }
+    }
   else{
 
     # Creates a temporary storage for SE
@@ -111,10 +129,18 @@ observeEvent(input$filter_apply_btn, {
 
       # Cleans filter and subfilter content
       filter_by <- gsub("'", "", filter$filter_by)
+      if (filter_by == "Age") {
+        min_age <- filter$sub_filter$min
+        max_age <- filter$sub_filter$max
+        subset_SE <- subset_SE[, !is.na(colData(subset_SE)[[filter_by]]) &
+                                 colData(subset_SE)[[filter_by]] >= min_age &
+                                 colData(subset_SE)[[filter_by]] <= max_age]
+      } else {
       sub_filter <- gsub("'", "", filter$sub_filter)
 
       # Subsets the SE so it only contains the
       subset_SE <- subset_SE[, !is.na(colData(subset_SE)[[filter_by]]) & colData(subset_SE)[[filter_by]] == sub_filter]
+      }
     }
     # View(subset_SE)
     my_data(as.data.frame(colData(subset_SE)))

@@ -17,7 +17,7 @@ tabPanel(
                     choices = NULL
         ),
 
-        # This will outputa dynamic field with a conditional selectInput and filter button created in server file
+        # This will output a dynamic field with a conditional selectInput and filter button created in server file
         uiOutput("dynamic_filter"),
         br(),
 
