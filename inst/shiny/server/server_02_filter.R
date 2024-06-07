@@ -223,68 +223,58 @@ observeEvent(input$visualize_btn, {
   View(data)
   
   if (!is.null(filter_by)) {
-    # Generate the top graph
-    output$top_visualization <- renderPlot({
+    # Generate histogram
+    output$histogram <- renderPlot({
       ggplot(data = data, aes_string(x = filter_by)) +
-        geom_bar() +
-        labs(x = filter_by, y = "Frequency", title = paste("Histogram of", filter_by, sep = " "))
+        geom_histogram(binwidth = 1, fill = "#4C516D", color = "black") +
+        labs(x = filter_by, y = "Frequency", title = paste("Histogram of", filter_by, sep = " ")) +
+        theme_minimal()
     })
-    
-    # For Categorical Data
-    # output$pieChart <- renderPlotly({
-    #   # # Getting the dataset
-    #   # values_list <- as.character(vals$SEList$filter_by)
-    #   #
-    #   # # Convert list to dataframe
-    #   # df <- data.frame(Category = values_list)
-    #   #
-    #   # # Filter out NA or non-finite values
-    #   # df <- df[!is.na(df$Category) & df$Category != "NA" & df$Category != "NaN", ]
-    #   #
-    #   # # Convert Category to factor
-    #   # df$Category <- as.factor(df$Category)
-    #   #
-    #   # # Summarize counts
-    #   # df_counts <- df %>%
-    #   #   group_by(Category) %>%
-    #   #   summarise(Count = n())
-    #   #
-    #   # plot_ly(
-    #   #   data = df_counts,
-    #   #   labels = ~Category,
-    #   #   values = ~Count,
-    #   #   type = "pie",
-    #   #   textinfo = "percent",
-    #   #   textposition = "inside",
-    #   #   hoverinfo = "label+percent"
-    #   # ) %>%
-    #   #   layout(title = "Pie Chart Example")
-    # })
-    
-    
-    
     
     # For Numerical Data
     output$boxPlot <- renderPlot({
+      ggplot(data = data, aes_string(x = filter_by, y = filter_by)) +
+        geom_boxplot(fill = "orange", color = "black") +
+        labs(x = filter_by, y = filter_by, title = paste("Box Plot of", filter_by, sep = " ")) +
+        theme_minimal()
+    })
+    
+    # Generate a scatter plot (if applicable)
+    output$scatterPlot <- renderPlot({
+      ggplot(data = data, aes_string(x = filter_by, y = filter_by)) +
+        geom_point(color = "green") +
+        labs(x = filter_by, y = filter_by, title = paste("Scatter Plot of", filter_by, sep = " ")) +
+        theme_minimal()
+    })
+    
+    # Generate a pie chart for categorical data
+    output$pieChart <- renderPlotly({
+      cat_data <- data[[filter_by]]
+      cat_data <- as.factor(cat_data)
+      cat_data <- cat_data[!is.na(cat_data)]
       
+      cat_data_summary <- as.data.frame(table(cat_data))
+      colnames(cat_data_summary) <- c("Category", "Count")
+      
+      plot_ly(cat_data_summary, labels = ~Category, values = ~Count, type = 'pie') %>%
+        layout(title = paste("Pie Chart of", filter_by))
     })
   }
 })
 
 # Summary Stats Table
 output$summaryStatsTable <- renderTable({
-  if(!is.null(vals$SEList) ) {
-    dat <- list()
-    dat['Number of Samples'] <- round(length(vals$SEList@colData@rownames))
-    dat['Number of Covariates'] <- round(length(names(vals$SEList@colData)))
-    df <- as.data.frame(unlist(dat))
-    
-    # Formatting
-    df$temp <- rownames(df)
-    colnames(df) <- c("", "Summary Statistics")
-    df <- df[,c(2,1)]
-    df[,2] <- as.character(round(df[,2]))
-    return(df)
-  }
+  dat <- list()
+  dat['Number of Samples'] <- round(length(vals$SEList@colData@rownames))
+  dat['Number of Covariates'] <- round(length(names(vals$SEList@colData)))
+  df <- as.data.frame(unlist(dat))
+  
+  # Formatting
+  df$temp <- rownames(df)
+  colnames(df) <- c("", "Summary Statistics")
+  df <- df[,c(2,1)]
+  df[,2] <- as.character(round(df[,2]))
+  return(df)
+  
 })
 

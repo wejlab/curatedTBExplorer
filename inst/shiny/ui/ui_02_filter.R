@@ -61,11 +61,12 @@ tabPanel(
       mainPanel(
         fluidRow(
           column(6,
-            plotOutput("top_visualization"),
-            plotOutput("pieChart")
+            plotOutput("histogram"),
+            plotlyOutput("pieChart")
           ),
           column(6,
-            plotOutput("boxPlot")
+            plotOutput("boxPlot"),
+            plotOutput("scatterPlot")
           )
         )
       )
