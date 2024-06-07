@@ -4,6 +4,7 @@ tabPanel(
 
   icon = icon("filter", class = "fa-solid fa-filter", lib = "font-awesome"),
   tabsetPanel(
+    useShinyjs(),  # Initialize shinyjs
     tabPanel(
       "Filter",
       sidebarPanel(
