@@ -138,6 +138,9 @@ selected_columns <- reactive({
     selected_columns <- c(selected_columns, "GeneralType")
   }
 
+  ###########################################################################
+  vals$selected_studies = NULL
+
   return(selected_columns)
 })
 
