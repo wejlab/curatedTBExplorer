@@ -82,8 +82,7 @@ observeEvent(input$add_filter_btn, {
   print(input$sub_filter)
   print(selected_filters$filters)
   
-  #if(input$filter_by == "" || (input$filter_by!="Age" && input$sub_filter == "")) {
-  if(input$filter_by == "" || input$sub_filter == "") {
+  if(input$filter_by == "" || (input$filter_by!="Age" && input$sub_filter == "")) {
     showNotification("Please confirm a selected study first", type = "warning")
   } else {
     filters <- selected_filters$filters
@@ -231,7 +230,7 @@ observeEvent(input$visualize_btn, {
         theme_minimal()
     })
     
-    # For Numerical Data
+    # Generate a boxplot
     output$boxPlot <- renderPlot({
       ggplot(data = data, aes_string(x = filter_by, y = filter_by)) +
         geom_boxplot(fill = "orange", color = "black") +
