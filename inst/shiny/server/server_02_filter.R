@@ -245,16 +245,18 @@ observeEvent(input$visualize_btn, {
 
 # Summary Stats Table
 output$summaryStatsTable <- renderTable({
-  dat <- list()
-  dat['Number of Samples'] <- round(length(vals$SEList@colData@rownames))
-  dat['Number of Covariates'] <- round(length(names(vals$SEList@colData)))
-  df <- as.data.frame(unlist(dat))
+  if(!is.null(vals$SEList) ) {
+    dat <- list()
+    dat['Number of Samples'] <- round(length(vals$SEList@colData@rownames))
+    dat['Number of Covariates'] <- round(length(names(vals$SEList@colData)))
+    df <- as.data.frame(unlist(dat))
 
-  # Formatting
-  df$temp <- rownames(df)
-  colnames(df) <- c("", "Summary Statistics")
-  df <- df[,c(2,1)]
-  df[,2] <- as.character(round(df[,2]))
-  return(df)
+    # Formatting
+    df$temp <- rownames(df)
+    colnames(df) <- c("", "Summary Statistics")
+    df <- df[,c(2,1)]
+    df[,2] <- as.character(round(df[,2]))
+    return(df)
+  }
 })
 
