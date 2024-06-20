@@ -314,31 +314,33 @@ trained_model <- reactiveVal(NULL)
 
 observeEvent(input$continueNN, {
   tryCatch({
-    # This will involve defining and training a neural network model using the specified parameters
-    nn_caret <- caret::train(Species~., data = rv$trainingData,
-                             method = "nnet", linout = TRUE,
-                             trace = FALSE)
-    importance <- varImp(nn_caret)
-    output$nnImportancePlot <- renderPlor({
-      plot(importance)
+    withProgress(message = "Training Model...", value = 0, {
+      control <- trainControl(method = "cv", number = input$foldCount)
+
+      rv$trainingData$TBStatus <- factor(rv$trainingData$TBStatus)
+
+      nnModel <- caret::train(TBStatus ~ .,
+                              data = rv$trainingData,
+                              method = "nnet",
+                              trControl = control,
+                              linout = FALSE,
+                              maxit = input$num_epochs,
+                              maxNWts = 10000,
+                              )
+
+      nnImportance <- varImp(nnModel)
+      View(nnImportance)
+
+
     })
 
-    ps <- predict(nn_caret, rv$trainingData)
-    confusionMatrix(ps, rv$trainingData$Species)$overall["Accuracy"]
-    # For demonstration purposes, let's just print a message indicating training started
-    print("Neural network training started...")
+    output$nnImportancePlot <- renderPlot({
+      plot(nnImportance, main = "Neural Network Importance Plot")
+    })
 
-    # Simulate training process for demonstration
-    Sys.sleep(5)  # Simulate training process taking 5 seconds
+    # ps <- predict(nn_caret, rv$trainingData)
+    # confusionMatrix(ps, rv$trainingData$Species)$overall["Accuracy"]
 
-    # After training is complete, store the trained model
-    trained_model(list(
-      num_layers = input$num_layers,
-      num_neurons = input$num_neurons,
-      learning_rate = input$learning_rate,
-      epochs = input$epochs,
-      batch_size = input$batch_size
-    ))
 
     # Print a message indicating training completed
     print("Neural network training completed.")

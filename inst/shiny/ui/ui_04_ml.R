@@ -45,16 +45,19 @@ tabPanel(
     tabPanel(
       "Neural Networks",
       sidebarPanel(
-        # Input for number of hidden layers
-        numericInput("num_layers", "Number of Hidden Layers:", value = 1, min = 1, max = 10),
+        "Neural Networks",
+        # # Input for number of hidden layers
+        # numericInput("num_layers", "Number of Hidden Layers:", value = 1, min = 1, max = 10),
         # Input for number of neurons in each hidden layer
-        numericInput("num_neurons", "Number of Neurons per Hidden Layer:", value = 10, min = 1, max = 100),
-        # Input for learning rate
-        numericInput("learning_rate", "Learning Rate:", value = 0.01, min = 0, max = 1, step = 0.01),
+        # numericInput("num_neurons", "Number of Neurons per Hidden Layer(s):", value = 10, min = 1, max = 100),
+        # # Input for learning rate
+        # numericInput("learning_rate", "Learning Rate:", value = 0.01, min = 0, max = 1, step = 0.01),
+
         # Input for number of epochs
-        numericInput("epochs", "Number of Epochs:", value = 100, min = 1, max = 1000),
-        # Input for batch size
-        numericInput("batch_size", "Batch Size:", value = 32, min = 1, max = 256),
+        numericInput("num_epochs", "Number of Epochs:", value = 100, min = 1, max = 1000),
+        # # Input for batch size
+        # numericInput("batch_size", "Batch Size:", value = 32, min = 1, max = 256),
+
         # Button to start training
         actionButton("continueNN", "Continue")
       ),
