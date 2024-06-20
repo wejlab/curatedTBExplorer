@@ -22,6 +22,14 @@ library(TBSignatureProfiler)
 data("DataSummary", package = "curatedTBData")
 study_data <- DataSummary
 
+# Adjusting column names due to changes in curatedTBData DataSummary
+if ("GEOAccession" %in% colnames(study_data)) {
+  colnames(study_data)[colnames(study_data) == "GEOAccession"] <- "Study"
+}
+if ("Country/Region" %in% colnames(study_data)) {
+  colnames(study_data)[colnames(study_data) == "Country/Region"] <- "GeographicalRegion"
+}
+
 ui <- fluidPage(
     theme = shinytheme("flatly"),
     navbarPage(
@@ -34,10 +42,15 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-    source(file.path("server", "server_01_upload.R"), local = TRUE)$value
-    source(file.path("server", "server_02_filter.R"), local = TRUE)$value
-    source(file.path("server", "server_03_tbsignatureprofiler.R"), local = TRUE)$value
-    source(file.path("server", "server_04_ml.R"), local = TRUE)$value
+    tryCatch({
+      source(file.path("server", "server_01_upload.R"), local = TRUE)$value
+      source(file.path("server", "server_02_filter.R"), local = TRUE)$value
+      source(file.path("server", "server_03_tbsignatureprofiler.R"), local = TRUE)$value
+      source(file.path("server", "server_04_ml.R"), local = TRUE)$value
+    }, error = function(e) {
+      cat("Error:", conditionMessage(e), "\n")
+      showNotification(paste("Error:", conditionMessage(e)), type = "error")
+    })
 }
 
 shinyApp(ui = ui, server = server)
