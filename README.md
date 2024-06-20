@@ -29,3 +29,8 @@ if (!requireNamespace("devtools", quietly=TRUE))
   install.packages("devtools")
 devtools::install_github("wejlab/curatedTBExplorer")
 ```
+
+If install fails, try:
+```r
+options(timeout=400)
+```
