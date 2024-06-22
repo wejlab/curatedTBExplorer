@@ -348,6 +348,22 @@ observeEvent(input$confirmStudiesBtn, {
         }
         incProgress(2 / 2, message = "Studies Confirmed")
 
+        #Grabs the columns that dont have NA values -> necessary for batch correction
+        #We also need to exclude columns where one value only comes from one study, and another only comes from the other study.
+        df <- as.data.frame(colData(vals$SEList)@listData)
+        naCols <- sapply(df, function(col) any(is.na(col)))
+        uniqueValueCols <- sapply(df, function(col) length(unique(col)) < 2)
+        # Combine the conditions to filter out columns
+        colsToExclude <- naCols | uniqueValueCols
+        dfFiltered <- df[, !colsToExclude]
+        View(dfFiltered)
+        colNamesFiltered <- colnames(dfFiltered)
+        View(colNamesFiltered)
+        #we may want to not allow TB status to even be an option, but i've included it here as a default
+        updateSelectizeInput(session, "selectedCovars", choices = colNamesFiltered, selected = "TBStatus", server = TRUE)
+
+
+
         # Sets values for filter tab
         vals$colData <- colData(vals$SEList)
         vals$covars <- colnames(colData(vals$SEList))
@@ -367,6 +383,26 @@ observeEvent(input$confirmStudiesBtn, {
       showNotification("Please select at study first", type = "warning")
     }
   })
+})
+
+# Handles the user selections for Batch Correction
+observeEvent(input$confirmCovarsBtn, {
+  selCov <- input$selectedCovars
+  if (length(selCov) > 0) {
+    my_formula <- paste("~", paste(selCov, collapse = " + "))
+  } else {
+    my_formula <- "~ TBStatus" # Default formula if nothing selected -> may be unnecessary?
+  }
+
+  print(paste("Formula:", my_formula))
+
+  # Create the model matrix
+  mod <- model.matrix(as.formula(my_formula), colData(vals$SEList))
+
+  # Perform batch correction using ComBat
+  assay(vals$SEList, "corrected_assay") <- ComBat(assay(vals$SEList, "assay1"),
+                                               batch = colData(vals$SEList)$Study,
+                                               mod = mod)
 })
 
 # Handles addition of studies to selected_studies list when studies are selected

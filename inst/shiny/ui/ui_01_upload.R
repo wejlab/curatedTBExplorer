@@ -39,7 +39,17 @@ tabPanel(
         # Button to clear the local download
         actionButton("clearLocalDownload", "Clear Local Download")
       )
+
     ),
+
+    # sidebarPanel(
+    #   conditionalPanel(
+    #     condition = "input.confirmStudiesBtn",
+    #
+    #     checkboxInput("test", "test", value = TRUE),
+    #   )
+    # ),
+
     mainPanel(
       # Layout panel to seperate page into columns
       fluidRow(
@@ -57,6 +67,13 @@ tabPanel(
           # Displays selectize for selecting dataset to use
           selectizeInput("selectedActiveMAEList", "Select Datasets To Use", choices = list(), multiple = TRUE, width = "100%"),
           actionButton("confirmStudiesBtn", "Confirm Selected Studies"),
+
+          #this panel appears after studies are confirmed, allow user to select their batch conditions
+          conditionalPanel(
+            condition = "input.confirmStudiesBtn > 0",
+            selectizeInput("selectedCovars", "Confirm Covariates for Batch Correction", choices = list(), multiple = TRUE, width = "100%"),
+            actionButton("confirmCovarsBtn", "Confirm Covariates")
+          )
           # textOutput("test")
         )
       )
