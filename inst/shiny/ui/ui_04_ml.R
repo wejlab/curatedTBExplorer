@@ -14,11 +14,8 @@ tabPanel(
       # NEED TO CHANGE THE selectInput CHOICES SO THEY INCLUDE MORE OPTIONS
       # LIKE HIV vs NO HIV
       ##########################################################################
-      # selectInput("oc1", "Outcome", choices = c("LTBI", "PTB", "Control", "OD")),
-      # selectInput("oc2", "Compared Outcome", choices = c("LTBI", "PTB", "Control", "OD")),
-      # selectInput("mainPredictor", "Prediction Class", choices = NULL),
-      # selectInput("oc1", "Outcome", choices = NULL),
-      # selectInput("oc2", "Compared Outcome", choices = NULL),
+      selectInput("oc1", "Outcome", choices = list()),
+      selectInput("oc2", "Compared Outcome", choices = list()),
 
       numericInput("featureSelectionCount", "Feature Count", value = 500, min = 0, step = 1),
       numericInput("foldCount", "Cross Validation Folds", value = 10, min = 0, step = 1)
@@ -76,11 +73,11 @@ tabPanel(
         actionButton("continueRF", "Continue"),
 
         sliderInput("rfSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
-        actionButton("formMatrix", "Test Gene Signature")
+        actionButton("testGeneSig", "Test Gene Signature")
       ),
       mainPanel(
         shinycssloaders::withSpinner(plotOutput("rfImportancePlot", height = "600")),
-        shinycssloaders::withSpinner(plotOutput("rfMatrix"))
+        shinycssloaders::withSpinner(tableOutput("rfMatrix"))
       )
     ),
     tabPanel(

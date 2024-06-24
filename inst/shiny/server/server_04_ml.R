@@ -11,6 +11,8 @@ rv <- reactiveValues(
 
   # Importance DataFrames
   rfImportance = NULL,
+
+  rfConfusionMatrix = NULL
 )
 
 # Updates outcome choice 1 reactive based on user selection
@@ -171,7 +173,12 @@ observeEvent(input$continueRF, {
       rv$rfImportance <- rfImportance
 
       rfPredictions <- predict(rfModel, rv$testData)
-      print(rfPredictions)
+
+      View(as.data.frame(rv$testData$TBStatus))
+
+      View(as.data.frame(rfPredictions))
+
+      rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, rv$testData$TBStatus)
 
       sorted_data <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
 
@@ -225,6 +232,20 @@ output$rfImportancePlot <- renderPlot({
     showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
 })
+
+observeEvent(input$testGeneSig, {
+
+  output$rfMatrix <- renderTable({
+    tryCatch({
+      as.data.frame(rv$rfConfusionMatrix$table)
+    }, error = function(e) {
+      # cat("Error:", conditionMessage(e), "\n")
+      # showNotification(paste("Error:", conditionMessage(e)), type = "error")
+    })
+  })
+})
+
+
 
 
 
