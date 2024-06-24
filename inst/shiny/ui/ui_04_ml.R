@@ -19,6 +19,7 @@ tabPanel(
       # selectInput("mainPredictor", "Prediction Class", choices = NULL),
       # selectInput("oc1", "Outcome", choices = NULL),
       # selectInput("oc2", "Compared Outcome", choices = NULL),
+
       numericInput("featureSelectionCount", "Feature Count", value = 500, min = 0, step = 1),
       numericInput("foldCount", "Cross Validation Folds", value = 10, min = 0, step = 1)
     ),
@@ -72,10 +73,13 @@ tabPanel(
         numericInput("numTrees", "Number of Trees Generated:", value = 500, min = 1),
         numericInput("nodeSize", "Size of Each Node:", value = 5, min = 1),
         numericInput("mtryInput", "mtry:", value = 2, min = 1),
-        actionButton("continueRF", "Continue")
+        actionButton("continueRF", "Continue"),
+
+        sliderInput("rfSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
+        actionButton("formMatrix", "Test Gene Signature")
       ),
       mainPanel(
-        shinycssloaders::withSpinner(plotOutput("rfImportancePlot", height = "5000px")),
+        shinycssloaders::withSpinner(plotOutput("rfImportancePlot", height = "600")),
         shinycssloaders::withSpinner(plotOutput("rfMatrix"))
       )
     ),

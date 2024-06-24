@@ -8,6 +8,9 @@ rv <- reactiveValues(
   # Results of user choice
   trainingSE = NULL,
   testingSE = NULL,
+
+  # Importance DataFrames
+  rfImportance = NULL,
 )
 
 # Updates outcome choice 1 reactive based on user selection
@@ -149,6 +152,7 @@ observeEvent(input$continueRF, {
         # classProbs = TRUE
       )
 
+      # Forming random forest model
       rfModel <- caret::train(
         TBStatus ~ .,
         data = rv$trainingData,
@@ -159,13 +163,15 @@ observeEvent(input$continueRF, {
         trControl = control
       )
 
+      # Getting importance plot
       rfImportance <- varImp(rfModel)
       importance <- rfImportance
-      View(rfImportance)
+      View(rfImportance$importance)
 
-      output$rfImportancePlot <- renderPlot({
-        plot(rfImportance, main = "Random Forest Importance Plot")
-      })
+      rv$rfImportance <- rfImportance
+
+      rfPredictions <- predict(rfModel, rv$testData)
+      print(rfPredictions)
 
       sorted_data <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
 
@@ -202,6 +208,27 @@ observeEvent(input$continueRF, {
     showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
 })
+
+# Here, we output the rf Importance plot.
+output$rfImportancePlot <- renderPlot({
+  tryCatch({
+    if(!is.null(rv$rfImportance)) {
+      importance <- rv$rfImportance
+      sorted_data <- importance
+      sorted_data$importance <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
+      sorted_data$importance <- sorted_data$importance[1:input$rfSignatureSize, , drop = FALSE]
+
+      plot(sorted_data, main = "Random Forest Importance Plot")
+    }
+  }, error = function(e) {
+    cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
+  })
+})
+
+
+
+
 
 # Code for Support Vector Machines
 observeEvent(input$continueSVM, {
