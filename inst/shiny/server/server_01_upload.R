@@ -356,9 +356,9 @@ observeEvent(input$confirmStudiesBtn, {
         # Combine the conditions to filter out columns
         colsToExclude <- naCols | uniqueValueCols
         dfFiltered <- df[, !colsToExclude]
-        View(dfFiltered)
+        # View(dfFiltered)
         colNamesFiltered <- colnames(dfFiltered)
-        View(colNamesFiltered)
+        # View(colNamesFiltered)
         #we may want to not allow TB status to even be an option, but i've included it here as a default
         updateSelectizeInput(session, "selectedCovars", choices = colNamesFiltered, selected = "TBStatus", server = TRUE)
 
