@@ -11,7 +11,7 @@ rv <- reactiveValues(
 
   # Importance DataFrames
   rfImportance = NULL,
-
+  rfGeneSigNames = NULL,
   rfConfusionMatrix = NULL
 )
 
@@ -168,17 +168,9 @@ observeEvent(input$continueRF, {
       # Getting importance plot
       rfImportance <- varImp(rfModel)
       importance <- rfImportance
-      View(rfImportance$importance)
+      # View(rfImportance$importance)
 
       rv$rfImportance <- rfImportance
-
-      rfPredictions <- predict(rfModel, rv$testData)
-
-      View(as.data.frame(rv$testData$TBStatus))
-
-      View(as.data.frame(rfPredictions))
-
-      rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, rv$testData$TBStatus)
 
       sorted_data <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
 
@@ -224,7 +216,8 @@ output$rfImportancePlot <- renderPlot({
       sorted_data <- importance
       sorted_data$importance <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
       sorted_data$importance <- sorted_data$importance[1:input$rfSignatureSize, , drop = FALSE]
-
+      rv$rfGeneSigNames <- as.list(rownames(sorted_data$importance))
+      # View(rv$rfGeneSigNames)
       plot(sorted_data, main = "Random Forest Importance Plot")
     }
   }, error = function(e) {
@@ -234,6 +227,44 @@ output$rfImportancePlot <- renderPlot({
 })
 
 observeEvent(input$testGeneSig, {
+  ### MIGHT BE WRONG, BUT I THINK WE'RE RETRAINING THE MODEL ONLY USING THE SELECTED GENES
+
+  View(rv$trainingData)
+  View(rv$testData)
+  colKeep <- c("TBStatus", rv$rfGeneSigNames)
+  View(colKeep)
+  # Reduces testing and training data to only include chosen genes
+  newtrainingData <- rv$trainingData[, unlist(colKeep)]
+
+  newtestingData <- rv$testData[, unlist(colKeep)]
+
+  control <- trainControl(
+    method = "cv",
+    number = input$foldCount
+    # verboseIter = TRUE,
+    # classProbs = TRUE
+  )
+
+  # Forming random forest model
+  rfModel <- caret::train(
+    TBStatus ~ .,
+    data = newtrainingData,
+    method = "rf",
+    tuneGrid = data.frame(mtry = input$mtryInput),
+    nodesize = input$nodeSize,
+    ntree = input$numTrees,
+    trControl = control
+  )
+
+  rfPredictions <- predict(rfModel, newtestingData)
+
+  View(as.data.frame(newtestingData$TBStatus))
+
+  View(as.data.frame(rfPredictions))
+
+  rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, newtestingData$TBStatus)
+
+
 
   output$rfMatrix <- renderTable({
     tryCatch({
@@ -386,7 +417,7 @@ observeEvent(input$continueNN, {
       plot(nnImportance, main = "Neural Network Importance Plot")
     })
 
-    # ps <- predict(nn_caret, rv$trainingData)
+    ps <- predict(nnModel, rv$trainingData)
     # confusionMatrix(ps, rv$trainingData$Species)$overall["Accuracy"]
 
 
