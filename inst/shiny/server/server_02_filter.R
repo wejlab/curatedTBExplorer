@@ -32,11 +32,6 @@ observe({
     column_index <- which(vals$covars == filter_by)
     # print(paste("Column index:", column_index))
 
-    if (length(column_index) == 0) {
-      print("Column index is out of bounds or filter_by does not exist in vals$covars")
-      return(NULL)
-    }
-
     column_values <- vals$colData[, column_index]
     # print(paste("Column values:", column_values))
 
