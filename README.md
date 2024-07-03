@@ -7,14 +7,14 @@ CuratedTBData is a R data package that is accessible via Bioconductor and GitHub
 ``` r
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install("DESeq2")
-BiocManager::install("GenomicRanges")
-BiocManager::install("MultiAssayExperiment")
-BiocManager::install("SummarizedExperiment")
-BiocManager::install("TBSignatureProfiler")
-BiocManager::install("curatedTBData")
-BiocManager::install("scran")
-BiocManager::install("SEtools")
+BiocManager::install("DESeq2", update = TRUE, ask = FALSE)
+BiocManager::install("GenomicRanges", update = TRUE, ask = FALSE)
+BiocManager::install("MultiAssayExperiment", update = TRUE, ask = FALSE)
+BiocManager::install("SummarizedExperiment", update = TRUE, ask = FALSE)
+BiocManager::install("TBSignatureProfiler", update = TRUE, ask = FALSE)
+BiocManager::install("curatedTBData", update = TRUE, ask = FALSE)
+BiocManager::install("scran", update = TRUE, ask = FALSE)
+BiocManager::install("SEtools", update = TRUE, ask = FALSE)
 ```
 
 
@@ -30,7 +30,7 @@ if (!requireNamespace("devtools", quietly=TRUE))
 devtools::install_github("wejlab/curatedTBExplorer")
 ```
 
-If install fails, try:
+If the installation fails, try:
 ```r
 options(timeout=400)
 ```
