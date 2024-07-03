@@ -567,14 +567,14 @@ observeEvent(input$enTestGeneSig, {
 
 # Code for Neural Networks
 # Define a reactive value to store the trained model
-trained_model <- reactiveVal(NULL)
+# trained_model <- reactiveVal(NULL)
 
 observeEvent(input$continueNN, {
   tryCatch({
     withProgress(message = "Training Model...", value = 0, {
       control <- trainControl(method = "cv", number = input$foldCount)
 
-      rv$trainingData$TBStatus <- factor(rv$trainingData$TBStatus)
+      # rv$trainingData$TBStatus <- factor(rv$trainingData$TBStatus)
 
       nnModel <- caret::train(TBStatus ~ .,
                               data = rv$trainingData,
@@ -586,21 +586,49 @@ observeEvent(input$continueNN, {
       )
 
       nnImportance <- varImp(nnModel)
-      View(nnImportance)
 
+      importance <- nnImportance
+      rv$nnImportance <- nnImportance
 
+      sortedData <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
+
+      top_five <- sortedData[1:5, , drop = FALSE]
+      # View(top_five)
+      top_genes <- sortedData[1:10, , drop = FALSE]
+      # View(top_genes)
+      genes_above_90 <- importance$importance[importance$importance$Overall >= 90, , drop = FALSE]
+      genes_above_80 <- importance$importance[importance$importance$Overall >= 80, , drop = FALSE]
+      #this sends the identified genes to the TBsignatureprofiler
+      TBsignatures_reactive <- reactive({
+        top_five <- as.list(rownames(top_five))
+        top_five_list <- CharacterList(top_five)
+        top_genes <- as.list(rownames(top_genes))
+        top_genes_list <- CharacterList(top_genes)
+        genes_above_90 <- as.list(rownames(genes_above_90))
+        genes_above_90_list <- CharacterList(genes_above_90)
+        genes_above_80 <- as.list(rownames(genes_above_80))
+        genes_above_80_list <- CharacterList(genes_above_80)
+        TBsignatures <- c(TBsignatures, list(TopFive_RF = top_five_list@unlistData), list(TopGenes_RF = top_genes_list@unlistData), list(GenesAbove90_RF =genes_above_90_list@unlistData), list(GenesAbove80_RF = genes_above_80_list@unlistData))
+      })
+
+      observe({
+        TBsignatures <- TBsignatures_reactive()
+        rv$TBsignatures_reactive <- TBsignatures_reactive()
+      })
+
+      showNotification("Finished Generating Neural Network Model", type = "message")
     })
 
     output$nnImportancePlot <- renderPlot({
       plot(nnImportance, main = "Neural Network Importance Plot")
     })
 
-    ps <- predict(nnModel, rv$trainingData)
-    # confusionMatrix(ps, rv$trainingData$Species)$overall["Accuracy"]
-
-
-    # Print a message indicating training completed
-    print("Neural network training completed.")
+    # ps <- predict(nnModel, rv$trainingData)
+    # # confusionMatrix(ps, rv$trainingData$Species)$overall["Accuracy"]
+    #
+    #
+    # # Print a message indicating training completed
+    # print("Neural network training completed.")
 
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
@@ -608,18 +636,70 @@ observeEvent(input$continueNN, {
   })
 })
 
-# Output to display training progress or results
-output$nn_output <- renderPrint({
-  # If the model is trained, display the training configuration
-  if (!is.null(trained_model())) {
-    cat("Neural Network Configuration:\n")
-    cat(paste("Number of Hidden Layers:", trained_model()$num_layers), "\n")
-    cat(paste("Number of Neurons per Hidden Layer:", trained_model()$num_neurons), "\n")
-    cat(paste("Learning Rate:", trained_model()$learning_rate), "\n")
-    cat(paste("Number of Epochs:", trained_model()$epochs), "\n")
-    cat(paste("Batch Size:", trained_model()$batch_size), "\n")
-  } else {
-    # If the model is not trained yet, display a message
-    "Neural network not trained yet."
-  }
+output$nnImportancePlot <- renderPlot({
+  tryCatch({
+    if(!is.null(rv$nnImportance)) {
+      importance <- rv$nnImportance
+      sortedData <- importance
+      sortedData$importance <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
+      sortedData$importance <- sortedData$importance[1:input$nnSignatureSize, , drop = FALSE]
+      rv$nnGeneSigNames <- as.list(rownames(sortedData$importance))
+      plot(sortedData, main = "Neural Network Importance Plot")
+    }
+  }, error = function(e) {
+    cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
+  })
 })
+
+observeEvent(input$nnTestGeneSig, {
+  colKeep <- c("TBStatus", rv$nnGeneSigNames)
+
+  newtrainingData <- rv$trainingData[, unlist(colKeep)]
+  newtestingData <- rv$testData[, unlist(colKeep)]
+
+  control <- trainControl(method = "cv", number = input$foldCount)
+
+  nnModel <- caret::train(TBStatus ~ .,
+                          data = rv$trainingData,
+                          method = "nnet",
+                          trControl = control,
+                          linout = FALSE,
+                          maxit = input$numEpochs,
+                          maxNWts = 10000,
+  )
+
+  nnPredictions <- predict(nnModel, newtestingData)
+
+  rv$nnConfusionMatrix <- confusionMatrix(nnPredictions, newtestingData$TBStatus)
+
+  output$nnMatrixTable <- renderTable({
+    tryCatch({
+      as.data.frame(rv$nnConfusionMatrix$table)
+    }, error = function(e) {
+
+    })
+  })
+
+  output$nnMatrixPlot <- renderPlot({
+    tryCatch({
+      plot(table(nnPredictions, rv$testDat$TBStatus), main = "Confusion matrix", cex.main = 1.2)
+    })
+  })
+})
+
+# # Output to display training progress or results
+# output$nn_output <- renderPrint({
+#   # If the model is trained, display the training configuration
+#   if (!is.null(trained_model())) {
+#     cat("Neural Network Configuration:\n")
+#     cat(paste("Number of Hidden Layers:", trained_model()$num_layers), "\n")
+#     cat(paste("Number of Neurons per Hidden Layer:", trained_model()$num_neurons), "\n")
+#     cat(paste("Learning Rate:", trained_model()$learning_rate), "\n")
+#     cat(paste("Number of Epochs:", trained_model()$epochs), "\n")
+#     cat(paste("Batch Size:", trained_model()$batch_size), "\n")
+#   } else {
+#     # If the model is not trained yet, display a message
+#     "Neural network not trained yet."
+#   }
+# })
