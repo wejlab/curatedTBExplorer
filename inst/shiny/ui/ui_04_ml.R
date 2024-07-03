@@ -10,10 +10,6 @@ tabPanel(
       # "General Settings",
       style = "background-color: #EDF1F1;",
 
-      ##########################################################################
-      # NEED TO CHANGE THE selectInput CHOICES SO THEY INCLUDE MORE OPTIONS
-      # LIKE HIV vs NO HIV
-      ##########################################################################
       selectInput("oc1", "Outcome", choices = list()),
       selectInput("oc2", "Compared Outcome", choices = list()),
 
@@ -34,33 +30,35 @@ tabPanel(
       "Elastic Net Regression",
       sidebarPanel(
         "Elastic Net Regression",
-        actionButton("continueEN", "Continue")
+        actionButton("continueEN", "Continue"),
+
+        sliderInput("enSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
+        actionButton("enTestGeneSig", "Test Gene Signature")
       ),
       mainPanel(
-        plotOutput("elasticNetImportancePlot", width = "100%", height = "5000px")
+        plotOutput("enImportancePlot", height = "600"),
+        plotOutput("enMatrixPlot"),
+        tableOutput("enMatrixTable")
       )
     ),
     tabPanel(
       "Neural Networks",
       sidebarPanel(
         "Neural Networks",
-        # # Input for number of hidden layers
-        # numericInput("num_layers", "Number of Hidden Layers:", value = 1, min = 1, max = 10),
-        # Input for number of neurons in each hidden layer
-        # numericInput("num_neurons", "Number of Neurons per Hidden Layer(s):", value = 10, min = 1, max = 100),
-        # # Input for learning rate
-        # numericInput("learning_rate", "Learning Rate:", value = 0.01, min = 0, max = 1, step = 0.01),
 
         # Input for number of epochs
-        numericInput("num_epochs", "Number of Epochs:", value = 100, min = 1, max = 1000),
-        # # Input for batch size
-        # numericInput("batch_size", "Batch Size:", value = 32, min = 1, max = 256),
+        numericInput("numEpochs", "Number of Epochs:", value = 100, min = 1, max = 1000),
 
         # Button to start training
-        actionButton("continueNN", "Continue")
+        actionButton("continueNN", "Continue"),
+
+        sliderInput("nnSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
+        actionButton("nnTestGeneSig", "Test Gene Signature")
       ),
       mainPanel(
-        plotOutput("nnImportancePlot", height = "5000px")
+        plotOutput("nnImportancePlot", height = "600"),
+        plotOutput("nnMatrixPlot"),
+        # tableOuput("nnMatrixTable")
       )
     ),
     tabPanel(
@@ -73,11 +71,12 @@ tabPanel(
         actionButton("continueRF", "Continue"),
 
         sliderInput("rfSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
-        actionButton("testGeneSig", "Test Gene Signature")
+        actionButton("rfTestGeneSig", "Test Gene Signature")
       ),
       mainPanel(
-        shinycssloaders::withSpinner(plotOutput("rfImportancePlot", height = "600")),
-        shinycssloaders::withSpinner(tableOutput("rfMatrix"))
+        plotOutput("rfImportancePlot", height = "600"),
+        plotOutput("rfMatrixPlot"),
+        tableOutput("rfMatrixTable")
       )
     ),
     tabPanel(
@@ -85,12 +84,15 @@ tabPanel(
       sidebarPanel(
         "Support Vector Machines",
         selectInput("kernelType", "Kernel Type", choices = c("Linear", "Radial", "Polynomial")),
-        actionButton("continueSVM", "Continue")
+        actionButton("continueSVM", "Continue"),
+
+        sliderInput("svmSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
+        actionButton("svmTestGeneSig", "Test Gene Signature")
       ),
       mainPanel(
-        # plotOutput("svmImportancePlot", width = "100%", height = "5000px"),
-        plotOutput("svmImportancePlot", height = 5000),
-        plotOutput("svmMatrix")
+        plotOutput("svmImportancePlot", height = "600"),
+        # plotOutput("svmMatrixPlot"),
+        tableOutput("svmMatrixTable")
       )
     )
   ),

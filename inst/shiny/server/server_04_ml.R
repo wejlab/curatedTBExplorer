@@ -12,8 +12,29 @@ rv <- reactiveValues(
   # Importance DataFrames
   rfImportance = NULL,
   rfGeneSigNames = NULL,
-  rfConfusionMatrix = NULL
+  rfPredictions = NULL,
+  rfConfusionMatrix = NULL,
+
+  enImportance = NULL,
+  enGeneSigNames = NULL,
+  enPredictions = NULL,
+  enConfusionMatrix = NULL,
+
+  svmImportance = NULL,
+  svmGeneSigNames = NULL,
+  svmPredictions = NULL,
+  svmConfusionMatrix = NULL,
+
+  nnImportance = NULL,
+  nnGeneSigNames = NULL,
+  nnPredictions = NULL,
+  nnConfusionMatrix = NULL
+
 )
+
+################################################################################################
+####################################### SELECTING DATASETS #####################################
+################################################################################################
 
 # Updates outcome choice 1 reactive based on user selection
 outcomeChoice1 <- reactive({
@@ -142,6 +163,10 @@ mlList <- reactive({
   }
 })
 
+######################################################################################################
+####################################### MACHINE LEARNING METHODS #####################################
+######################################################################################################
+
 # Code for Random Forests
 observeEvent(input$continueRF, {
   tryCatch({
@@ -226,11 +251,11 @@ output$rfImportancePlot <- renderPlot({
   })
 })
 
-observeEvent(input$testGeneSig, {
+observeEvent(input$rfTestGeneSig, {
   ### MIGHT BE WRONG, BUT I THINK WE'RE RETRAINING THE MODEL ONLY USING THE SELECTED GENES
-
-  View(rv$trainingData)
-  View(rv$testData)
+#
+#   View(rv$trainingData)
+#   View(rv$testData)
   colKeep <- c("TBStatus", rv$rfGeneSigNames)
   View(colKeep)
   # Reduces testing and training data to only include chosen genes
@@ -241,8 +266,6 @@ observeEvent(input$testGeneSig, {
   control <- trainControl(
     method = "cv",
     number = input$foldCount
-    # verboseIter = TRUE,
-    # classProbs = TRUE
   )
 
   # Forming random forest model
@@ -266,12 +289,18 @@ observeEvent(input$testGeneSig, {
 
 
 
-  output$rfMatrix <- renderTable({
+  output$rfMatrixTable <- renderTable({
     tryCatch({
       as.data.frame(rv$rfConfusionMatrix$table)
     }, error = function(e) {
       # cat("Error:", conditionMessage(e), "\n")
       # showNotification(paste("Error:", conditionMessage(e)), type = "error")
+    })
+  })
+
+  output$rfMatrixPlot <- renderPlot({
+    tryCatch({
+      plot(table(rfPredictions, rv$testData$TBStatus), main = "Confusion Matrix", cex.main = 1.2)
     })
   })
 })
@@ -349,7 +378,7 @@ observeEvent(input$continueSVM, {
 
     #confusion matrix
     confusion_matrix <- table(predictions, rv$testData$TBStatus)
-    output$svmMatrix <- renderPlot({
+    output$svmMatrixPlot <- renderPlot({
       plot(confusion_matrix, main = "Confusion Matrix", cex.main = 1.2)
     })
     print(confusion_matrix)
@@ -365,25 +394,113 @@ observeEvent(input$continueSVM, {
 # Code for Elastic Net Regression
 observeEvent(input$continueEN, {
   tryCatch({
-    ctrl <- trainControl(method = "cv", number = input$foldCount)
-    elastic_net <- caret::train(TBStatus ~ .,
-                                data = rv$trainingData,
-                                method = "glmnet",
-                                trControl = ctrl,
-                                tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.001, 1, length = 100)))
+    withProgress(message = "Training Model...", value = 0, {
+      control <- trainControl(method = "cv", number = input$foldCount)
+      enModel <- caret::train(TBStatus ~ .,
+                              data = rv$trainingData,
+                              method = "glmnet",
+                              trControl = control,
+                              tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.001, 1, length = 100)))
 
-    importance <- varImp(elastic_net)
-    output$elasticNetImportancePlot <- renderPlot({
-      plot(importance)
+      enImportance <- varImp(enModel)
+      importance <- enImportance
+      rv$enImportance <- enImportance
+
+      print("here")
+
+      sortedData <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
+
+      top_five <- sortedData[1:5, , drop = FALSE]
+      # View(top_five)
+      top_genes <- sortedData[1:10, , drop = FALSE]
+      # View(top_genes)
+      genes_above_90 <- importance$importance[importance$importance$Overall >= 90, , drop = FALSE]
+      genes_above_80 <- importance$importance[importance$importance$Overall >= 80, , drop = FALSE]
+      #this sends the identified genes to the TBsignatureprofiler
+      TBsignatures_reactive <- reactive({
+        top_five <- as.list(rownames(top_five))
+        top_five_list <- CharacterList(top_five)
+        top_genes <- as.list(rownames(top_genes))
+        top_genes_list <- CharacterList(top_genes)
+        genes_above_90 <- as.list(rownames(genes_above_90))
+        genes_above_90_list <- CharacterList(genes_above_90)
+        genes_above_80 <- as.list(rownames(genes_above_80))
+        genes_above_80_list <- CharacterList(genes_above_80)
+        TBsignatures <- c(TBsignatures, list(TopFive_RF = top_five_list@unlistData), list(TopGenes_RF = top_genes_list@unlistData), list(GenesAbove90_RF =genes_above_90_list@unlistData), list(GenesAbove80_RF = genes_above_80_list@unlistData))
+      })
+
+      print("here")
+
+      observe({
+        TBsignatures <- TBsignatures_reactive()
+        rv$TBsignatures_reactive <- TBsignatures_reactive()
+      })
+
+      showNotification("Finished Generating Elastic Net Model", type = "message")
     })
-
-    # Create predictions based on the testing data/ elastic net training
-    predictions <- predict(elastic_net, rv$testData)
-    print(predictions)
+    # # Create predictions based on the testing data/ elastic net training
+    # predictions <- predict(elastic_net, rv$testData)
+    # print(predictions)
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
     showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
+})
+
+output$enImportancePlot <- renderPlot({
+  tryCatch({
+    if(!is.null(rv$enImportance)) {
+      importance <- rv$enImportance
+      sortedData <- importance
+      sortedData$importance <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
+      sortedData$importance <- sortedData$importance[1:input$enSignatureSize, , drop = FALSE]
+      rv$enGeneSigNames <- as.list(rownames(sortedData$importance))
+      plot(sortedData, main = "Elastic Net Importance Plot")
+    }
+  }, error = function(e) {
+    cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
+  })
+})
+
+observeEvent(input$enTestGeneSig, {
+
+  print("Beginning test gene sig")
+  colKeep <- c("TBStatus", rv$enGeneSigNames)
+
+  newtrainingData <- rv$trainingData[, unlist(colKeep)]
+  newtestingData <- rv$testData[, unlist(colKeep)]
+
+  control <- trainControl(
+    method = "cv",
+    number = input$foldCount
+  )
+
+  print("middle test gene sig")
+
+  enModel <- caret::train(TBStatus ~ .,
+                          data = newtrainingData,
+                          method = "glmnet",
+                          trControl = control,
+                          tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.001, 1, length = 100)))
+  enPredictions <- predict(enModel, newtestingData)
+
+  rv$enConfusionMatrix <- confusionMatrix(enPredictions, newtestingData$TBStatus)
+
+  print("end test gene sig")
+  output$enMatrixTable <- renderTable({
+    tryCatch({
+      as.data.frame(rv$enConfusionMatrix$table)
+    }, error = function(e) {
+
+    })
+  })
+  output$enMatrixPlot <- renderPlot({
+    tryCatch({
+      plot(table(enPredictions, rv$testData$TBStatus), main = "Confusion Matrix", cex.main = 1.2)
+    })
+  })
+
 })
 
 
@@ -403,7 +520,7 @@ observeEvent(input$continueNN, {
                               method = "nnet",
                               trControl = control,
                               linout = FALSE,
-                              maxit = input$num_epochs,
+                              maxit = input$numEpochs,
                               maxNWts = 10000,
                               )
 
