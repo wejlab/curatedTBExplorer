@@ -91,7 +91,7 @@ tabPanel(
       ),
       mainPanel(
         plotOutput("svmImportancePlot", height = "600"),
-        # plotOutput("svmMatrixPlot"),
+        plotOutput("svmMatrixPlot"),
         tableOutput("svmMatrixTable")
       )
     )
