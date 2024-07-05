@@ -259,7 +259,7 @@ observeEvent(input$rfTestGeneSig, {
   colKeep <- c("TBStatus", rv$rfGeneSigNames)
   # View(colKeep)
   # Reduces testing and training data to only include chosen genes
-  newtrainingData <- rv$trainingData[, unlist(colKeep)]
+  newTrainingData <- rv$trainingData[, unlist(colKeep)]
 
   newtestingData <- rv$testData[, unlist(colKeep)]
 
@@ -271,7 +271,7 @@ observeEvent(input$rfTestGeneSig, {
   # Forming random forest model
   rfModel <- caret::train(
     TBStatus ~ .,
-    data = newtrainingData,
+    data = newTrainingData,
     method = "rf",
     tuneGrid = data.frame(mtry = input$mtryInput),
     nodesize = input$nodeSize,
@@ -418,7 +418,7 @@ output$svmImportancePlot <- renderPlot({
 observeEvent(input$svmTestGeneSig, {
   colKeep <- c("TBStatus", rv$svmGeneSigNames)
 
-  newtrainingData <- rv$trainingData[, unlist(colKeep)]
+  newTrainingData <- rv$trainingData[, unlist(colKeep)]
   newtestingData <- rv$testData[, unlist(colKeep)]
 
   if(input$kernelType == "Linear"){
@@ -432,7 +432,7 @@ observeEvent(input$svmTestGeneSig, {
   control <- trainControl(method = "cv", number = input$foldCount)
 
   svmModel <- caret::train(TBStatus ~ .,
-                           data = newtrainingData,
+                           data = newTrainingData,
                            method = kType,
                            trControl = control)
 
@@ -532,7 +532,7 @@ observeEvent(input$enTestGeneSig, {
 
   colKeep <- c("TBStatus", rv$enGeneSigNames)
 
-  newtrainingData <- rv$trainingData[, unlist(colKeep)]
+  newTrainingData <- rv$trainingData[, unlist(colKeep)]
   newtestingData <- rv$testData[, unlist(colKeep)]
 
   control <- trainControl(
@@ -541,7 +541,7 @@ observeEvent(input$enTestGeneSig, {
   )
 
   enModel <- caret::train(TBStatus ~ .,
-                          data = newtrainingData,
+                          data = newTrainingData,
                           method = "glmnet",
                           trControl = control,
                           tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.001, 1, length = 100)))
@@ -658,13 +658,13 @@ output$nnImportancePlot <- renderPlot({
 observeEvent(input$nnTestGeneSig, {
   colKeep <- c("TBStatus", rv$nnGeneSigNames)
 
-  newtrainingData <- rv$trainingData[, unlist(colKeep)]
+  newTrainingData <- rv$trainingData[, unlist(colKeep)]
   newtestingData <- rv$testData[, unlist(colKeep)]
 
   control <- trainControl(method = "cv", number = input$foldCount)
 
   nnModel <- caret::train(TBStatus ~ .,
-                          data = newtrainingData,
+                          data = newTrainingData,
                           method = "nnet",
                           trControl = control,
                           linout = FALSE,
