@@ -58,7 +58,7 @@ tabPanel(
       mainPanel(
         plotOutput("nnImportancePlot", height = "600"),
         plotOutput("nnMatrixPlot"),
-        tableOuput("nnMatrixTable")
+        tableOutput("nnMatrixTable")
       )
     ),
     tabPanel(

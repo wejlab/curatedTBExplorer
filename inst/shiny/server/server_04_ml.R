@@ -257,7 +257,7 @@ observeEvent(input$rfTestGeneSig, {
   #   View(rv$trainingData)
   #   View(rv$testData)
   colKeep <- c("TBStatus", rv$rfGeneSigNames)
-  View(colKeep)
+  # View(colKeep)
   # Reduces testing and training data to only include chosen genes
   newtrainingData <- rv$trainingData[, unlist(colKeep)]
 
@@ -281,9 +281,9 @@ observeEvent(input$rfTestGeneSig, {
 
   rfPredictions <- predict(rfModel, newtestingData)
 
-  View(as.data.frame(newtestingData$TBStatus))
+  # View(as.data.frame(newtestingData$TBStatus))
 
-  View(as.data.frame(rfPredictions))
+  # View(as.data.frame(rfPredictions))
 
   rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, newtestingData$TBStatus)
 
@@ -300,7 +300,8 @@ observeEvent(input$rfTestGeneSig, {
 
   output$rfMatrixPlot <- renderPlot({
     tryCatch({
-      plot(table(rfPredictions, rv$testData$TBStatus), main = "Confusion Matrix", cex.main = 1.2)
+      plot(table(rfPredictions, rv$testData$TBStatus), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
+      mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
     })
   })
 })
@@ -334,7 +335,7 @@ observeEvent(input$continueSVM, {
       importance <- svmImportance
       rv$svmImportance <- svmImportance
 
-      View(importance$importance)
+      # View(importance$importance)
 
       #gene selection
       #included are the top 5, ten, any genes above 90, and any above 80, for comparison purposes
@@ -437,8 +438,9 @@ observeEvent(input$svmTestGeneSig, {
 
   svmPredictions <- predict(svmModel, newtestingData)
 
-  rv$svmConfustionMatrix <- confusionMatrix(svmPredictions, newtestingData$TBStatus)
-
+  rv$svmConfusionMatrix <- confusionMatrix(svmPredictions, newtestingData$TBStatus)
+  View(rv$svmConfusionMatrix)
+  View(as.data.frame(rv$svmConfusionMatrix$table))
   output$svmMatrixTable <- renderTable({
     tryCatch({
       as.data.frame(rv$svmConfusionMatrix$table)
@@ -447,9 +449,11 @@ observeEvent(input$svmTestGeneSig, {
       showNotification(paste("Error:", conditionMessage(e)), type = "error")
     })
   })
+
   output$svmMatrixPlot <- renderPlot({
     tryCatch({
-      plot(table(svmPredictions, rv$testData$TBStatus), main = "Confusion Matrix", cex.main = 1.2)
+      plot(table(svmPredictions, rv$testData$TBStatus), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
+      mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
     }, error = function(e) {
       cat("Error:", conditionMessage(e), "\n")
       showNotification(paste("Error:", conditionMessage(e)), type = "error")
@@ -555,7 +559,8 @@ observeEvent(input$enTestGeneSig, {
   })
   output$enMatrixPlot <- renderPlot({
     tryCatch({
-      plot(table(enPredictions, rv$testData$TBStatus), main = "Confusion Matrix", cex.main = 1.2)
+      plot(table(enPredictions, rv$testData$TBStatus), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
+      mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
     }, error = function(e) {
       cat("Error:", conditionMessage(e), "\n")
       showNotification(paste("Error:", conditionMessage(e)), type = "error")
@@ -619,10 +624,6 @@ observeEvent(input$continueNN, {
       showNotification("Finished Generating Neural Network Model", type = "message")
     })
 
-    output$nnImportancePlot <- renderPlot({
-      plot(nnImportance, main = "Neural Network Importance Plot")
-    })
-
     # ps <- predict(nnModel, rv$trainingData)
     # # confusionMatrix(ps, rv$trainingData$Species)$overall["Accuracy"]
     #
@@ -642,8 +643,10 @@ output$nnImportancePlot <- renderPlot({
       importance <- rv$nnImportance
       sortedData <- importance
       sortedData$importance <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
+      # print(input$nnSignatureSize)
       sortedData$importance <- sortedData$importance[1:input$nnSignatureSize, , drop = FALSE]
       rv$nnGeneSigNames <- as.list(rownames(sortedData$importance))
+      # print(rv$nnGeneSigNames)
       plot(sortedData, main = "Neural Network Importance Plot")
     }
   }, error = function(e) {
@@ -661,7 +664,7 @@ observeEvent(input$nnTestGeneSig, {
   control <- trainControl(method = "cv", number = input$foldCount)
 
   nnModel <- caret::train(TBStatus ~ .,
-                          data = rv$trainingData,
+                          data = newtrainingData,
                           method = "nnet",
                           trControl = control,
                           linout = FALSE,
@@ -683,7 +686,8 @@ observeEvent(input$nnTestGeneSig, {
 
   output$nnMatrixPlot <- renderPlot({
     tryCatch({
-      plot(table(nnPredictions, rv$testDat$TBStatus), main = "Confusion matrix", cex.main = 1.2)
+      plot(table(nnPredictions, rv$testData$TBStatus), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
+      mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
     })
   })
 })
