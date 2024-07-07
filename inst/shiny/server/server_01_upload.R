@@ -24,6 +24,8 @@ vals <- reactiveValues(
   sessionMAEList = list(),
   # Holds the combined SummarizedExperiment.
   SEList = NULL,
+  # Holds the colData from the studies, used in batch qc
+  batchList = NULL
 )
 
 # Variables to hold local downloaded and default studies
@@ -350,17 +352,39 @@ observeEvent(input$confirmStudiesBtn, {
 
         #Grabs the columns that dont have NA values -> necessary for batch correction
         #We also need to exclude columns where one value only comes from one study, and another only comes from the other study.
+        # vals$batchList <- lapply(vals$MAEList, function(colData) ))
+        #im thinking we can grab the values from the MAEList instead of SEList?
+
         df <- as.data.frame(colData(vals$SEList)@listData)
-        naCols <- sapply(df, function(col) any(is.na(col)))
-        uniqueValueCols <- sapply(df, function(col) length(unique(col)) < 2)
-        # Combine the conditions to filter out columns
-        colsToExclude <- naCols | uniqueValueCols
-        dfFiltered <- df[, !colsToExclude]
-        View(dfFiltered)
-        colNamesFiltered <- colnames(dfFiltered)
-        View(colNamesFiltered)
-        #we may want to not allow TB status to even be an option, but i've included it here as a default
-        updateSelectizeInput(session, "selectedCovars", choices = colNamesFiltered, selected = "TBStatus", server = TRUE)
+
+        tempA <- colData(vals$MAEList[[1]])@listData
+        tempB <- colData(vals$MAEList[[2]])@listData
+        tempA <- as.data.frame(tempA)
+        tempB <- as.data.frame(tempB)
+        tempNaCols <- sapply(tempA, function(col) any(is.na(col)))
+        tempNbCols <- sapply(tempB, function(col) any(is.na(col)))
+        tempAUnique <- sapply(tempA, function(col) length(unique(na.omit(col))) < 2)
+        tempBUnique <- sapply(tempB, function(col) length(unique(na.omit(col))) < 2)
+        View(tempAUnique)
+        tempColExclude <- tempNaCols | tempNbCols | tempAUnique | tempBUnique
+        tempFiltered <- df[ ,!tempColExclude]
+        View(tempFiltered)
+        updateSelectizeInput(session, "selectedCovars", choices = colnames(tempFiltered), selected = "TBStatus", server = TRUE)
+
+
+
+        View(vals$batchList)
+        # df <- as.data.frame(colData(vals$SEList)@listData)
+        # naCols <- sapply(df, function(col) any(is.na(col)))
+        # uniqueValueCols <- sapply(df, function(col) length(unique(col)) < 2)
+        # # Combine the conditions to filter out columns
+        # colsToExclude <- naCols | uniqueValueCols
+        # dfFiltered <- df[, !colsToExclude]
+        # View(dfFiltered)
+        # colNamesFiltered <- colnames(dfFiltered)
+        # View(colNamesFiltered)
+        # #we may want to not allow TB status to even be an option, but i've included it here as a default
+        # updateSelectizeInput(session, "selectedCovars", choices = colNamesFiltered, selected = "TBStatus", server = TRUE)
 
 
 
