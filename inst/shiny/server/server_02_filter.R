@@ -27,18 +27,18 @@ observeEvent(vals$SEList, {
 ############# Dropdowns #######################
 observe({
   filter_by <- input$filter_by
-  print(paste("Filter by:", filter_by))
+  # print(paste("Filter by:", filter_by))
   if (!is.null(filter_by)) {
     column_index <- which(vals$covars == filter_by)
-    print(paste("Column index:", column_index))
+    # print(paste("Column index:", column_index))
 
     if (length(column_index) == 0) {
-      print("Column index is out of bounds or filter_by does not exist in vals$covars")
+      # print("Column index is out of bounds or filter_by does not exist in vals$covars")
       return(NULL)
     }
 
     column_values <- vals$colData[, column_index]
-    print(paste("Column values:", column_values))
+    # print(paste("Column values:", column_values))
 
     # Filter out NA values
     column_values <- column_values[!is.na(column_values)]
