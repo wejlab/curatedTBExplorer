@@ -349,8 +349,17 @@ observeEvent(input$confirmStudiesBtn, {
           vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated", log = TRUE)
         }
 
+        # preCheck <- vals$SEList
+        # View(preCheck)
+        # View(as.data.frame(preCheck@assays@data@listData$log_assay1_cpm))
         # Corrects gene names
-        rownames(vals$SEList) <- update_genenames(rownames(vals$SEList))
+        # rownames(vals$SEList) <- update_genenames(rownames(vals$SEList))
+
+        # vals$SEList@NAMES <- update_genenames(vals$SEList@NAMES)
+
+        # View(as.data.frame(vals$SEList@assays@data@listData$log_assay1_cpm))
+
+        # View(vals$SEList)
 
         incProgress(2 / 2, message = "Studies Confirmed")
 
