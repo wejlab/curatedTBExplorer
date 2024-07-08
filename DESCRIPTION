@@ -38,7 +38,6 @@ Imports:
     shinythemes,
     shinyWidgets, 
     TBSignatureProfiler
-    
 Suggests: 
     dplyr, 
     DT, 
