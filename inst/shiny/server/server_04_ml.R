@@ -2,6 +2,7 @@
 rv <- reactiveValues(
   # Holds the users' choices for outcomes
   # Still need to figure out the format that this will come in
+  CovariateOutcomeChoice = NULL,
   outcomeChoice1 = NULL,
   outcomeChoice2 = NULL,
 
@@ -62,7 +63,6 @@ observeEvent(input$confirmDataset, {
       # View(selectedTrainingList)
       # View(selectedTestingList)
 
-      # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
       vals$statusList <- vals$mlList$TBStatus
 
       # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
@@ -132,9 +132,6 @@ observeEvent(input$confirmDataset, {
       rv$testData <- data.frame(TBStatus = testing_col_data$TBStatus, t(testing_assay_data))
       rv$testData$TBStatus <- factor(rv$testData$TBStatus, levels = c("TBYes", "TBNo"))
 
-
-      # View(rv$trainingSE)
-      # View(rv$testingSE)
       showNotification("Dataset Confirmed", type = "message")
     }
   }, error = function(e) {
@@ -151,8 +148,41 @@ observeEvent(vals$SEList, {
     unique_study_values <- unique(study_info)
     updateSelectizeInput(session, "selectedTrainingData", choices = unique_study_values)
     updateSelectizeInput(session, "selectedTestingData", choices = unique_study_values)
+
+    allCovarChoices <- as.list(names(vals$SEList@colData@listData))
+    # print(allCovarChoices)
+    # goodCovarChoices <- allCovarChoices[sapply(allCovarChoices, function(name) {
+    #   type <- typeof(vals$SEList$colData$listData[[name]])
+    #   type == "character"
+    # })]
+    # print(goodCovarChoices)
+
+    updateSelectInput(session, "covariateCategory", choices = allCovarChoices)
   }
 })
+
+observeEvent(input$covariateCategory, {
+  if(!is.null(input$covariateCategory)) {
+    if(!is.null(vals$SEList)) {
+      uniqueCovarChoices <- unique(vals$SEList@colData@listData[[input$covariateCategory]])
+      updateSelectInput(session, "oc1", choices = uniqueCovarChoices)
+      updateSelectInput(session, "oc2", choices = c(uniqueCovarChoices, "All Else"))
+    }
+  }
+})
+
+# observeEvent(input&oc1, {
+#   if(is.null(input$oc2)) {
+#
+#   }
+# })
+#
+# observeEvent(input$oc2, {
+#   if(!is.null(input$oc1)) {
+#
+#   }
+# })
+
 
 # Sets mlList to reactive
 mlList <- reactive({
