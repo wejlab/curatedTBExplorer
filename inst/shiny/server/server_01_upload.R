@@ -348,6 +348,10 @@ observeEvent(input$confirmStudiesBtn, {
           vals$SEList <- toSE(vals$MAEList)
           vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated", log = TRUE)
         }
+
+        # Corrects gene names
+        rownames(vals$SEList) <- update_genenames(rownames(vals$SEList))
+
         incProgress(2 / 2, message = "Studies Confirmed")
 
         #Grabs the columns that dont have NA values -> necessary for batch correction
@@ -375,7 +379,7 @@ observeEvent(input$confirmStudiesBtn, {
           View(vals$batchList)
         }, error = function(e) {
           cat("Error:", conditionMessage(e), "\n")
-          showNotification(paste("Error:", conditionMessage(e)), type = "error")
+          showNotification(paste("Batch Correction Error:", conditionMessage(e)), type = "error")
         })
 
         # df <- as.data.frame(colData(vals$SEList)@listData)
@@ -389,7 +393,6 @@ observeEvent(input$confirmStudiesBtn, {
         # View(colNamesFiltered)
         # #we may want to not allow TB status to even be an option, but i've included it here as a default
         # updateSelectizeInput(session, "selectedCovars", choices = colNamesFiltered, selected = "TBStatus", server = TRUE)
-
 
 
         # Sets values for filter tab
