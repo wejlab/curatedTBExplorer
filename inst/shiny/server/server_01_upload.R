@@ -379,13 +379,13 @@ observeEvent(input$confirmStudiesBtn, {
           tempNbCols <- sapply(tempB, function(col) any(is.na(col)))
           tempAUnique <- sapply(tempA, function(col) length(unique(na.omit(col))) < 2)
           tempBUnique <- sapply(tempB, function(col) length(unique(na.omit(col))) < 2)
-          View(tempAUnique)
+          # View(tempAUnique)
           tempColExclude <- tempNaCols | tempNbCols | tempAUnique | tempBUnique
           tempFiltered <- df[ ,!tempColExclude]
-          View(tempFiltered)
+          # View(tempFiltered)
           updateSelectizeInput(session, "selectedCovars", choices = colnames(tempFiltered), selected = "TBStatus", server = TRUE)
 
-          View(vals$batchList)
+          # View(vals$batchList)
         }, error = function(e) {
           cat("Error:", conditionMessage(e), "\n")
           showNotification(paste("Batch Correction Error:", conditionMessage(e)), type = "error")
