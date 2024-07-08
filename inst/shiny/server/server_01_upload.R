@@ -355,25 +355,29 @@ observeEvent(input$confirmStudiesBtn, {
         # vals$batchList <- lapply(vals$MAEList, function(colData) ))
         #im thinking we can grab the values from the MAEList instead of SEList?
 
-        df <- as.data.frame(colData(vals$SEList)@listData)
+        tryCatch({
+          df <- as.data.frame(colData(vals$SEList)@listData)
 
-        tempA <- colData(vals$MAEList[[1]])@listData
-        tempB <- colData(vals$MAEList[[2]])@listData
-        tempA <- as.data.frame(tempA)
-        tempB <- as.data.frame(tempB)
-        tempNaCols <- sapply(tempA, function(col) any(is.na(col)))
-        tempNbCols <- sapply(tempB, function(col) any(is.na(col)))
-        tempAUnique <- sapply(tempA, function(col) length(unique(na.omit(col))) < 2)
-        tempBUnique <- sapply(tempB, function(col) length(unique(na.omit(col))) < 2)
-        View(tempAUnique)
-        tempColExclude <- tempNaCols | tempNbCols | tempAUnique | tempBUnique
-        tempFiltered <- df[ ,!tempColExclude]
-        View(tempFiltered)
-        updateSelectizeInput(session, "selectedCovars", choices = colnames(tempFiltered), selected = "TBStatus", server = TRUE)
+          tempA <- colData(vals$MAEList[[1]])@listData
+          tempB <- colData(vals$MAEList[[2]])@listData
+          tempA <- as.data.frame(tempA)
+          tempB <- as.data.frame(tempB)
+          tempNaCols <- sapply(tempA, function(col) any(is.na(col)))
+          tempNbCols <- sapply(tempB, function(col) any(is.na(col)))
+          tempAUnique <- sapply(tempA, function(col) length(unique(na.omit(col))) < 2)
+          tempBUnique <- sapply(tempB, function(col) length(unique(na.omit(col))) < 2)
+          View(tempAUnique)
+          tempColExclude <- tempNaCols | tempNbCols | tempAUnique | tempBUnique
+          tempFiltered <- df[ ,!tempColExclude]
+          View(tempFiltered)
+          updateSelectizeInput(session, "selectedCovars", choices = colnames(tempFiltered), selected = "TBStatus", server = TRUE)
 
+          View(vals$batchList)
+        }, error = function(e) {
+          cat("Error:", conditionMessage(e), "\n")
+          showNotification(paste("Error:", conditionMessage(e)), type = "error")
+        })
 
-
-        View(vals$batchList)
         # df <- as.data.frame(colData(vals$SEList)@listData)
         # naCols <- sapply(df, function(col) any(is.na(col)))
         # uniqueValueCols <- sapply(df, function(col) length(unique(col)) < 2)
@@ -411,22 +415,27 @@ observeEvent(input$confirmStudiesBtn, {
 
 # Handles the user selections for Batch Correction
 observeEvent(input$confirmCovarsBtn, {
-  selCov <- input$selectedCovars
-  if (length(selCov) > 0) {
-    my_formula <- paste("~", paste(selCov, collapse = " + "))
-  } else {
-    my_formula <- "~ TBStatus" # Default formula if nothing selected -> may be unnecessary?
-  }
+  tryCatch({
+    selCov <- input$selectedCovars
+    if (length(selCov) > 0) {
+      my_formula <- paste("~", paste(selCov, collapse = " + "))
+    } else {
+      my_formula <- "~ TBStatus" # Default formula if nothing selected -> may be unnecessary?
+    }
 
-  print(paste("Formula:", my_formula))
+    print(paste("Formula:", my_formula))
 
-  # Create the model matrix
-  mod <- model.matrix(as.formula(my_formula), colData(vals$SEList))
+    # Create the model matrix
+    mod <- model.matrix(as.formula(my_formula), colData(vals$SEList))
 
-  # Perform batch correction using ComBat
-  assay(vals$SEList, "corrected_assay") <- ComBat(assay(vals$SEList, "assay1"),
-                                               batch = colData(vals$SEList)$Study,
-                                               mod = mod)
+    # Perform batch correction using ComBat
+    assay(vals$SEList, "corrected_assay") <- ComBat(assay(vals$SEList, "assay1"),
+                                                    batch = colData(vals$SEList)$Study,
+                                                    mod = mod)
+  }, error = function(e) {
+    cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
+  })
 })
 
 # Handles addition of studies to selected_studies list when studies are selected
