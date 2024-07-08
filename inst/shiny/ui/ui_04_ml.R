@@ -10,6 +10,7 @@ tabPanel(
       # "General Settings",
       style = "background-color: #EDF1F1;",
 
+      selectInput("covariateCategory", "Category Contrast", choices = list()),
       selectInput("oc1", "Outcome", choices = list()),
       selectInput("oc2", "Compared Outcome", choices = list()),
 
