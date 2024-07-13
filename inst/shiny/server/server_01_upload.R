@@ -349,8 +349,17 @@ observeEvent(input$confirmStudiesBtn, {
           vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated", log = TRUE)
         }
 
+        # preCheck <- vals$SEList
+        # View(preCheck)
+        # View(as.data.frame(preCheck@assays@data@listData$log_assay1_cpm))
         # Corrects gene names
-        rownames(vals$SEList) <- update_genenames(rownames(vals$SEList))
+        # rownames(vals$SEList) <- update_genenames(rownames(vals$SEList))
+
+        # vals$SEList@NAMES <- update_genenames(vals$SEList@NAMES)
+
+        # View(as.data.frame(vals$SEList@assays@data@listData$log_assay1_cpm))
+
+        # View(vals$SEList)
 
         incProgress(2 / 2, message = "Studies Confirmed")
 
@@ -370,13 +379,13 @@ observeEvent(input$confirmStudiesBtn, {
           tempNbCols <- sapply(tempB, function(col) any(is.na(col)))
           tempAUnique <- sapply(tempA, function(col) length(unique(na.omit(col))) < 2)
           tempBUnique <- sapply(tempB, function(col) length(unique(na.omit(col))) < 2)
-          View(tempAUnique)
+          # View(tempAUnique)
           tempColExclude <- tempNaCols | tempNbCols | tempAUnique | tempBUnique
           tempFiltered <- df[ ,!tempColExclude]
-          View(tempFiltered)
+          # View(tempFiltered)
           updateSelectizeInput(session, "selectedCovars", choices = colnames(tempFiltered), selected = "TBStatus", server = TRUE)
 
-          View(vals$batchList)
+          # View(vals$batchList)
         }, error = function(e) {
           cat("Error:", conditionMessage(e), "\n")
           showNotification(paste("Batch Correction Error:", conditionMessage(e)), type = "error")

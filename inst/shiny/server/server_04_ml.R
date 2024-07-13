@@ -180,19 +180,6 @@ observeEvent(input$covariateCategory, {
   }
 })
 
-# observeEvent(input&oc1, {
-#   if(is.null(input$oc2)) {
-#
-#   }
-# })
-#
-# observeEvent(input$oc2, {
-#   if(!is.null(input$oc1)) {
-#
-#   }
-# })
-
-
 # Sets mlList to reactive
 mlList <- reactive({
   if (!is.null(vals$SEList)) {
