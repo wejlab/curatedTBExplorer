@@ -2,7 +2,7 @@
 rv <- reactiveValues(
   # Holds the users' choices for outcomes
   # Still need to figure out the format that this will come in
-  CovariateOutcomeChoice = NULL,
+  covariateOutcomeChoice = NULL,
   outcomeChoice1 = NULL,
   outcomeChoice2 = NULL,
 
@@ -29,7 +29,9 @@ rv <- reactiveValues(
   nnImportance = NULL,
   nnGeneSigNames = NULL,
   nnPredictions = NULL,
-  nnConfusionMatrix = NULL
+  nnConfusionMatrix = NULL,
+
+  TBsignatures_reactive = NULL
 
 )
 
@@ -66,19 +68,29 @@ observeEvent(input$confirmDataset, {
       # vals$statusList <- vals$mlList$TBStatus
 
       vals$statusList <- vals$mlList@colData@listData[[input$covariateCategory]]
+      covarColumn <- vals$mlList@colData@listData[[input$covariateCategory]]
 
-      # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
-      vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
       if(input$oc2 == "All Else") {
-        vals$mlList@colData@listData[[input$covariateCategory]] <- factor(
-          ifelse(vals$mlList@colData@listData[[input$covariateCategory]] == input$oc1, input$oc1, "Other"))
+        covarColumn <- factor(
+          ifelse(covarColumn == input$oc1, input$oc1, "All Else"))
       } else {
-        vals$mlList@colData@listData[[input$covariateCategory]] <- factor()
+        covarColumn <- factor(
+          ifelse(covarColumn == input$oc1, input$oc1, ifelse(covarColumn == input$oc2, input$oc2, NA))
+        )
+        keptOutcomes <- !is.na(covarColumn)
+
+        vals$mlList <- vals$mlList[, keptOutcomes]
+
+        vals$mlList$colData[[input$covariateCategory]] <- covarColumn[keptOutcomes]
       }
 
+      # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
+      # vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
+
+      # View(colData(vals$mlList))
 
       # Running DE_analyze function from BATCHQC
-      vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", "TBStatus", 'log_assay1_cpm')
+      vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", input$covariateCategory, 'log_assay1_cpm')
 
       # View(vals$DE)
 
@@ -88,8 +100,12 @@ observeEvent(input$confirmDataset, {
           filter(padj <= 0.05)
       })
 
+      View(vals$filtered)
+
+      generatedName <- paste0(input$covariateCategory, input$oc1)
+
       # Prevents the list of genes from going lower than 500
-      if(length(vals$filtered$TBStatusTBYes$padj) < 500) {
+      if(length(vals$filtered[[generatedName]]$padj) < 500) {
         vals$filtered <- vals$DE
       }
 
@@ -106,7 +122,7 @@ observeEvent(input$confirmDataset, {
       })
 
       # Filters Summarized Experiment so only coinciding genes get kept
-      filtered_genes <- rownames(vals$filtered$TBStatusTBYes)
+      filtered_genes <- rownames(vals$filtered[[generatedName]])
       # vals$mlList <-
       limitedSE <- vals$mlList[filtered_genes, , drop = FALSE]
 
@@ -127,20 +143,29 @@ observeEvent(input$confirmDataset, {
 
       #data loaded for training
       training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
+
       col_data <- colData(rv$trainingSE)
-      col_data$TBStatus <- factor(col_data$TBStatus, levels = c("TBYes", "TBNo"))
+
+      col_data[[input$covariateCategory]] <- factor(col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
 
       #data is our training dataframe
-      rv$trainingData <- data.frame(TBStatus = col_data$TBStatus, t(training_assay_data))
-      rv$trainingData$TBStatus <- factor(rv$trainingData$TBStatus, levels = c("TBYes", "TBNo"))
+      rv$trainingData <- setNames(data.frame(col_data[[input$covariateCategory]], t(training_assay_data)), c(input$covariateCategory, colnames(t(training_assay_data))))
+
+      # View(rv$trainingData)
+      # View(rv$trainingData[[input$covariateCategory]])
+
+      rv$trainingData[[input$covariateCategory]] <- factor(rv$trainingData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
 
       #data for testing
       testing_assay_data <- rv$testingSE@assays@data@listData$log_assay1_cpm
       testing_col_data <- colData(rv$testingSE)
-      testing_col_data$TBStatus <- factor(testing_col_data$TBStatus, levels = c("TBYes", "TBNo"))
-      rv$testData <- data.frame(TBStatus = testing_col_data$TBStatus, t(testing_assay_data))
-      rv$testData$TBStatus <- factor(rv$testData$TBStatus, levels = c("TBYes", "TBNo"))
+      testing_col_data[[input$covariateCategory]] <- factor(testing_col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
+      rv$testData <- setNames(data.frame(testing_col_data[[input$covariateCategory]], t(testing_assay_data)), c(input$covariateCategory, colnames(t(testing_assay_data))))
+      rv$testData[[input$covariateCategory]] <- factor(rv$testData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
 
+      View(rv$testData)
+
+      View(rv$trainingData)
       showNotification("Dataset Confirmed", type = "message")
     }
   }, error = function(e) {
@@ -180,6 +205,19 @@ observeEvent(input$covariateCategory, {
   }
 })
 
+# observeEvent(input&oc1, {
+#   if(is.null(input$oc2)) {
+#
+#   }
+# })
+#
+# observeEvent(input$oc2, {
+#   if(!is.null(input$oc1)) {
+#
+#   }
+# })
+
+
 # Sets mlList to reactive
 mlList <- reactive({
   if (!is.null(vals$SEList)) {
@@ -205,9 +243,10 @@ observeEvent(input$continueRF, {
         # classProbs = TRUE
       )
 
+      print("1")
       # Forming random forest model
       rfModel <- caret::train(
-        TBStatus ~ .,
+        as.formula(paste(input$covariateCategory, "~ .")),
         data = rv$trainingData,
         method = "rf",
         tuneGrid = data.frame(mtry = input$mtryInput),
@@ -215,6 +254,8 @@ observeEvent(input$continueRF, {
         ntree = input$numTrees,
         trControl = control
       )
+
+      print("2")
 
       # Getting importance plot
       rfImportance <- varImp(rfModel)
@@ -282,7 +323,7 @@ observeEvent(input$rfTestGeneSig, {
   #
   #   View(rv$trainingData)
   #   View(rv$testData)
-  colKeep <- c("TBStatus", rv$rfGeneSigNames)
+  colKeep <- c(input$covariateCategory, rv$rfGeneSigNames)
   # View(colKeep)
   # Reduces testing and training data to only include chosen genes
   newTrainingData <- rv$trainingData[, unlist(colKeep)]
@@ -296,7 +337,7 @@ observeEvent(input$rfTestGeneSig, {
 
   # Forming random forest model
   rfModel <- caret::train(
-    TBStatus ~ .,
+    as.formula(paste(input$covariateCategory, "~ .")),
     data = newTrainingData,
     method = "rf",
     tuneGrid = data.frame(mtry = input$mtryInput),
@@ -311,7 +352,7 @@ observeEvent(input$rfTestGeneSig, {
 
   # View(as.data.frame(rfPredictions))
 
-  rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, newtestingData$TBStatus)
+  rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, newtestingData[[input$covariateCategory]])
 
 
 
@@ -326,7 +367,7 @@ observeEvent(input$rfTestGeneSig, {
 
   output$rfMatrixPlot <- renderPlot({
     tryCatch({
-      plot(table(rfPredictions, rv$testData$TBStatus), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
+      plot(table(rfPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
       mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
     })
   })
@@ -352,7 +393,7 @@ observeEvent(input$continueSVM, {
 
       #cross validation and SVM training
       control <- trainControl(method = "cv", number = input$foldCount)
-      svmModel <- caret::train(TBStatus ~ .,
+      svmModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
                                data = rv$trainingData,
                                method = kType,
                                trControl = control)
@@ -366,7 +407,7 @@ observeEvent(input$continueSVM, {
       #gene selection
       #included are the top 5, ten, any genes above 90, and any above 80, for comparison purposes
       #grabs the top genes from the importance matrix
-      sorted_data <- importance$importance[order(importance$importance$TBYes, decreasing = TRUE), ]
+      sorted_data <- importance$importance[order(importance$importance[[input$oc1]], decreasing = TRUE), ]
       # View(as.data.frame(sorted_data))
       #select the top 5 genes after sorting
       top_five <- sorted_data[1:5, , drop = FALSE]
@@ -375,10 +416,10 @@ observeEvent(input$continueSVM, {
       top_genes <- sorted_data[1:10, , drop = FALSE]
       # View(top_genes)
       #select any genes which are greater than 90
-      genes_above_90 <- importance$importance[importance$importance$TBYes >= 90, , drop = FALSE]
+      genes_above_90 <- importance$importance[importance$importance[[input$oc1]] >= 90, , drop = FALSE]
       # View(genes_above_90)
       #and select any genes which are greater than 80
-      genes_above_80 <- importance$importance[importance$importance$TBYes >= 80, , drop = FALSE]
+      genes_above_80 <- importance$importance[importance$importance[input$oc1] >= 80, , drop = FALSE]
       # View(genes_above_80)
 
 
@@ -429,7 +470,7 @@ output$svmImportancePlot <- renderPlot({
     if(!is.null(rv$svmImportance)) {
       importance <- rv$svmImportance
       sortedData <- importance
-      sortedData$importance <- importance$importance[order(importance$importance$TBYes, decreasing = TRUE), , drop = FALSE]
+      sortedData$importance <- importance$importance[order(importance$importance[[input$oc1]], decreasing = TRUE), , drop = FALSE]
       sortedData$importance <- sortedData$importance[1:input$svmSignatureSize, , drop = FALSE]
 
       rv$svmGeneSigNames <- as.list(rownames(sortedData$importance))
@@ -442,7 +483,7 @@ output$svmImportancePlot <- renderPlot({
 })
 
 observeEvent(input$svmTestGeneSig, {
-  colKeep <- c("TBStatus", rv$svmGeneSigNames)
+  colKeep <- c(input$covariateCategory, rv$svmGeneSigNames)
 
   newTrainingData <- rv$trainingData[, unlist(colKeep)]
   newtestingData <- rv$testData[, unlist(colKeep)]
@@ -457,14 +498,14 @@ observeEvent(input$svmTestGeneSig, {
 
   control <- trainControl(method = "cv", number = input$foldCount)
 
-  svmModel <- caret::train(TBStatus ~ .,
+  svmModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
                            data = newTrainingData,
                            method = kType,
                            trControl = control)
 
   svmPredictions <- predict(svmModel, newtestingData)
 
-  rv$svmConfusionMatrix <- confusionMatrix(svmPredictions, newtestingData$TBStatus)
+  rv$svmConfusionMatrix <- confusionMatrix(svmPredictions, newtestingData[[input$covariateCategory]])
   View(rv$svmConfusionMatrix)
   View(as.data.frame(rv$svmConfusionMatrix$table))
   output$svmMatrixTable <- renderTable({
@@ -478,7 +519,7 @@ observeEvent(input$svmTestGeneSig, {
 
   output$svmMatrixPlot <- renderPlot({
     tryCatch({
-      plot(table(svmPredictions, rv$testData$TBStatus), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
+      plot(table(svmPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
       mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
     }, error = function(e) {
       cat("Error:", conditionMessage(e), "\n")
@@ -493,7 +534,7 @@ observeEvent(input$continueEN, {
   tryCatch({
     withProgress(message = "Training Model...", value = 0, {
       control <- trainControl(method = "cv", number = input$foldCount)
-      enModel <- caret::train(TBStatus ~ .,
+      enModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
                               data = rv$trainingData,
                               method = "glmnet",
                               trControl = control,
@@ -556,7 +597,7 @@ output$enImportancePlot <- renderPlot({
 
 observeEvent(input$enTestGeneSig, {
 
-  colKeep <- c("TBStatus", rv$enGeneSigNames)
+  colKeep <- c(input$covariateCategory, rv$enGeneSigNames)
 
   newTrainingData <- rv$trainingData[, unlist(colKeep)]
   newtestingData <- rv$testData[, unlist(colKeep)]
@@ -566,14 +607,14 @@ observeEvent(input$enTestGeneSig, {
     number = input$foldCount
   )
 
-  enModel <- caret::train(TBStatus ~ .,
+  enModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
                           data = newTrainingData,
                           method = "glmnet",
                           trControl = control,
                           tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.001, 1, length = 100)))
   enPredictions <- predict(enModel, newtestingData)
 
-  rv$enConfusionMatrix <- confusionMatrix(enPredictions, newtestingData$TBStatus)
+  rv$enConfusionMatrix <- confusionMatrix(enPredictions, newtestingData[[input$covariateCategory]])
 
   output$enMatrixTable <- renderTable({
     tryCatch({
@@ -585,7 +626,7 @@ observeEvent(input$enTestGeneSig, {
   })
   output$enMatrixPlot <- renderPlot({
     tryCatch({
-      plot(table(enPredictions, rv$testData$TBStatus), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
+      plot(table(enPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
       mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
     }, error = function(e) {
       cat("Error:", conditionMessage(e), "\n")
@@ -607,7 +648,7 @@ observeEvent(input$continueNN, {
 
       # rv$trainingData$TBStatus <- factor(rv$trainingData$TBStatus)
 
-      nnModel <- caret::train(TBStatus ~ .,
+      nnModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
                               data = rv$trainingData,
                               method = "nnet",
                               trControl = control,
@@ -682,14 +723,14 @@ output$nnImportancePlot <- renderPlot({
 })
 
 observeEvent(input$nnTestGeneSig, {
-  colKeep <- c("TBStatus", rv$nnGeneSigNames)
+  colKeep <- c(input$covariateCategory, rv$nnGeneSigNames)
 
   newTrainingData <- rv$trainingData[, unlist(colKeep)]
   newtestingData <- rv$testData[, unlist(colKeep)]
 
   control <- trainControl(method = "cv", number = input$foldCount)
 
-  nnModel <- caret::train(TBStatus ~ .,
+  nnModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
                           data = newTrainingData,
                           method = "nnet",
                           trControl = control,
@@ -700,7 +741,7 @@ observeEvent(input$nnTestGeneSig, {
 
   nnPredictions <- predict(nnModel, newtestingData)
 
-  rv$nnConfusionMatrix <- confusionMatrix(nnPredictions, newtestingData$TBStatus)
+  rv$nnConfusionMatrix <- confusionMatrix(nnPredictions, newtestingData[[input$covariateCategory]])
 
   output$nnMatrixTable <- renderTable({
     tryCatch({
@@ -712,7 +753,7 @@ observeEvent(input$nnTestGeneSig, {
 
   output$nnMatrixPlot <- renderPlot({
     tryCatch({
-      plot(table(nnPredictions, rv$testData$TBStatus), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
+      plot(table(nnPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
       mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
     })
   })
