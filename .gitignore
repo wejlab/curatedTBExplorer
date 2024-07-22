@@ -1,4 +1,24 @@
-.Rproj.user
+## log files
+*/*.log
+*/*/*.log
+
+## R History files
 .Rhistory
-.RData
+*/.Rhistory
+*/*/.Rhistory
+
+## other files
+*/*.nav
+*/*.aux
+*/*.snm
+*/*.toc
+*/*/*.nav
+*/*/*.aux
+*/*/*.snm
+*/*/*.toc
+
+## user files
+.Rproj.user
 .Ruserdata
+
+
