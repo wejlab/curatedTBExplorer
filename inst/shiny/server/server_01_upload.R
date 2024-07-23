@@ -73,12 +73,11 @@ tryCatch(
       saveRDS(list(), file = defaultStudyPath)
     }
 
+    # Reads default study from directory
     tempdefaultStudy <- readRDS(defaultStudyDir)
-
-
     vals$defaultStudy <- tempdefaultStudy
 
-
+    # Adds the default study to the study selection
     updateSelectizeInput(session, "selectedActiveMAEList", choices = union(names(tempdefaultStudy), names(locallyDownloadedStudies)))
 
     cat("Added GSE31348 study to defaultStudy reactive value\n")
@@ -140,7 +139,6 @@ selected_columns <- reactive({
     selected_columns <- c(selected_columns, "GeneralType")
   }
 
-  ###########################################################################
   vals$selected_studies = NULL
 
   return(selected_columns)
@@ -349,24 +347,15 @@ observeEvent(input$confirmStudiesBtn, {
           vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated", log = TRUE)
         }
 
-        # preCheck <- vals$SEList
-        # View(preCheck)
-        # View(as.data.frame(preCheck@assays@data@listData$log_assay1_cpm))
         # Corrects gene names
         # rownames(vals$SEList) <- update_genenames(rownames(vals$SEList))
 
-        # vals$SEList@NAMES <- update_genenames(vals$SEList@NAMES)
-
-        # View(as.data.frame(vals$SEList@assays@data@listData$log_assay1_cpm))
-
-        # View(vals$SEList)
-
         incProgress(2 / 2, message = "Studies Confirmed")
 
-        #Grabs the columns that dont have NA values -> necessary for batch correction
-        #We also need to exclude columns where one value only comes from one study, and another only comes from the other study.
+        # Grabs the columns that dont have NA values -> necessary for batch correction
+        # We also need to exclude columns where one value only comes from one study, and another only comes from the other study.
         # vals$batchList <- lapply(vals$MAEList, function(colData) ))
-        #im thinking we can grab the values from the MAEList instead of SEList?
+        # I'm thinking we can grab the values from the MAEList instead of SEList?
 
         tryCatch({
           df <- as.data.frame(colData(vals$SEList)@listData)
@@ -476,14 +465,3 @@ observeEvent(input$deselected_study, {
     vals$selected_studies <- current_studies[current_studies != current_deselection]
   }
 })
-
-# Code for testing
-# output$test <- renderText({
-#   paste(
-#     "sessionMAEList: ", paste(names(vals$sessionMAEList), collapse = ", "), "\n",
-#     "selectedActiveMAEList: ", paste(names(vals$selectedActiveMAEList), collapse = ", "), "\n",
-#     "MAEList: ", paste(names(vals$MAEList), collapse = ", "), "\n",
-#     # "SEList: ", paste(names(vals$SEList), collapse = ", "), "\n",
-#     "mlList: ", paste(names(vals$mlList), collapse = ", "), "\n"
-#   )
-# })

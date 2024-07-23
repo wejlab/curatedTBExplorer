@@ -1,7 +1,3 @@
-# to do:
-# generate box plots correctly
-# allow for the plots in the heatmap to change based on filters from the filter page
-
 tb_profiler_result <- reactiveVal(NULL)
 
 # shiny::observe({

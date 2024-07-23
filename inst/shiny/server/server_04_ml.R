@@ -62,14 +62,11 @@ observeEvent(input$confirmDataset, {
       selectedTrainingList <- input$selectedTrainingData
       selectedTestingList <- input$selectedTestingData
 
-      # View(selectedTrainingList)
-      # View(selectedTestingList)
-
-      # vals$statusList <- vals$mlList$TBStatus
-
+      # Grabs the columnData for the selected covariate category (TBStatus or Ethnicity)
       vals$statusList <- vals$mlList@colData@listData[[input$covariateCategory]]
       covarColumn <- vals$mlList@colData@listData[[input$covariateCategory]]
 
+      # Changes the covariate data into factors depending on choice of outcomes
       if(input$oc2 == "All Else") {
         covarColumn <- factor(
           ifelse(covarColumn == input$oc1, input$oc1, "All Else"))
@@ -77,22 +74,16 @@ observeEvent(input$confirmDataset, {
         covarColumn <- factor(
           ifelse(covarColumn == input$oc1, input$oc1, ifelse(covarColumn == input$oc2, input$oc2, NA))
         )
-        keptOutcomes <- !is.na(covarColumn)
 
+        # Subset the summarized experiment so we only keep valid samples (samples without NA)
+        keptOutcomes <- !is.na(covarColumn)
         vals$mlList <- vals$mlList[, keptOutcomes]
 
         vals$mlList$colData[[input$covariateCategory]] <- covarColumn[keptOutcomes]
       }
 
-      # Replaces values in TBStatus as TBYes if it matches PTB. Replaces as TBNo if not
-      # vals$mlList$TBStatus <- factor(ifelse(vals$mlList$TBStatus == "PTB", "TBYes", "TBNo"))
-
-      # View(colData(vals$mlList))
-
       # Running DE_analyze function from BATCHQC
       vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", input$covariateCategory, 'log_assay1_cpm')
-
-      # View(vals$DE)
 
       # Filters out when padj is less than or equal to 0.05
       vals$filtered <- lapply(vals$DE, function(df) {
@@ -100,8 +91,7 @@ observeEvent(input$confirmDataset, {
           filter(padj <= 0.05)
       })
 
-      View(vals$filtered)
-
+      # We make generated name because it needs to match the one generated through DE_analyze (covarCategory + Outcome)
       generatedName <- paste0(input$covariateCategory, input$oc1)
 
       # Prevents the list of genes from going lower than 500
@@ -115,7 +105,7 @@ observeEvent(input$confirmDataset, {
           arrange(abs(log2FoldChange))
       })
 
-      # Only keeps highest 500 values (Is this highest 500 log2FoldChange )
+      # Lets user select how many genes to keep
       vals$filtered <- lapply(vals$filtered, function(df) {
         df %>%
           slice_head(n = input$featureSelectionCount)
@@ -123,49 +113,30 @@ observeEvent(input$confirmDataset, {
 
       # Filters Summarized Experiment so only coinciding genes get kept
       filtered_genes <- rownames(vals$filtered[[generatedName]])
-      # vals$mlList <-
+
       limitedSE <- vals$mlList[filtered_genes, , drop = FALSE]
 
-      # View(limitedSE)
-      # View(vals$mlList)
-
-      # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
-      # subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTrainingList, , drop = FALSE]
-
       rv$trainingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTrainingList]
-      # View(rv$trainingSE)
-
-      # Now that I'm looking back at this line, i don't know what happens with subsetByStudy
-      # subsetByStudy <- colData(limitedSE)[colData(limitedSE)$Study %in% selectedTestingList, , drop = FALSE]
 
       rv$testingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTestingList]
-      # View(rv$testingSE)
 
-      #data loaded for training
+      # Data loaded for training
       training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
-
       col_data <- colData(rv$trainingSE)
-
       col_data[[input$covariateCategory]] <- factor(col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
 
-      #data is our training dataframe
+      # Data is our training dataframe
       rv$trainingData <- setNames(data.frame(col_data[[input$covariateCategory]], t(training_assay_data)), c(input$covariateCategory, colnames(t(training_assay_data))))
-
-      # View(rv$trainingData)
-      # View(rv$trainingData[[input$covariateCategory]])
 
       rv$trainingData[[input$covariateCategory]] <- factor(rv$trainingData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
 
-      #data for testing
+      # Data for testing
       testing_assay_data <- rv$testingSE@assays@data@listData$log_assay1_cpm
       testing_col_data <- colData(rv$testingSE)
       testing_col_data[[input$covariateCategory]] <- factor(testing_col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
       rv$testData <- setNames(data.frame(testing_col_data[[input$covariateCategory]], t(testing_assay_data)), c(input$covariateCategory, colnames(t(testing_assay_data))))
       rv$testData[[input$covariateCategory]] <- factor(rv$testData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
 
-      View(rv$testData)
-
-      View(rv$trainingData)
       showNotification("Dataset Confirmed", type = "message")
     }
   }, error = function(e) {
@@ -195,6 +166,7 @@ observeEvent(vals$SEList, {
   }
 })
 
+# Reactively updates the selectInputs for the outcome choices
 observeEvent(input$covariateCategory, {
   if(!is.null(input$covariateCategory)) {
     if(!is.null(vals$SEList)) {
@@ -204,19 +176,6 @@ observeEvent(input$covariateCategory, {
     }
   }
 })
-
-# observeEvent(input&oc1, {
-#   if(is.null(input$oc2)) {
-#
-#   }
-# })
-#
-# observeEvent(input$oc2, {
-#   if(!is.null(input$oc1)) {
-#
-#   }
-# })
-
 
 # Sets mlList to reactive
 mlList <- reactive({
@@ -259,22 +218,18 @@ observeEvent(input$continueRF, {
 
       # Getting importance plot
       rfImportance <- varImp(rfModel)
-      importance <- rfImportance
-      # View(rfImportance$importance)
 
+      importance <- rfImportance
       rv$rfImportance <- rfImportance
 
       sorted_data <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
 
-      # View(sorted_data)
-      # View(as.data.frame(sorted_data))
       top_five <- sorted_data[1:5, , drop = FALSE]
-      # View(top_five)
       top_genes <- sorted_data[1:10, , drop = FALSE]
-      # View(top_genes)
       genes_above_90 <- importance$importance[importance$importance$Overall >= 90, , drop = FALSE]
       genes_above_80 <- importance$importance[importance$importance$Overall >= 80, , drop = FALSE]
-      #this sends the identified genes to the TBsignatureprofiler
+
+      # This sends the identified genes to the TBsignatureprofiler
       TBsignatures_reactive <- reactive({
         top_five <- as.list(rownames(top_five))
         top_five_list <- CharacterList(top_five)
@@ -309,7 +264,6 @@ output$rfImportancePlot <- renderPlot({
       sorted_data$importance <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
       sorted_data$importance <- sorted_data$importance[1:input$rfSignatureSize, , drop = FALSE]
       rv$rfGeneSigNames <- as.list(rownames(sorted_data$importance))
-      # View(rv$rfGeneSigNames)
       plot(sorted_data, main = "Random Forest Importance Plot")
     }
   }, error = function(e) {
@@ -319,12 +273,9 @@ output$rfImportancePlot <- renderPlot({
 })
 
 observeEvent(input$rfTestGeneSig, {
-  ### MIGHT BE WRONG, BUT I THINK WE'RE RETRAINING THE MODEL ONLY USING THE SELECTED GENES
-  #
-  #   View(rv$trainingData)
-  #   View(rv$testData)
+
   colKeep <- c(input$covariateCategory, rv$rfGeneSigNames)
-  # View(colKeep)
+
   # Reduces testing and training data to only include chosen genes
   newTrainingData <- rv$trainingData[, unlist(colKeep)]
 
@@ -347,15 +298,9 @@ observeEvent(input$rfTestGeneSig, {
   )
 
   rfPredictions <- predict(rfModel, newtestingData)
-
-  # View(as.data.frame(newtestingData$TBStatus))
-
-  # View(as.data.frame(rfPredictions))
-
   rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, newtestingData[[input$covariateCategory]])
 
-
-
+  # Renders the matrix table
   output$rfMatrixTable <- renderTable({
     tryCatch({
       as.data.frame(rv$rfConfusionMatrix$table)
@@ -365,6 +310,7 @@ observeEvent(input$rfTestGeneSig, {
     })
   })
 
+  # Renders the matrix plot
   output$rfMatrixPlot <- renderPlot({
     tryCatch({
       plot(table(rfPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
@@ -372,12 +318,6 @@ observeEvent(input$rfTestGeneSig, {
     })
   })
 })
-
-
-
-
-
-
 
 # Code for Support Vector Machines
 observeEvent(input$continueSVM, {
@@ -401,8 +341,6 @@ observeEvent(input$continueSVM, {
       svmImportance <- varImp(svmModel)
       importance <- svmImportance
       rv$svmImportance <- svmImportance
-
-      # View(importance$importance)
 
       #gene selection
       #included are the top 5, ten, any genes above 90, and any above 80, for comparison purposes
@@ -443,22 +381,6 @@ observeEvent(input$continueSVM, {
 
       showNotification("Finished Generating Support Vector Machine Model", type = "message")
     })
-
-    # #create predictions based on the testing data/ svm training
-    # predictions <- predict(svmModel, rv$testData)
-    # # View(predictions)
-    # print(predictions)
-    #
-    # #confusion matrix
-    # confusion_matrix <- table(predictions, rv$testData$TBStatus)
-    # output$svmMatrixPlot <- renderPlot({
-    #   plot(confusion_matrix, main = "Confusion Matrix", cex.main = 1.2)
-    # })
-    # print(confusion_matrix)
-    #
-    # #accuracy
-    # accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-    # print(paste("Accuracy In Testing:", accuracy))
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
     showNotification(paste("Error:", conditionMessage(e)), type = "error")
@@ -547,12 +469,11 @@ observeEvent(input$continueEN, {
       sortedData <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
 
       top_five <- sortedData[1:5, , drop = FALSE]
-      # View(top_five)
       top_genes <- sortedData[1:10, , drop = FALSE]
-      # View(top_genes)
       genes_above_90 <- importance$importance[importance$importance$Overall >= 90, , drop = FALSE]
       genes_above_80 <- importance$importance[importance$importance$Overall >= 80, , drop = FALSE]
-      #this sends the identified genes to the TBsignatureprofiler
+
+      # This sends the identified genes to the TBsignatureprofiler
       TBsignatures_reactive <- reactive({
         top_five <- as.list(rownames(top_five))
         top_five_list <- CharacterList(top_five)
@@ -639,14 +560,11 @@ observeEvent(input$enTestGeneSig, {
 
 # Code for Neural Networks
 # Define a reactive value to store the trained model
-# trained_model <- reactiveVal(NULL)
 
 observeEvent(input$continueNN, {
   tryCatch({
     withProgress(message = "Training Model...", value = 0, {
       control <- trainControl(method = "cv", number = input$foldCount)
-
-      # rv$trainingData$TBStatus <- factor(rv$trainingData$TBStatus)
 
       nnModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
                               data = rv$trainingData,
@@ -665,12 +583,11 @@ observeEvent(input$continueNN, {
       sortedData <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
 
       top_five <- sortedData[1:5, , drop = FALSE]
-      # View(top_five)
       top_genes <- sortedData[1:10, , drop = FALSE]
-      # View(top_genes)
       genes_above_90 <- importance$importance[importance$importance$Overall >= 90, , drop = FALSE]
       genes_above_80 <- importance$importance[importance$importance$Overall >= 80, , drop = FALSE]
-      #this sends the identified genes to the TBsignatureprofiler
+
+      # This sends the identified genes to the TBsignatureprofiler
       TBsignatures_reactive <- reactive({
         top_five <- as.list(rownames(top_five))
         top_five_list <- CharacterList(top_five)
@@ -690,14 +607,6 @@ observeEvent(input$continueNN, {
 
       showNotification("Finished Generating Neural Network Model", type = "message")
     })
-
-    # ps <- predict(nnModel, rv$trainingData)
-    # # confusionMatrix(ps, rv$trainingData$Species)$overall["Accuracy"]
-    #
-    #
-    # # Print a message indicating training completed
-    # print("Neural network training completed.")
-
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
     showNotification(paste("Error:", conditionMessage(e)), type = "error")
@@ -710,10 +619,8 @@ output$nnImportancePlot <- renderPlot({
       importance <- rv$nnImportance
       sortedData <- importance
       sortedData$importance <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
-      # print(input$nnSignatureSize)
       sortedData$importance <- sortedData$importance[1:input$nnSignatureSize, , drop = FALSE]
       rv$nnGeneSigNames <- as.list(rownames(sortedData$importance))
-      # print(rv$nnGeneSigNames)
       plot(sortedData, main = "Neural Network Importance Plot")
     }
   }, error = function(e) {
@@ -758,19 +665,3 @@ observeEvent(input$nnTestGeneSig, {
     })
   })
 })
-
-# # Output to display training progress or results
-# output$nn_output <- renderPrint({
-#   # If the model is trained, display the training configuration
-#   if (!is.null(trained_model())) {
-#     cat("Neural Network Configuration:\n")
-#     cat(paste("Number of Hidden Layers:", trained_model()$num_layers), "\n")
-#     cat(paste("Number of Neurons per Hidden Layer:", trained_model()$num_neurons), "\n")
-#     cat(paste("Learning Rate:", trained_model()$learning_rate), "\n")
-#     cat(paste("Number of Epochs:", trained_model()$epochs), "\n")
-#     cat(paste("Batch Size:", trained_model()$batch_size), "\n")
-#   } else {
-#     # If the model is not trained yet, display a message
-#     "Neural network not trained yet."
-#   }
-# })
