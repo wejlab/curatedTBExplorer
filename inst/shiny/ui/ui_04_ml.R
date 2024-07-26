@@ -14,6 +14,8 @@ tabPanel(
       selectInput("oc1", "Outcome", choices = list()),
       selectInput("oc2", "Compared Outcome", choices = list()),
 
+      selectInput("assaySelection", "Select Assay", choices = list()),  # Add this line for assay selection
+
       numericInput("featureSelectionCount", "Feature Count", value = 500, min = 0, step = 1),
       numericInput("foldCount", "Cross Validation Folds", value = 10, min = 0, step = 1)
     ),
@@ -96,5 +98,5 @@ tabPanel(
         tableOutput("svmMatrixTable")
       )
     )
-  ),
+  )
 )

@@ -181,6 +181,7 @@ observeEvent(vals$SEList, {
     # print(goodCovarChoices)
 
     updateSelectInput(session, "covariateCategory", choices = allCovarChoices)
+    updateSelectInput(session, "assaySelection", choices = vals$datassays)
   }
 })
 
