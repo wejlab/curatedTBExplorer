@@ -25,7 +25,9 @@ vals <- reactiveValues(
   # Holds the combined SummarizedExperiment.
   SEList = NULL,
   # Holds the colData from the studies, used in batch qc
-  batchList = NULL
+  batchList = NULL,
+  # acts as a flag to tell if batch correction was done
+  batchFlag = FALSE
 )
 
 # Variables to hold local downloaded and default studies
@@ -349,60 +351,83 @@ observeEvent(input$confirmStudiesBtn, {
           vals$SEList <- mkAssay(vals$SEList, input_name = "assay_curated", log = TRUE)
         }
 
-        # preCheck <- vals$SEList
-        # View(preCheck)
-        # View(as.data.frame(preCheck@assays@data@listData$log_assay1_cpm))
-        # Corrects gene names
-        # rownames(vals$SEList) <- update_genenames(rownames(vals$SEList))
-
-        # vals$SEList@NAMES <- update_genenames(vals$SEList@NAMES)
-
-        # View(as.data.frame(vals$SEList@assays@data@listData$log_assay1_cpm))
-
-        # View(vals$SEList)
-
+        View(vals$SEList)
         incProgress(2 / 2, message = "Studies Confirmed")
 
-        #Grabs the columns that dont have NA values -> necessary for batch correction
-        #We also need to exclude columns where one value only comes from one study, and another only comes from the other study.
-        # vals$batchList <- lapply(vals$MAEList, function(colData) ))
-        #im thinking we can grab the values from the MAEList instead of SEList?
+        # Extract listData from colData of each study in vals$MAEList
+        listDataList <- lapply(vals$MAEList, function(mae) {
+          as.data.frame(colData(mae)@listData)
+        })
+
+        # Find common columns across all studies
+        commonCols <- Reduce(intersect, lapply(listDataList, colnames))
+
+        # Filter data frames to only include common columns
+        listDataList <- lapply(listDataList, function(df) {
+          df[, commonCols, drop = FALSE]
+        })
+
+        # Check for missing values and unique values for each study
+        check_columns <- function(listDataList) {
+          naColsList <- lapply(listDataList, function(df) {
+            # print("Checking for NAs in dataframe:")
+            print(head(df))
+            sapply(df, function(col) any(is.na(col)))
+          })
+
+          uniqueColsList <- lapply(listDataList, function(df) {
+            # print("Checking for unique values in dataframe:")
+            print(head(df))
+            sapply(df, function(col) length(unique(na.omit(col))) < 2)
+          })
+
+          # print("naColsList:")
+          # print(naColsList)
+          # print("uniqueColsList:")
+          # print(uniqueColsList)
+
+          combinedNaCols <- Reduce("|", naColsList)
+          combinedUniqueCols <- Reduce("|", uniqueColsList)
+
+          colsToExclude <- combinedNaCols | combinedUniqueCols
+
+          return(colsToExclude)
+        }
 
         tryCatch({
-          df <- as.data.frame(colData(vals$SEList)@listData)
+          # Check columns to exclude
+          colsToExclude <- check_columns(listDataList)
 
-          tempA <- colData(vals$MAEList[[1]])@listData
-          tempB <- colData(vals$MAEList[[2]])@listData
-          tempA <- as.data.frame(tempA)
-          tempB <- as.data.frame(tempB)
-          tempNaCols <- sapply(tempA, function(col) any(is.na(col)))
-          tempNbCols <- sapply(tempB, function(col) any(is.na(col)))
-          tempAUnique <- sapply(tempA, function(col) length(unique(na.omit(col))) < 2)
-          tempBUnique <- sapply(tempB, function(col) length(unique(na.omit(col))) < 2)
-          # View(tempAUnique)
-          tempColExclude <- tempNaCols | tempNbCols | tempAUnique | tempBUnique
-          tempFiltered <- df[ ,!tempColExclude]
-          # View(tempFiltered)
-          updateSelectizeInput(session, "selectedCovars", choices = colnames(tempFiltered), selected = "TBStatus", server = TRUE)
+          # Print debugging information
+          # print("Columns to exclude based on missing values or uniqueness:")
+          # print(colsToExclude)
 
-          # View(vals$batchList)
+          # Filter out columns to exclude from the first study's dataframe
+          df <- listDataList[[1]]
+
+          # Ensure we have columns left after exclusion
+          if (all(colsToExclude)) {
+            showNotification("All columns are excluded due to missing or unique values.", type = "warning")
+            filteredDf <- data.frame()
+          } else {
+            filteredDf <- df[, !colsToExclude, drop = FALSE]
+          }
+
+          # Print debugging information
+          # print("Filtered data frame:")
+          # print(filteredDf)
+
+          # Update the selectize input with the filtered columns if any columns remain
+          if (ncol(filteredDf) > 0) {
+            updateSelectizeInput(session, "selectedCovars", choices = colnames(filteredDf), selected = "TBStatus", server = TRUE)
+          } else {
+            updateSelectizeInput(session, "selectedCovars", choices = NULL, selected = NULL, server = TRUE)
+            showNotification("No columns available for selection.", type = "warning")
+          }
         }, error = function(e) {
           cat("Error:", conditionMessage(e), "\n")
           showNotification(paste("Batch Correction Error:", conditionMessage(e)), type = "error")
         })
-
-        # df <- as.data.frame(colData(vals$SEList)@listData)
-        # naCols <- sapply(df, function(col) any(is.na(col)))
-        # uniqueValueCols <- sapply(df, function(col) length(unique(col)) < 2)
-        # # Combine the conditions to filter out columns
-        # colsToExclude <- naCols | uniqueValueCols
-        # dfFiltered <- df[, !colsToExclude]
-        # View(dfFiltered)
-        # colNamesFiltered <- colnames(dfFiltered)
-        # View(colNamesFiltered)
-        # #we may want to not allow TB status to even be an option, but i've included it here as a default
-        # updateSelectizeInput(session, "selectedCovars", choices = colNamesFiltered, selected = "TBStatus", server = TRUE)
-
 
         # Sets values for filter tab
         vals$colData <- colData(vals$SEList)
@@ -417,10 +442,11 @@ observeEvent(input$confirmStudiesBtn, {
         cat("Error:", conditionMessage(e), "\n")
         showNotification(paste("Error:", conditionMessage(e)), type = "error")
       })
+
       showNotification("Studies Confirmed", type = "message")
-      # View(vals$SEList)
+
     } else {
-      showNotification("Please select at study first", type = "warning")
+      showNotification("Please select at least one study", type = "warning")
     }
   })
 })
@@ -428,27 +454,69 @@ observeEvent(input$confirmStudiesBtn, {
 # Handles the user selections for Batch Correction
 observeEvent(input$confirmCovarsBtn, {
   tryCatch({
+    tempAssays <- assay(vals$SEList)
     selCov <- input$selectedCovars
     if (length(selCov) > 0) {
       my_formula <- paste("~", paste(selCov, collapse = " + "))
     } else {
-      my_formula <- "~ TBStatus" # Default formula if nothing selected -> may be unnecessary?
+      my_formula <- "~ TBStatus" # Default formula if nothing selected
     }
 
-    print(paste("Formula:", my_formula))
+    # print(paste("Formula:", my_formula))
+
+    # Check for missing values in the covariates
+    coldata <- colData(vals$SEList)
+    missing_data <- sapply(coldata, function(x) any(is.na(x)))
+    selected_missing_data <- missing_data[selCov]
+
+    if (any(selected_missing_data)) {
+      # Get the names of the columns with missing values
+      missing_columns <- names(selected_missing_data[selected_missing_data])
+
+      # Print the columns with missing values
+      print("The following selected covariates contain missing values:")
+      print(missing_columns)
+
+      # Stop execution with an error message
+      stop("Selected covariates contain missing values. Please handle missing data before proceeding.")
+    }
+
+    # Filter out rows with missing values in the selected covariates
+    filtered_coldata <- coldata[complete.cases(coldata[, selCov, drop = FALSE]), ]
 
     # Create the model matrix
-    mod <- model.matrix(as.formula(my_formula), colData(vals$SEList))
+    if (nrow(filtered_coldata) > 0) {
+      mod <- model.matrix(as.formula(my_formula), filtered_coldata)
+    } else {
+      stop("No complete cases available after filtering for selected covariates.")
+    }
+
+    # print(paste("Dimensions of assay:", dim(assay(vals$SEList, "assay1"))))
+    # print(paste("Dimensions of colData:", dim(colData(vals$SEList))))
+    # print(paste("Dimensions of model matrix:", dim(mod)))
 
     # Perform batch correction using ComBat
     assay(vals$SEList, "corrected_assay") <- ComBat(assay(vals$SEList, "assay1"),
-                                                    batch = colData(vals$SEList)$Study,
+                                                    batch = filtered_coldata$Study,
                                                     mod = mod)
+
+    # Reset the assay variables, as a new assay column is created.
+    vals$colData <- colData(vals$SEList)
+    vals$covars <- colnames(colData(vals$SEList))
+    vals$datassays <- names(assays(vals$SEList))
+    vals$backupSE <- vals$SEList
+
+    # Also set the batchFlag to true
+    vals$batchFlag = TRUE
+
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
     showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
 })
+
+
+
 
 # Handles addition of studies to selected_studies list when studies are selected
 observeEvent(input$selected_study, {
