@@ -42,14 +42,6 @@ tabPanel(
 
     ),
 
-    # sidebarPanel(
-    #   conditionalPanel(
-    #     condition = "input.confirmStudiesBtn",
-    #
-    #     checkboxInput("test", "test", value = TRUE),
-    #   )
-    # ),
-
     mainPanel(
       # Layout panel to seperate page into columns
       fluidRow(
