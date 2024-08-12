@@ -173,6 +173,10 @@ observeEvent(vals$SEList, {
     updateSelectizeInput(session, "selectedTestingData", choices = unique_study_values)
 
     allCovarChoices <- as.list(names(vals$SEList@colData@listData))
+    if("TBStatus" %in% allCovarChoices) {
+      allCovarChoices <- c("TBStatus", allCovarChoices[allCovarChoices != "TBStatus"])
+    }
+
     # print(allCovarChoices)
     # goodCovarChoices <- allCovarChoices[sapply(allCovarChoices, function(name) {
     #   type <- typeof(vals$SEList$colData$listData[[name]])
@@ -180,7 +184,7 @@ observeEvent(vals$SEList, {
     # })]
     # print(goodCovarChoices)
 
-    updateSelectInput(session, "covariateCategory", choices = allCovarChoices)
+    updateSelectInput(session, "covariateCategory", choices = setdiff(allCovarChoices, c("Age", "TST")))
     updateSelectInput(session, "assaySelection", choices = vals$datassays)
   }
 })
