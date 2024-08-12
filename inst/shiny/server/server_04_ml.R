@@ -221,7 +221,6 @@ observeEvent(input$continueRF, {
         # classProbs = TRUE
       )
 
-      print("1")
       # Forming random forest model
       rfModel <- caret::train(
         as.formula(paste(input$covariateCategory, "~ .")),
@@ -232,8 +231,6 @@ observeEvent(input$continueRF, {
         ntree = input$numTrees,
         trControl = control
       )
-
-      print("2")
 
       # Getting importance plot
       rfImportance <- varImp(rfModel)
@@ -315,7 +312,6 @@ observeEvent(input$rfTestGeneSig, {
     ntree = input$numTrees,
     trControl = control
   )
-
   rfPredictions <- predict(rfModel, newtestingData)
   rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, newtestingData[[input$covariateCategory]])
 
@@ -332,8 +328,38 @@ observeEvent(input$rfTestGeneSig, {
   # Renders the matrix plot
   output$rfMatrixPlot <- renderPlot({
     tryCatch({
-      plot(table(rfPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
-      mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
+      table <- rv$rfConfusionMatrix$table
+
+      df <- data.frame(
+        Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
+        Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
+        Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
+      )
+
+      cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
+
+      rownames(cm) <- c(input$oc1, input$oc2)
+      colnames(cm) <- c(input$oc1, input$oc2)
+
+      # Convert the matrix to a data frame suitable for ggplot
+      cmDf <- as.data.frame(cm)
+      cmDf$Reference <- rownames(cmDf)
+      cmMelt <- melt(cmDf, id.vars = "Reference")
+
+      colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
+
+      # Define colors for the cells
+      cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
+
+      # Confusion matrix plot
+      ggplot(data = cmMelt, aes(x = Predicted, y = Actual)) +
+        geom_tile(aes(fill = Color), color = "white") +
+        scale_fill_identity() +
+        geom_text(aes(label = Freq), vjust = 1) +
+        labs(title = "Confusion Matrix",
+             x = "Predicted",
+             y = "Actual") +
+        theme_minimal()
     })
   })
 })
