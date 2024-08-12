@@ -190,11 +190,20 @@ observeEvent(input$covariateCategory, {
   if(!is.null(input$covariateCategory)) {
     if(!is.null(vals$SEList)) {
       uniqueCovarChoices <- unique(vals$SEList@colData@listData[[input$covariateCategory]])
-      updateSelectInput(session, "oc1", choices = uniqueCovarChoices)
-      updateSelectInput(session, "oc2", choices = c(uniqueCovarChoices, "All Else"))
+      updateSelectInput(session, "oc1", choices = na.omit(uniqueCovarChoices))
+      updateSelectInput(session, "oc2", choices = na.omit(c(uniqueCovarChoices, "All Else")))
+      observeEvent(input$oc1, {
+        if(!is.null(input$oc1)) {
+          if(!is.null(vals$SEList)) {
+            updateSelectInput(session, "oc2", choices = na.omit(c(setdiff(uniqueCovarChoices, input$oc1), "All Else")))
+          }
+        }
+      })
     }
   }
 })
+
+
 
 # Sets mlList to reactive
 mlList <- reactive({
