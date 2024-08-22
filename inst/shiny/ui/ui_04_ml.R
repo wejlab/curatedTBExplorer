@@ -68,7 +68,7 @@ tabPanel(
       "Random Forests",
       sidebarPanel(
         "Random Forests",
-        numericInput("numTrees", "Number of Trees Generated:", value = 500, min = 1),
+        numericInput("numTrees", "Number of Trees Generated:", value = 100, min = 1),
         numericInput("nodeSize", "Size of Each Node:", value = 5, min = 1),
         numericInput("mtryInput", "mtry:", value = 2, min = 1),
         actionButton("continueRF", "Continue"),
