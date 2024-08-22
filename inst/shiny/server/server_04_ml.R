@@ -495,11 +495,38 @@ observeEvent(input$svmTestGeneSig, {
 
   output$svmMatrixPlot <- renderPlot({
     tryCatch({
-      plot(table(svmPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
-      mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
-    }, error = function(e) {
-      cat("Error:", conditionMessage(e), "\n")
-      showNotification(paste("Error:", conditionMessage(e)), type = "error")
+      table <- rv$svmConfusionMatrix$table
+
+      df <- data.frame(
+        Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
+        Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
+        Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
+      )
+
+      cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
+
+      rownames(cm) <- c(input$oc1, input$oc2)
+      colnames(cm) <- c(input$oc1, input$oc2)
+
+      # Convert the matrix to a data frame suitable for ggplot
+      cmDf <- as.data.frame(cm)
+      cmDf$Reference <- rownames(cmDf)
+      cmMelt <- melt(cmDf, id.vars = "Reference")
+
+      colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
+
+      # Define colors for the cells
+      cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
+
+      # Confusion matrix plot
+      ggplot(data = cmMelt, aes(x = Predicted, y = Actual)) +
+        geom_tile(aes(fill = Color), color = "white") +
+        scale_fill_identity() +
+        geom_text(aes(label = Freq), vjust = 1) +
+        labs(title = "Confusion Matrix",
+             x = "Predicted",
+             y = "Actual") +
+        theme_minimal()
     })
   })
 })
@@ -598,12 +625,38 @@ observeEvent(input$enTestGeneSig, {
 
     output$enMatrixPlot <- renderPlot({
       tryCatch({
-        plot(table(enPredictions, rv$testData[[input$covariateCategory]]),
-             main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
-        mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
-      }, error = function(e) {
-        cat("Error:", conditionMessage(e), "\n")
-        showNotification(paste("Error:", conditionMessage(e)), type = "error")
+        table <- rv$enConfusionMatrix$table
+
+        df <- data.frame(
+          Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
+          Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
+          Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
+        )
+
+        cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
+
+        rownames(cm) <- c(input$oc1, input$oc2)
+        colnames(cm) <- c(input$oc1, input$oc2)
+
+        # Convert the matrix to a data frame suitable for ggplot
+        cmDf <- as.data.frame(cm)
+        cmDf$Reference <- rownames(cmDf)
+        cmMelt <- melt(cmDf, id.vars = "Reference")
+
+        colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
+
+        # Define colors for the cells
+        cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
+
+        # Confusion matrix plot
+        ggplot(data = cmMelt, aes(x = Predicted, y = Actual)) +
+          geom_tile(aes(fill = Color), color = "white") +
+          scale_fill_identity() +
+          geom_text(aes(label = Freq), vjust = 1) +
+          labs(title = "Confusion Matrix",
+               x = "Predicted",
+               y = "Actual") +
+          theme_minimal()
       })
     })
   }, error = function(e) {
@@ -715,11 +768,38 @@ observeEvent(input$nnTestGeneSig, {
 
     output$nnMatrixPlot <- renderPlot({
       tryCatch({
-        plot(table(nnPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
-        mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
-      }, error = function(e) {
-        cat("Error:", conditionMessage(e), "\n")
-        showNotification(paste("Error:", conditionMessage(e)), type = "error")
+        table <- rv$nnConfusionMatrix$table
+
+        df <- data.frame(
+          Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
+          Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
+          Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
+        )
+
+        cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
+
+        rownames(cm) <- c(input$oc1, input$oc2)
+        colnames(cm) <- c(input$oc1, input$oc2)
+
+        # Convert the matrix to a data frame suitable for ggplot
+        cmDf <- as.data.frame(cm)
+        cmDf$Reference <- rownames(cmDf)
+        cmMelt <- melt(cmDf, id.vars = "Reference")
+
+        colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
+
+        # Define colors for the cells
+        cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
+
+        # Confusion matrix plot
+        ggplot(data = cmMelt, aes(x = Predicted, y = Actual)) +
+          geom_tile(aes(fill = Color), color = "white") +
+          scale_fill_identity() +
+          geom_text(aes(label = Freq), vjust = 1) +
+          labs(title = "Confusion Matrix",
+               x = "Predicted",
+               y = "Actual") +
+          theme_minimal()
       })
     })
   }, error = function(e) {
