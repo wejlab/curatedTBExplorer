@@ -31,7 +31,8 @@ rv <- reactiveValues(
   nnPredictions = NULL,
   nnConfusionMatrix = NULL,
 
-  TBsignatures_reactive = NULL
+  TBsignatures_reactive = NULL,
+  datasetConfirm = NULL
 
 )
 
@@ -52,6 +53,7 @@ outcomeChoice2 <- reactive({
 # Splits the SEList based on selected training and testing data
 observeEvent(input$confirmDataset, {
   tryCatch({
+    rv$datasetConfirm = TRUE
     # Gives warning if selectedTrainingData or selectedTesting Data is empty
     if (length(input$selectedTrainingData) <= 0) {
       showNotification("Please select studies for training", type = "warning")
@@ -209,69 +211,68 @@ mlList <- reactive({
 ####################################### MACHINE LEARNING METHODS #####################################
 ######################################################################################################
 
+###################################################################
 # Code for Random Forests
 observeEvent(input$continueRF, {
-  tryCatch({
-    withProgress(message = "Training Model...", value = 0, {
-      # Setting control settings for random forest model
-      control <- trainControl(
-        method = "cv",
-        number = input$foldCount
-        # verboseIter = TRUE,
-        # classProbs = TRUE
-      )
+  if (is.null(rv$datasetConfirm)) {
+    showModal(modalDialog(
+      title = "Error",
+      "Please confirm the datasets before continuing.",
+      easyClose = TRUE,
+      footer = NULL
+    )) }else {
+    tryCatch({
+      withProgress(message = "Training Model...", value = 0, {
+        # Setting control settings for random forest model
+        control <- trainControl(
+          method = "cv",
+          number = input$foldCount
+          # verboseIter = TRUE,
+          # classProbs = TRUE
+        )
 
-      print("1")
-      # Forming random forest model
-      rfModel <- caret::train(
-        as.formula(paste(input$covariateCategory, "~ .")),
-        data = rv$trainingData,
-        method = "rf",
-        tuneGrid = data.frame(mtry = input$mtryInput),
-        nodesize = input$nodeSize,
-        ntree = input$numTrees,
-        trControl = control
-      )
+        print("1")
+        # Forming random forest model
+        rfModel <- caret::train(
+          as.formula(paste(input$covariateCategory, "~ .")),
+          data = rv$trainingData,
+          method = "rf",
+          tuneGrid = data.frame(mtry = input$mtryInput),
+          nodesize = input$nodeSize,
+          ntree = input$numTrees,
+          trControl = control
+        )
 
-      print("2")
+        print("2")
 
-      # Getting importance plot
-      rfImportance <- varImp(rfModel)
+        # Getting importance plot
+        rfImportance <- varImp(rfModel)
 
-      importance <- rfImportance
-      rv$rfImportance <- rfImportance
+        importance <- rfImportance
+        rv$rfImportance <- rfImportance
 
-      sorted_data <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
+        sortedData <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
 
-      top_five <- sorted_data[1:5, , drop = FALSE]
-      top_genes <- sorted_data[1:10, , drop = FALSE]
-      genes_above_90 <- importance$importance[importance$importance$Overall >= 90, , drop = FALSE]
-      genes_above_80 <- importance$importance[importance$importance$Overall >= 80, , drop = FALSE]
+        #automatically send to the profiler
+        rv$rfGeneSigNames <- as.list(rownames(sortedData)[1:input$rfSignatureSize])
+        TBsignatures_reactive <- reactive({
+          rfGeneSigNames_list <- CharacterList(rv$rfGeneSigNames)
+          TBsignatures <- c(TBsignatures, list(RFGeneSignature = rfGeneSigNames_list@unlistData))
+          return(TBsignatures)
+        })
+        observe({
+          TBsignatures <- TBsignatures_reactive()
+          rv$TBsignatures_reactive <- TBsignatures_reactive()
+        })
 
-      # This sends the identified genes to the TBsignatureprofiler
-      TBsignatures_reactive <- reactive({
-        top_five <- as.list(rownames(top_five))
-        top_five_list <- CharacterList(top_five)
-        top_genes <- as.list(rownames(top_genes))
-        top_genes_list <- CharacterList(top_genes)
-        genes_above_90 <- as.list(rownames(genes_above_90))
-        genes_above_90_list <- CharacterList(genes_above_90)
-        genes_above_80 <- as.list(rownames(genes_above_80))
-        genes_above_80_list <- CharacterList(genes_above_80)
-        TBsignatures <- c(TBsignatures, list(TopFive_RF = top_five_list@unlistData), list(TopGenes_RF = top_genes_list@unlistData), list(GenesAbove90_RF =genes_above_90_list@unlistData), list(GenesAbove80_RF = genes_above_80_list@unlistData))
+
+        showNotification("Finished Generating Random Forest Model", type = "message")
       })
-
-      observe({
-        TBsignatures <- TBsignatures_reactive()
-        rv$TBsignatures_reactive <- TBsignatures_reactive()
-      })
-
-      showNotification("Finished Generating Random Forest Model", type = "message")
+    }, error = function(e) {
+      cat("Error:", conditionMessage(e), "\n")
+      showNotification(paste("Error:", conditionMessage(e)), type = "error")
     })
-  }, error = function(e) {
-    cat("Error:", conditionMessage(e), "\n")
-    showNotification(paste("Error:", conditionMessage(e)), type = "error")
-  })
+    }
 })
 
 # Here, we output the rf Importance plot.
@@ -337,73 +338,65 @@ observeEvent(input$rfTestGeneSig, {
     })
   })
 })
+###################################################################
 
+
+
+###################################################################
 # Code for Support Vector Machines
 observeEvent(input$continueSVM, {
-  tryCatch({
-    withProgress(message = "Training Model...", value = 0, {
-      if(input$kernelType == "Linear"){
-        kType <- "svmLinear"
-      } else if(input$kernelType == "Radial"){
-        kType <- "svmRadial"
-      } else {
-        kType <- "svmPoly"
-      }
+  # if (is.null(input$confirm_datasets) || input$confirm_datasets == 0) {
+  if (is.null(rv$datasetConfirm)) {
+    showModal(modalDialog(
+      title = "Error",
+      "Please confirm the datasets before continuing.",
+      easyClose = TRUE,
+      footer = NULL
+    )) }else {
+    tryCatch({
+      withProgress(message = "Training Model...", value = 0, {
+        if(input$kernelType == "Linear"){
+          kType <- "svmLinear"
+        } else if(input$kernelType == "Radial"){
+          kType <- "svmRadial"
+        } else {
+          kType <- "svmPoly"
+        }
 
-      #cross validation and SVM training
-      control <- trainControl(method = "cv", number = input$foldCount)
-      svmModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
-                               data = rv$trainingData,
-                               method = kType,
-                               trControl = control)
+        #cross validation and SVM training
+        control <- trainControl(method = "cv", number = input$foldCount)
+        svmModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
+                                 data = rv$trainingData,
+                                 method = kType,
+                                 trControl = control)
 
-      svmImportance <- varImp(svmModel)
-      importance <- svmImportance
-      rv$svmImportance <- svmImportance
+        svmImportance <- varImp(svmModel)
+        importance <- svmImportance
+        rv$svmImportance <- svmImportance
 
-      #gene selection
-      #included are the top 5, ten, any genes above 90, and any above 80, for comparison purposes
-      #grabs the top genes from the importance matrix
-      sorted_data <- importance$importance[order(importance$importance[[input$oc1]], decreasing = TRUE), ]
-      # View(as.data.frame(sorted_data))
-      #select the top 5 genes after sorting
-      top_five <- sorted_data[1:5, , drop = FALSE]
-      # View(top)
-      #select the top 10 genes after sorting
-      top_genes <- sorted_data[1:10, , drop = FALSE]
-      # View(top_genes)
-      #select any genes which are greater than 90
-      genes_above_90 <- importance$importance[importance$importance[[input$oc1]] >= 90, , drop = FALSE]
-      # View(genes_above_90)
-      #and select any genes which are greater than 80
-      genes_above_80 <- importance$importance[importance$importance[input$oc1] >= 80, , drop = FALSE]
-      # View(genes_above_80)
+        #gene selection
+        sortedData <- importance$importance[order(importance$importance[[input$oc1]], decreasing = TRUE), ]
+
+        #automatically send to the profiler
+        rv$SVMGeneSigNames <- as.list(rownames(sortedData)[1:input$svmSignatureSize])
+        TBsignatures_reactive <- reactive({
+          svmGeneSigNames_list <- CharacterList(rv$svmGeneSigNames)
+          TBsignatures <- c(TBsignatures, list(SVMGeneSignature = svmGeneSigNames_list@unlistData))
+          return(TBsignatures)
+        })
+        observe({
+          TBsignatures <- TBsignatures_reactive()
+          rv$TBsignatures_reactive <- TBsignatures_reactive()
+        })
 
 
-      #this sends the identified genes to the TBsignatureprofiler
-      TBsignatures_reactive <- reactive({
-        top_five <- as.list(rownames(top_five))
-        top_five_list <- CharacterList(top_five)
-        top_genes <- as.list(rownames(top_genes))
-        top_genes_list <- CharacterList(top_genes)
-        genes_above_90 <- as.list(rownames(genes_above_90))
-        genes_above_90_list <- CharacterList(genes_above_90)
-        genes_above_80 <- as.list(rownames(genes_above_80))
-        genes_above_80_list <- CharacterList(genes_above_80)
-        TBsignatures <- c(TBsignatures, list(TopFive = top_five_list@unlistData), list(TopGenes = top_genes_list@unlistData), list(GenesAbove90 =genes_above_90_list@unlistData), list(GenesAbove80 = genes_above_80_list@unlistData))
+        showNotification("Finished Generating Support Vector Machine Model", type = "message")
       })
-
-      observe({
-        TBsignatures <- TBsignatures_reactive()
-        rv$TBsignatures_reactive <- TBsignatures_reactive()
-      })
-
-      showNotification("Finished Generating Support Vector Machine Model", type = "message")
+    }, error = function(e) {
+      cat("Error:", conditionMessage(e), "\n")
+      showNotification(paste("Error:", conditionMessage(e)), type = "error")
     })
-  }, error = function(e) {
-    cat("Error:", conditionMessage(e), "\n")
-    showNotification(paste("Error:", conditionMessage(e)), type = "error")
-  })
+      }
 })
 
 output$svmImportancePlot <- renderPlot({
@@ -468,60 +461,62 @@ observeEvent(input$svmTestGeneSig, {
     })
   })
 })
+###################################################################
 
 
+
+###################################################################
 # Code for Elastic Net Regression
 observeEvent(input$continueEN, {
-  tryCatch({
-    withProgress(message = "Training Model...", value = 0, {
-      control <- trainControl(method = "cv", number = input$foldCount)
-      enModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
-                              data = rv$trainingData,
-                              method = "glmnet",
-                              trControl = control,
-                              tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.001, 1, length = 100)))
+  if (is.null(rv$datasetConfirm)) {
+    showModal(modalDialog(
+      title = "Error",
+      "Please confirm the datasets before continuing.",
+      easyClose = TRUE,
+      footer = NULL
+    ))
+  } else {
+    tryCatch({
+      withProgress(message = "Training Model...", value = 0, {
+        control <- trainControl(method = "cv", number = input$foldCount)
 
-      enImportance <- varImp(enModel)
-      importance <- enImportance
-      rv$enImportance <- enImportance
+        enModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
+                                data = rv$trainingData,
+                                method = "glmnet",
+                                trControl = control,
+                                tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.001, 1, length = 100)))
 
-      sortedData <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
+        enImportance <- varImp(enModel)
+        importance <- enImportance
+        rv$enImportance <- enImportance
 
-      top_five <- sortedData[1:5, , drop = FALSE]
-      top_genes <- sortedData[1:10, , drop = FALSE]
-      genes_above_90 <- importance$importance[importance$importance$Overall >= 90, , drop = FALSE]
-      genes_above_80 <- importance$importance[importance$importance$Overall >= 80, , drop = FALSE]
+        sortedData <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
 
-      # This sends the identified genes to the TBsignatureprofiler
-      TBsignatures_reactive <- reactive({
-        top_five <- as.list(rownames(top_five))
-        top_five_list <- CharacterList(top_five)
-        top_genes <- as.list(rownames(top_genes))
-        top_genes_list <- CharacterList(top_genes)
-        genes_above_90 <- as.list(rownames(genes_above_90))
-        genes_above_90_list <- CharacterList(genes_above_90)
-        genes_above_80 <- as.list(rownames(genes_above_80))
-        genes_above_80_list <- CharacterList(genes_above_80)
-        TBsignatures <- c(TBsignatures, list(TopFive_RF = top_five_list@unlistData), list(TopGenes_RF = top_genes_list@unlistData), list(GenesAbove90_RF =genes_above_90_list@unlistData), list(GenesAbove80_RF = genes_above_80_list@unlistData))
+        # Automatically send to the profiler
+        rv$enGeneSigNames <- as.list(rownames(sortedData)[1:input$enSignatureSize])
+        TBsignatures_reactive <- reactive({
+          enGeneSigNames_list <- CharacterList(rv$enGeneSigNames)
+          TBsignatures <- c(TBsignatures, list(ENGeneSignature = enGeneSigNames_list@unlistData))
+          return(TBsignatures)
+        })
+
+        observe({
+          TBsignatures <- TBsignatures_reactive()
+          rv$TBsignatures_reactive <- TBsignatures_reactive()
+        })
+
+        showNotification("Finished Generating Elastic Net Model", type = "message")
       })
-
-      observe({
-        TBsignatures <- TBsignatures_reactive()
-        rv$TBsignatures_reactive <- TBsignatures_reactive()
-      })
-
-      showNotification("Finished Generating Elastic Net Model", type = "message")
+    }, error = function(e) {
+      cat("Error:", conditionMessage(e), "\n")
+      showNotification(paste("Error:", conditionMessage(e)), type = "error")
     })
-
-  }, error = function(e) {
-    cat("Error:", conditionMessage(e), "\n")
-    showNotification(paste("Error:", conditionMessage(e)), type = "error")
-  })
+  }
 })
 
 output$enImportancePlot <- renderPlot({
   tryCatch({
-    if(!is.null(rv$enImportance)) {
+    if (!is.null(rv$enImportance)) {
       importance <- rv$enImportance
       sortedData <- importance
       sortedData$importance <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
@@ -536,95 +531,38 @@ output$enImportancePlot <- renderPlot({
 })
 
 observeEvent(input$enTestGeneSig, {
-
-  colKeep <- c(input$covariateCategory, rv$enGeneSigNames)
-
-  newTrainingData <- rv$trainingData[, unlist(colKeep)]
-  newtestingData <- rv$testData[, unlist(colKeep)]
-
-  control <- trainControl(
-    method = "cv",
-    number = input$foldCount
-  )
-
-  enModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
-                          data = newTrainingData,
-                          method = "glmnet",
-                          trControl = control,
-                          tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.001, 1, length = 100)))
-  enPredictions <- predict(enModel, newtestingData)
-
-  rv$enConfusionMatrix <- confusionMatrix(enPredictions, newtestingData[[input$covariateCategory]])
-
-  output$enMatrixTable <- renderTable({
-    tryCatch({
-      as.data.frame(rv$enConfusionMatrix$table)
-    }, error = function(e) {
-      cat("Error:", conditionMessage(e), "\n")
-      showNotification(paste("Error:", conditionMessage(e)), type = "error")
-    })
-  })
-  output$enMatrixPlot <- renderPlot({
-    tryCatch({
-      plot(table(enPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
-      mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
-    }, error = function(e) {
-      cat("Error:", conditionMessage(e), "\n")
-      showNotification(paste("Error:", conditionMessage(e)), type = "error")
-    })
-  })
-
-})
-
-
-# Code for Neural Networks
-# Define a reactive value to store the trained model
-
-observeEvent(input$continueNN, {
   tryCatch({
-    withProgress(message = "Training Model...", value = 0, {
-      control <- trainControl(method = "cv", number = input$foldCount)
+    colKeep <- c(input$covariateCategory, rv$enGeneSigNames)
 
-      nnModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
-                              data = rv$trainingData,
-                              method = "nnet",
-                              trControl = control,
-                              linout = FALSE,
-                              maxit = input$numEpochs,
-                              maxNWts = 10000,
-      )
+    newTrainingData <- rv$trainingData[, unlist(colKeep)]
+    newtestingData <- rv$testData[, unlist(colKeep)]
+    control <- trainControl(method = "cv", number = input$foldCount)
+    enModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
+                            data = newTrainingData,
+                            method = "glmnet",
+                            trControl = control,
+                            tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.001, 1, length = 100)))
 
-      nnImportance <- varImp(nnModel)
-
-      importance <- nnImportance
-      rv$nnImportance <- nnImportance
-
-      sortedData <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
-
-      top_five <- sortedData[1:5, , drop = FALSE]
-      top_genes <- sortedData[1:10, , drop = FALSE]
-      genes_above_90 <- importance$importance[importance$importance$Overall >= 90, , drop = FALSE]
-      genes_above_80 <- importance$importance[importance$importance$Overall >= 80, , drop = FALSE]
-
-      # This sends the identified genes to the TBsignatureprofiler
-      TBsignatures_reactive <- reactive({
-        top_five <- as.list(rownames(top_five))
-        top_five_list <- CharacterList(top_five)
-        top_genes <- as.list(rownames(top_genes))
-        top_genes_list <- CharacterList(top_genes)
-        genes_above_90 <- as.list(rownames(genes_above_90))
-        genes_above_90_list <- CharacterList(genes_above_90)
-        genes_above_80 <- as.list(rownames(genes_above_80))
-        genes_above_80_list <- CharacterList(genes_above_80)
-        TBsignatures <- c(TBsignatures, list(TopFive_RF = top_five_list@unlistData), list(TopGenes_RF = top_genes_list@unlistData), list(GenesAbove90_RF =genes_above_90_list@unlistData), list(GenesAbove80_RF = genes_above_80_list@unlistData))
+    enPredictions <- predict(enModel, newtestingData)
+    rv$enConfusionMatrix <- confusionMatrix(enPredictions, newtestingData[[input$covariateCategory]])
+    output$enMatrixTable <- renderTable({
+      tryCatch({
+        as.data.frame(rv$enConfusionMatrix$table)
+      }, error = function(e) {
+        cat("Error:", conditionMessage(e), "\n")
+        showNotification(paste("Error:", conditionMessage(e)), type = "error")
       })
+    })
 
-      observe({
-        TBsignatures <- TBsignatures_reactive()
-        rv$TBsignatures_reactive <- TBsignatures_reactive()
+    output$enMatrixPlot <- renderPlot({
+      tryCatch({
+        plot(table(enPredictions, rv$testData[[input$covariateCategory]]),
+             main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
+        mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
+      }, error = function(e) {
+        cat("Error:", conditionMessage(e), "\n")
+        showNotification(paste("Error:", conditionMessage(e)), type = "error")
       })
-
-      showNotification("Finished Generating Neural Network Model", type = "message")
     })
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")
@@ -632,9 +570,64 @@ observeEvent(input$continueNN, {
   })
 })
 
+###################################################################
+
+
+
+###################################################################
+#Neural Networks
+observeEvent(input$continueNN, {
+  if (is.null(rv$datasetConfirm)) {
+    showModal(modalDialog(
+      title = "Error",
+      "Please confirm the datasets before continuing.",
+      easyClose = TRUE,
+      footer = NULL
+    ))
+  } else {
+    tryCatch({
+      withProgress(message = "Training Model...", value = 0, {
+        control <- trainControl(method = "cv", number = input$foldCount)
+
+        nnModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
+                                data = rv$trainingData,
+                                method = "nnet",
+                                trControl = control,
+                                linout = FALSE,
+                                maxit = input$numEpochs,
+                                maxNWts = 10000)
+
+        nnImportance <- varImp(nnModel)
+        rv$nnImportance <- nnImportance
+
+        sortedData <- nnImportance$importance[order(nnImportance$importance$Overall, decreasing = TRUE), , drop = FALSE]
+
+        # Automatically send to the profiler
+        rv$nnGeneSigNames <- as.list(rownames(sortedData)[1:input$nnSignatureSize])
+
+        TBsignatures_reactive <- reactive({
+          nnGeneSigNames_list <- CharacterList(rv$nnGeneSigNames)
+          TBsignatures <- c(TBsignatures, list(NNGeneSignature = nnGeneSigNames_list@unlistData))
+          return(TBsignatures)
+        })
+
+        observe({
+          TBsignatures <- TBsignatures_reactive()
+          rv$TBsignatures_reactive <- TBsignatures_reactive()
+        })
+
+        showNotification("Finished Generating Neural Network Model", type = "message")
+      })
+    }, error = function(e) {
+      cat("Error:", conditionMessage(e), "\n")
+      showNotification(paste("Error:", conditionMessage(e)), type = "error")
+    })
+  }
+})
+
 output$nnImportancePlot <- renderPlot({
   tryCatch({
-    if(!is.null(rv$nnImportance)) {
+    if (!is.null(rv$nnImportance)) {
       importance <- rv$nnImportance
       sortedData <- importance
       sortedData$importance <- importance$importance[order(importance$importance$Overall, decreasing = TRUE), , drop = FALSE]
@@ -649,38 +642,48 @@ output$nnImportancePlot <- renderPlot({
 })
 
 observeEvent(input$nnTestGeneSig, {
-  colKeep <- c(input$covariateCategory, rv$nnGeneSigNames)
+  tryCatch({
+    colKeep <- c(input$covariateCategory, rv$nnGeneSigNames)
 
-  newTrainingData <- rv$trainingData[, unlist(colKeep)]
-  newtestingData <- rv$testData[, unlist(colKeep)]
+    newTrainingData <- rv$trainingData[, unlist(colKeep)]
+    newtestingData <- rv$testData[, unlist(colKeep)]
 
-  control <- trainControl(method = "cv", number = input$foldCount)
+    control <- trainControl(method = "cv", number = input$foldCount)
 
-  nnModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
-                          data = newTrainingData,
-                          method = "nnet",
-                          trControl = control,
-                          linout = FALSE,
-                          maxit = input$numEpochs,
-                          maxNWts = 10000,
-  )
+    nnModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
+                            data = newTrainingData,
+                            method = "nnet",
+                            trControl = control,
+                            linout = FALSE,
+                            maxit = input$numEpochs,
+                            maxNWts = 10000)
 
-  nnPredictions <- predict(nnModel, newtestingData)
+    nnPredictions <- predict(nnModel, newtestingData)
 
-  rv$nnConfusionMatrix <- confusionMatrix(nnPredictions, newtestingData[[input$covariateCategory]])
+    rv$nnConfusionMatrix <- confusionMatrix(nnPredictions, newtestingData[[input$covariateCategory]])
 
-  output$nnMatrixTable <- renderTable({
-    tryCatch({
-      as.data.frame(rv$nnConfusionMatrix$table)
-    }, error = function(e) {
-
+    output$nnMatrixTable <- renderTable({
+      tryCatch({
+        as.data.frame(rv$nnConfusionMatrix$table)
+      }, error = function(e) {
+        cat("Error:", conditionMessage(e), "\n")
+        showNotification(paste("Error:", conditionMessage(e)), type = "error")
+      })
     })
-  })
 
-  output$nnMatrixPlot <- renderPlot({
-    tryCatch({
-      plot(table(nnPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
-      mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
+    output$nnMatrixPlot <- renderPlot({
+      tryCatch({
+        plot(table(nnPredictions, rv$testData[[input$covariateCategory]]), main = "Confusion matrix", xlab = "", ylab = "Test Actual:")
+        mtext("Model Prediction:", side = 3, line = .5, cex = 1.2)
+      }, error = function(e) {
+        cat("Error:", conditionMessage(e), "\n")
+        showNotification(paste("Error:", conditionMessage(e)), type = "error")
+      })
     })
+  }, error = function(e) {
+    cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
 })
+
+###################################################################
