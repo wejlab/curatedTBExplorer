@@ -409,8 +409,7 @@ observeEvent(input$confirmStudiesBtn, {
           if (all(colsToExclude)) {
             showNotification("All columns are excluded due to missing or unique values.", type = "warning")
             filteredDf <- data.frame()
-          } else if (!"TBStatus" %in% colnames(filteredDF)) {
-            showNotification("TBSTatus is not availabe for batch correction.", type - "warning")
+
           } else {
             filteredDf <- df[, !colsToExclude, drop = FALSE]
           }
