@@ -33,7 +33,7 @@ tabPanel(
       "Elastic Net Regression",
       sidebarPanel(
         "Elastic Net Regression",
-        actionButton("continueEN", "Continue"),
+        actionButton("continueEN", "Train Model"),
 
         sliderInput("enSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
         actionButton("enTestGeneSig", "Test Gene Signature")
@@ -53,7 +53,7 @@ tabPanel(
         numericInput("numEpochs", "Number of Epochs:", value = 100, min = 1, max = 1000),
 
         # Button to start training
-        actionButton("continueNN", "Continue"),
+        actionButton("continueNN", "Train Model"),
 
         sliderInput("nnSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
         actionButton("nnTestGeneSig", "Test Gene Signature")
@@ -71,7 +71,7 @@ tabPanel(
         numericInput("numTrees", "Number of Trees Generated:", value = 100, min = 1),
         numericInput("nodeSize", "Size of Each Node:", value = 5, min = 1),
         numericInput("mtryInput", "mtry:", value = 2, min = 1),
-        actionButton("continueRF", "Continue"),
+        actionButton("continueRF", "Train Model"),
 
         sliderInput("rfSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
         actionButton("rfTestGeneSig", "Test Gene Signature")
@@ -87,7 +87,7 @@ tabPanel(
       sidebarPanel(
         "Support Vector Machines",
         selectInput("kernelType", "Kernel Type", choices = c("Linear", "Radial", "Polynomial")),
-        actionButton("continueSVM", "Continue"),
+        actionButton("continueSVM", "Train Model"),
 
         sliderInput("svmSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
         actionButton("svmTestGeneSig", "Test Gene Signature")

@@ -395,7 +395,9 @@ observeEvent(input$confirmStudiesBtn, {
         tryCatch({
           # Check columns to exclude
           colsToExclude <- check_columns(listDataList)
-
+          if("PatientID" %in% colsToExclude) {
+            colsToExclude <- c(colsToExclude, PatientID)
+          }
           # Print debugging information
           # print("Columns to exclude based on missing values or uniqueness:")
           # print(colsToExclude)
@@ -407,17 +409,15 @@ observeEvent(input$confirmStudiesBtn, {
           if (all(colsToExclude)) {
             showNotification("All columns are excluded due to missing or unique values.", type = "warning")
             filteredDf <- data.frame()
+          } else if (!"TBStatus" %in% colnames(filteredDF)) {
+            showNotification("TBSTatus is not availabe for batch correction.", type - "warning")
           } else {
             filteredDf <- df[, !colsToExclude, drop = FALSE]
           }
 
-          # Print debugging information
-          # print("Filtered data frame:")
-          # print(filteredDf)
-
           # Update the selectize input with the filtered columns if any columns remain
           if (ncol(filteredDf) > 0) {
-            updateSelectizeInput(session, "selectedCovars", choices = colnames(filteredDf), selected = "TBStatus", server = TRUE)
+            updateSelectizeInput(session, "selectedCovars", choices = colnames(filteredDf), server = TRUE)
           } else {
             updateSelectizeInput(session, "selectedCovars", choices = NULL, selected = NULL, server = TRUE)
             showNotification("No columns available for selection.", type = "warning")
@@ -454,6 +454,7 @@ observeEvent(input$confirmCovarsBtn, {
   tryCatch({
     tempAssays <- assay(vals$SEList)
     selCov <- input$selectedCovars
+
     if (length(selCov) > 0) {
       my_formula <- paste("~", paste(selCov, collapse = " + "))
     } else {
@@ -506,6 +507,9 @@ observeEvent(input$confirmCovarsBtn, {
 
     # Also set the batchFlag to true
     vals$batchFlag = TRUE
+
+    showNotification("Covariates Confirmed", type = "message")
+
 
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")

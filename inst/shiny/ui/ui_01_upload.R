@@ -58,7 +58,7 @@ tabPanel(
 
           # Displays selectize for selecting dataset to use
           selectizeInput("selectedActiveMAEList", "Select Datasets To Use", choices = list(), multiple = TRUE, width = "100%"),
-          actionButton("confirmStudiesBtn", "Confirm Selected Studies"),
+          actionButton("confirmStudiesBtn", "Confirm Selected Studies", styles = "margin-bottom: 20px;"),
 
           #this panel appears after studies are confirmed, allow user to select their batch conditions
           conditionalPanel(
