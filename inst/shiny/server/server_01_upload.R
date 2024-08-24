@@ -451,6 +451,8 @@ observeEvent(input$confirmStudiesBtn, {
 # Handles the user selections for Batch Correction
 observeEvent(input$confirmCovarsBtn, {
   tryCatch({
+    withProgress(message = "Confirming Covariates...", value = .75, {
+
     tempAssays <- assay(vals$SEList)
     selCov <- input$selectedCovars
 
@@ -508,7 +510,7 @@ observeEvent(input$confirmCovarsBtn, {
     vals$batchFlag = TRUE
 
     showNotification("Covariates Confirmed", type = "message")
-
+    })
 
   }, error = function(e) {
     cat("Error:", conditionMessage(e), "\n")

@@ -85,13 +85,7 @@ observeEvent(input$confirmDataset, {
 
       # Running DE_analyze function from BATCHQC
 
-      vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", input$covariateCategory, 'log_assay1_cpm')
-      #determines which assay to used based on the fact if batch qc was used or not
-      # if(vals$batchFlag){
-      #   vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", input$covariateCategory, 'corrected_assay')
-      # } else {
-      #   vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", input$covariateCategory, 'log_assay1_cpm')
-      # }
+      vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", input$covariateCategory, input$assaySelection)
 
       # Filters out when padj is less than or equal to 0.05
       vals$filtered <- lapply(vals$DE, function(df) {
@@ -101,7 +95,7 @@ observeEvent(input$confirmDataset, {
 
       # We make generated name because it needs to match the one generated through DE_analyze (covarCategory + Outcome)
       generatedName <- paste0(input$covariateCategory, input$oc1)
-
+      View(generatedName)
       # Prevents the list of genes from going lower than 500
       if(length(vals$filtered[[generatedName]]$padj) < 500) {
         vals$filtered <- vals$DE
@@ -128,13 +122,8 @@ observeEvent(input$confirmDataset, {
 
       rv$testingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTestingList]
 
-      #data loaded for training - dynamically depending on batch status
-      training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
-      # if(vals$batchFlag) {
-      #   training_assay_data <- rv$trainingSE@assays@data@listData$properAssay
-      # } else {
-      #   training_assay_data <- rv$trainingSE@assays@data@listData$log_assay1_cpm
-      # }
+      #training assay data depends on the assay selection by user
+      training_assay_data <- rv$trainingSE@assays@data@listData[[input$assaySelection]]
 
       col_data <- colData(rv$trainingSE)
       col_data[[input$covariateCategory]] <- factor(col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
@@ -144,13 +133,8 @@ observeEvent(input$confirmDataset, {
 
       rv$trainingData[[input$covariateCategory]] <- factor(rv$trainingData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
 
-      #data for testing - dynamically depending on batch status
-       testing_assay_data <- rv$testingSE@assays@data@listData$log_assay1_cpm
-      # if(vals$batchFlag) {
-      #   testing_assay_data <- rv$testingSE@assays@data@listData$properAssay
-      # } else {
-      #   testing_assay_data <- rv$testingSE@assays@data@listData$log_assay1_cpm
-      # }
+      #same as training assay data
+      testing_assay_data <- rv$testingSE@assays@data@listData[[input$assaySelection]]
 
       testing_col_data <- colData(rv$testingSE)
       testing_col_data[[input$covariateCategory]] <- factor(testing_col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
