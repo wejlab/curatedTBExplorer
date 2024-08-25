@@ -37,19 +37,25 @@ shiny::observe({
 
 
 observeEvent(input$begin, {
-  selected_dataset <- vals$SEList
-  selected_profiles <- input$profiles
-  selected_assay <- input$assay
-  selected_algorithm <- input$algorithm
-  selected_colData <- input$columnInfo
+  tryCatch({
+    selected_dataset <- vals$SEList
+    selected_profiles <- input$profiles
+    selected_assay <- input$assay
+    selected_algorithm <- input$algorithm
+    selected_colData <- input$columnInfo
 
-  print("entered")
-  tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay, selected_algorithm, rv$TBsignatures_reactive, selected_colData))
-  print("exit")
-  # renders the dt
-  output$ssgsea_table <- renderDT({
-    tb_profiler_result()[[1]]
+    print("entered")
+    tb_profiler_result(runTBsigProfilerFunction(vals$SEList, selected_profiles, selected_assay, selected_algorithm, rv$TBsignatures_reactive, selected_colData))
+    print("exit")
+    # renders the dt
+    output$ssgsea_table <- renderDT({
+      tb_profiler_result()[[1]]
+    })
+  }, error = function(e) {
+    cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
+
 })
 
 # observer for the heatmap button
