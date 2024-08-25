@@ -163,6 +163,13 @@ observeEvent(vals$SEList, {
       allCovarChoices <- c("TBStatus", allCovarChoices[allCovarChoices != "TBStatus"])
     }
 
+    # print(allCovarChoices)
+    # goodCovarChoices <- allCovarChoices[sapply(allCovarChoices, function(name) {
+    #   type <- typeof(vals$SEList$colData$listData[[name]])
+    #   type == "character"
+    # })]
+    # print(goodCovarChoices)
+
     updateSelectInput(session, "covariateCategory", choices = setdiff(allCovarChoices, c("Age", "TST")))
     updateSelectInput(session, "assaySelection", choices = vals$datassays)
   }
@@ -201,7 +208,8 @@ mlList <- reactive({
 ####################################### MACHINE LEARNING METHODS #####################################
 ######################################################################################################
 
-####################################### Code for Random Forests ######################################
+###################################################################
+# Code for Random Forests
 # Random Forest Model Creation and Variable Importance Handling
 observeEvent(input$continueRF, {
   if (is.null(rv$datasetConfirm)) {
@@ -349,11 +357,13 @@ observeEvent(input$rfTestGeneSig, {
   showNotification("TBSignatures have been updated.", type = "message")
 })
 
+###################################################################
 
-####################################### Code for Support Vector Machines ######################################
+
 
 ###################################################################
 # Code for Support Vector Machines
+# SVM Model Creation and Variable Importance Handling
 observeEvent(input$continueSVM, {
   if (is.null(rv$datasetConfirm)) {
     showModal(modalDialog(
@@ -498,13 +508,14 @@ observeEvent(input$svmTestGeneSig, {
   # Display notification when TBSignatures are updated
   showNotification("TBSignatures have been updated.", type = "message")
 })
+
 ###################################################################
 
 
-####################################### Code for Elastic Net Regression ######################################
 
 ###################################################################
 # Code for Elastic Net Regression
+# Elastic Net Model Creation and Variable Importance Handling
 observeEvent(input$continueEN, {
   if (is.null(rv$datasetConfirm)) {
     showModal(modalDialog(
@@ -646,11 +657,13 @@ observeEvent(input$enTestGeneSig, {
   })
 })
 
+###################################################################
 
-####################################### Code for Neural Net ######################################
+
 
 ###################################################################
 #Neural Networks
+# Neural Network Model Creation and Variable Importance Handling
 observeEvent(input$continueNN, {
   if (is.null(rv$datasetConfirm)) {
     showModal(modalDialog(
