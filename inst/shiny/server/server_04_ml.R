@@ -70,21 +70,27 @@ observeEvent(input$confirmDataset, {
       # Changes the covariate data into factors depending on choice of outcomes
       if(input$oc2 == "All Else") {
         covarColumn <- factor(
-          ifelse(covarColumn == input$oc1, input$oc1, "All Else"))
+          ifelse(covarColumn == input$oc1, input$oc1, "All Else")
+        )
       } else {
         covarColumn <- factor(
           ifelse(covarColumn == input$oc1, input$oc1, ifelse(covarColumn == input$oc2, input$oc2, NA))
         )
-
-        # Subset the summarized experiment so we only keep valid samples (samples without NA)
-        keptOutcomes <- !is.na(covarColumn)
-        vals$mlList <- vals$mlList[, keptOutcomes]
-
-        vals$mlList$colData[[input$covariateCategory]] <- covarColumn[keptOutcomes]
       }
 
-      # Running DE_analyze function from BATCHQC
+      # Subset the summarized experiment so we only keep valid samples (samples without NA)
+      keptOutcomes <- !is.na(covarColumn)
+      vals$mlList <- vals$mlList[, keptOutcomes]
+      vals$mlList@colData@listData[[input$covariateCategory]] <- covarColumn[keptOutcomes]
 
+
+      # View(vals$mlList)
+      # View(as.data.frame(vals$mlList@colData))
+
+      mlListBeforeDEAnalyze <- vals$mlList
+      # View(mlListBeforeDEAnalyze@assays@data@listData$assay1)
+
+      # Running DE_analyze function from BATCHQC
       vals$DE <- DE_analyze(vals$mlList, 'limma', "Study", input$covariateCategory, input$assaySelection)
 
       # Filters out when padj is less than or equal to 0.05
@@ -92,6 +98,8 @@ observeEvent(input$confirmDataset, {
         df %>%
           filter(padj <= 0.05)
       })
+
+      # View(mlListBeforeNameGeneration <- vals$mlList@assays@data@listData$assay1)
 
       # We make generated name because it needs to match the one generated through DE_analyze (covarCategory + Outcome)
       generatedName <- paste0(input$covariateCategory, input$oc1)
@@ -116,8 +124,9 @@ observeEvent(input$confirmDataset, {
       # Filters Summarized Experiment so only coinciding genes get kept
       filtered_genes <- rownames(vals$filtered[[generatedName]])
 
-      limitedSE <- vals$mlList[filtered_genes, , drop = FALSE]
+      limitedSE <- vals$mlList[filtered_genes, , drop = FALSE] # drop = FALSE makes sure it doesn't convert to a vector
 
+      View(limitedSE@assays@data@listData$assay1)
       rv$trainingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTrainingList]
 
       rv$testingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTestingList]
@@ -131,6 +140,8 @@ observeEvent(input$confirmDataset, {
       # Data is our training dataframe
       rv$trainingData <- setNames(data.frame(col_data[[input$covariateCategory]], t(training_assay_data)), c(input$covariateCategory, colnames(t(training_assay_data))))
 
+
+
       rv$trainingData[[input$covariateCategory]] <- factor(rv$trainingData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
 
       #same as training assay data
@@ -140,6 +151,8 @@ observeEvent(input$confirmDataset, {
       testing_col_data[[input$covariateCategory]] <- factor(testing_col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
       rv$testData <- setNames(data.frame(testing_col_data[[input$covariateCategory]], t(testing_assay_data)), c(input$covariateCategory, colnames(t(testing_assay_data))))
       rv$testData[[input$covariateCategory]] <- factor(rv$testData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
+
+      # View(rv$trainingData)
 
       showNotification("Dataset Confirmed", type = "message")
     }
@@ -163,13 +176,6 @@ observeEvent(vals$SEList, {
       allCovarChoices <- c("TBStatus", allCovarChoices[allCovarChoices != "TBStatus"])
     }
 
-    # print(allCovarChoices)
-    # goodCovarChoices <- allCovarChoices[sapply(allCovarChoices, function(name) {
-    #   type <- typeof(vals$SEList$colData$listData[[name]])
-    #   type == "character"
-    # })]
-    # print(goodCovarChoices)
-
     updateSelectInput(session, "covariateCategory", choices = setdiff(allCovarChoices, c("Age", "TST")))
     updateSelectInput(session, "assaySelection", choices = vals$datassays)
   }
@@ -192,8 +198,6 @@ observeEvent(input$covariateCategory, {
     }
   }
 })
-
-
 
 # Sets mlList to reactive
 mlList <- reactive({
