@@ -41,7 +41,6 @@ tabPanel(
       mainPanel(
         plotOutput("enImportancePlot", height = "600"),
         plotOutput("enMatrixPlot"),
-        tableOutput("enMatrixTable")
       )
     ),
     tabPanel(
@@ -61,7 +60,6 @@ tabPanel(
       mainPanel(
         plotOutput("nnImportancePlot", height = "600"),
         plotOutput("nnMatrixPlot"),
-        tableOutput("nnMatrixTable")
       )
     ),
     tabPanel(
@@ -79,7 +77,6 @@ tabPanel(
       mainPanel(
         plotOutput("rfImportancePlot", height = "600"),
         plotOutput("rfMatrixPlot"),
-        tableOutput("rfMatrixTable")
       )
     ),
     tabPanel(
@@ -95,7 +92,6 @@ tabPanel(
       mainPanel(
         plotOutput("svmImportancePlot", height = "600"),
         plotOutput("svmMatrixPlot"),
-        tableOutput("svmMatrixTable")
       )
     )
   )

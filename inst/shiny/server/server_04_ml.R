@@ -288,7 +288,6 @@ observeEvent(input$rfTestGeneSig, {
 
   # Reduces testing and training data to only include chosen genes
   newTrainingData <- rv$trainingData[, unlist(colKeep)]
-  newtestingData <- rv$testData[, unlist(colKeep)]
 
   control <- trainControl(
     method = "cv",
@@ -306,55 +305,57 @@ observeEvent(input$rfTestGeneSig, {
     trControl = control
   )
 
-  rfPredictions <- predict(rfModel, newtestingData)
-  rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, newtestingData[[input$covariateCategory]])
+  # Generates a list of plots for each
+  plotList <- lapply(names(vals$testDataList), function(namey) {
+    testy <- vals$testDataList[[namey]]
 
-  # Renders the matrix table
-  output$rfMatrixTable <- renderTable({
-    tryCatch({
-      as.data.frame(rv$rfConfusionMatrix$table)
-    }, error = function(e) {
-      cat("Error:", conditionMessage(e), "\n")
-      showNotification(paste("Error:", conditionMessage(e)), type = "error")
-    })
+    newtestingData <- testy[, unlist(colKeep)]
+    rfPredictions <- predict(rfModel, newtestingData)
+    rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, newtestingData[[input$covariateCategory]])
+
+    # Renders the matrix plot
+    table <- rv$rfConfusionMatrix$table
+
+    df <- data.frame(
+      Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
+      Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
+      Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
+    )
+
+    cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
+
+    rownames(cm) <- c(input$oc1, input$oc2)
+    colnames(cm) <- c(input$oc1, input$oc2)
+
+    # Convert the matrix to a data frame suitable for ggplot
+    cmDf <- as.data.frame(cm)
+    cmDf$Reference <- rownames(cmDf)
+    cmMelt <- melt(cmDf, id.vars = "Reference")
+
+    colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
+
+    # Define colors for the cells
+    cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
+
+    # Confusion matrix plot
+    plotty <- ggplot(data = cmMelt, aes(x = Predicted, y = Actual)) +
+      geom_tile(aes(fill = Color), color = "white") +
+      scale_fill_identity() +
+      geom_text(aes(label = Freq), vjust = 1) +
+      labs(title = namey,
+           x = "Predicted",
+           y = "Actual") +
+      theme_minimal()
+
+    return(plotty)
+
   })
+  # Renaming the items in the plotList
+  names(plotList) <- names(vals$testDataList)
 
-  # Renders the matrix plot
+  # Outputs the Matrix plots in a table
   output$rfMatrixPlot <- renderPlot({
-    tryCatch({
-      table <- rv$rfConfusionMatrix$table
-
-      df <- data.frame(
-        Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
-        Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
-        Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
-      )
-
-      cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
-
-      rownames(cm) <- c(input$oc1, input$oc2)
-      colnames(cm) <- c(input$oc1, input$oc2)
-
-      # Convert the matrix to a data frame suitable for ggplot
-      cmDf <- as.data.frame(cm)
-      cmDf$Reference <- rownames(cmDf)
-      cmMelt <- melt(cmDf, id.vars = "Reference")
-
-      colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
-
-      # Define colors for the cells
-      cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
-
-      # Confusion matrix plot
-      ggplot(data = cmMelt, aes(x = Predicted, y = Actual)) +
-        geom_tile(aes(fill = Color), color = "white") +
-        scale_fill_identity() +
-        geom_text(aes(label = Freq), vjust = 1) +
-        labs(title = "Confusion Matrix",
-             x = "Predicted",
-             y = "Actual") +
-        theme_minimal()
-    })
+    do.call(grid.arrange, c(plotList, ncol = 2))
   })
 
   # Create and update TBSignatures after the Random Forest testing is completed
@@ -462,15 +463,6 @@ observeEvent(input$svmTestGeneSig, {
   rv$svmConfusionMatrix <- confusionMatrix(svmPredictions, newtestingData[[input$covariateCategory]])
   # View(rv$svmConfusionMatrix)
   # View(as.data.frame(rv$svmConfusionMatrix$table))
-
-  output$svmMatrixTable <- renderTable({
-    tryCatch({
-      as.data.frame(rv$svmConfusionMatrix$table)
-    }, error = function(e) {
-      cat("Error:", conditionMessage(e), "\n")
-      showNotification(paste("Error:", conditionMessage(e)), type = "error")
-    })
-  })
 
   output$svmMatrixPlot <- renderPlot({
     tryCatch({
@@ -604,16 +596,6 @@ observeEvent(input$enTestGeneSig, {
     # Making predictions on test data
     enPredictions <- predict(enModel, newtestingData)
     rv$enConfusionMatrix <- confusionMatrix(enPredictions, newtestingData[[input$covariateCategory]])
-
-    # Render confusion matrix table
-    output$enMatrixTable <- renderTable({
-      tryCatch({
-        as.data.frame(rv$enConfusionMatrix$table)
-      }, error = function(e) {
-        cat("Error:", conditionMessage(e), "\n")
-        showNotification(paste("Error:", conditionMessage(e)), type = "error")
-      })
-    })
 
     # Render confusion matrix plot
     output$enMatrixPlot <- renderPlot({
@@ -756,16 +738,6 @@ observeEvent(input$nnTestGeneSig, {
     # Making predictions on test data
     nnPredictions <- predict(nnModel, newtestingData)
     rv$nnConfusionMatrix <- confusionMatrix(nnPredictions, newtestingData[[input$covariateCategory]])
-
-    # Render confusion matrix table
-    output$nnMatrixTable <- renderTable({
-      tryCatch({
-        as.data.frame(rv$nnConfusionMatrix$table)
-      }, error = function(e) {
-        cat("Error:", conditionMessage(e), "\n")
-        showNotification(paste("Error:", conditionMessage(e)), type = "error")
-      })
-    })
 
     # Render confusion matrix plot
     output$nnMatrixPlot <- renderPlot({
