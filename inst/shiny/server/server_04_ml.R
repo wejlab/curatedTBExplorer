@@ -126,10 +126,8 @@ observeEvent(input$confirmDataset, {
 
       limitedSE <- vals$mlList[filtered_genes, , drop = FALSE] # drop = FALSE makes sure it doesn't convert to a vector
 
-      View(limitedSE@assays@data@listData$assay1)
+      # View(limitedSE@assays@data@listData$assay1)
       rv$trainingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTrainingList]
-
-      rv$testingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTestingList]
 
       #training assay data depends on the assay selection by user
       training_assay_data <- rv$trainingSE@assays@data@listData[[input$assaySelection]]
@@ -140,19 +138,25 @@ observeEvent(input$confirmDataset, {
       # Data is our training dataframe
       rv$trainingData <- setNames(data.frame(col_data[[input$covariateCategory]], t(training_assay_data)), c(input$covariateCategory, colnames(t(training_assay_data))))
 
-
-
       rv$trainingData[[input$covariateCategory]] <- factor(rv$trainingData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
 
-      #same as training assay data
-      testing_assay_data <- rv$testingSE@assays@data@listData[[input$assaySelection]]
+      # Subsetting the limitedSE into assays for each testing study
+      vals$testDataList <- lapply(selectedTestingList, function(studyName) {
+        testling <- limitedSE[, colData(limitedSE)$Study == studyName]
+        testing_assay_data <- testling@assays@data@listData[[input$assaySelection]]
+        testing_col_data <- colData(testling)
+        testing_col_data[[input$covariateCategory]] <- factor(testing_col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
+        testData <- setNames(data.frame(testing_col_data[[input$covariateCategory]], t(testing_assay_data)), c(input$covariateCategory, colnames(t(testing_assay_data))))
+        testData[[input$covariateCategory]] <- factor(testData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
+        return(testData)
+      })
 
-      testing_col_data <- colData(rv$testingSE)
-      testing_col_data[[input$covariateCategory]] <- factor(testing_col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
-      rv$testData <- setNames(data.frame(testing_col_data[[input$covariateCategory]], t(testing_assay_data)), c(input$covariateCategory, colnames(t(testing_assay_data))))
-      rv$testData[[input$covariateCategory]] <- factor(rv$testData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
+      # Renaming the assays in the list
+      names(vals$testDataList) <- selectedTestingList
 
-      # View(rv$trainingData)
+      # lapply(testDataList, function(instance) {
+      #   View(instance)
+      # })
 
       showNotification("Dataset Confirmed", type = "message")
     }

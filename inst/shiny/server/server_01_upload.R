@@ -27,7 +27,9 @@ vals <- reactiveValues(
   # Holds the colData from the studies, used in batch qc
   batchList = NULL,
   # acts as a flag to tell if batch correction was done
-  batchFlag = FALSE
+  batchFlag = FALSE,
+  # A list to hold the subset SEs for testing
+  testDataList = NULL
 )
 
 # Variables to hold local downloaded and default studies
