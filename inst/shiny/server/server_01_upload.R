@@ -324,12 +324,13 @@ observeEvent(input$downloadStudiesBtn, {
   }
 })
 
+
 # Sets studies to use for rest of package
 observeEvent(input$confirmStudiesBtn, {
   withProgress(message = "Confirming Studies...", value = 0, {
 
     # Confirms that something is selected in the selectize
-    if(length(input$selectedActiveMAEList) > 0) {
+    if (length(input$selectedActiveMAEList) > 0) {
 
       # Compare vals$sessionMAEList to vals$localMAEList and add any missing studies to localMAEList
       vals$MAEList <- vals$sessionMAEList[input$selectedActiveMAEList]
@@ -339,6 +340,26 @@ observeEvent(input$confirmStudiesBtn, {
 
       # Error handling for if making assay doesn't work
       tryCatch({
+
+        # If the user has selected something in optChoice, drop rows with NA in the selected column
+        #this is important for the specific use case we were asked to handle. maybe not so much for a broad user interested in other categories
+        #currenlty only offers users the choices of TBSTatus, Progressoin, or nothing
+        if (!is.null(input$optChoice) && input$optChoice != "") {
+          vals$MAEList <- lapply(vals$MAEList, function(mae) {
+            col_data <- as.data.frame(colData(mae))
+            if (input$optChoice %in% colnames(col_data)) {
+              # Drop rows with NA in the selected column
+              col_data <- col_data[!is.na(col_data[[input$optChoice]]), ]
+
+              # Convert col_data back to DataFrame before assigning it back to colData(mae)
+              colData(mae) <- S4Vectors::DataFrame(col_data)  # Update colData of MAE object correctly
+
+              # Print for debugging purposes
+              print(col_data)
+            }
+            return(mae)
+          })
+        }
 
         # Converts MAEList to SEList differently depending on how it's done
         if (length(vals$MAEList) > 1) {
@@ -370,21 +391,12 @@ observeEvent(input$confirmStudiesBtn, {
         # Check for missing values and unique values for each study
         check_columns <- function(listDataList) {
           naColsList <- lapply(listDataList, function(df) {
-            # print("Checking for NAs in dataframe:")
-            print(head(df))
             sapply(df, function(col) any(is.na(col)))
           })
 
           uniqueColsList <- lapply(listDataList, function(df) {
-            # print("Checking for unique values in dataframe:")
-            print(head(df))
             sapply(df, function(col) length(unique(na.omit(col))) < 2)
           })
-
-          # print("naColsList:")
-          # print(naColsList)
-          # print("uniqueColsList:")
-          # print(uniqueColsList)
 
           combinedNaCols <- Reduce("|", naColsList)
           combinedUniqueCols <- Reduce("|", uniqueColsList)
@@ -397,12 +409,9 @@ observeEvent(input$confirmStudiesBtn, {
         tryCatch({
           # Check columns to exclude
           colsToExclude <- check_columns(listDataList)
-          if("PatientID" %in% colsToExclude) {
-            colsToExclude <- c(colsToExclude, PatientID)
+          if ("PatientID" %in% colsToExclude) {
+            colsToExclude <- c(colsToExclude, "PatientID")
           }
-          # Print debugging information
-          # print("Columns to exclude based on missing values or uniqueness:")
-          # print(colsToExclude)
 
           # Filter out columns to exclude from the first study's dataframe
           df <- listDataList[[1]]
@@ -436,6 +445,8 @@ observeEvent(input$confirmStudiesBtn, {
 
         # Sets up the dataTable in filter page:
         my_data(as.data.frame(colData(vals$SEList)))
+        View(colData(vals$SEList)@listData$Progression)
+        print(colData(vals$SEList)@listData$Progression)
 
       }, error = function(e) {
         cat("Error:", conditionMessage(e), "\n")
@@ -449,6 +460,12 @@ observeEvent(input$confirmStudiesBtn, {
     }
   })
 })
+
+
+
+
+
+
 
 # Handles the user selections for Batch Correction
 observeEvent(input$confirmCovarsBtn, {

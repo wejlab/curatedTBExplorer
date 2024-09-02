@@ -38,6 +38,14 @@ tabPanel(
 
         # Button to clear the local download
         actionButton("clearLocalDownload", "Clear Local Download")
+      ),
+
+      #Optimization Action button
+      actionButton("optBtn", "Optimization Options"),
+      #Conditional Panel for more options
+      conditionalPanel(
+        condition = "input.optBtn % 2 != 0",
+        selectInput("optChoice", "Covariate to Optimize For", choices = list("None" = "", "Progression", "TBStatus"))
       )
 
     ),
