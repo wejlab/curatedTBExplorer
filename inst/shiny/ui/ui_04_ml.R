@@ -35,7 +35,7 @@ tabPanel(
         "Elastic Net Regression",
         actionButton("continueEN", "Train Model"),
 
-        sliderInput("enSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
+        sliderInput("enSignatureSize", "Set Signature Size: ", min = 1, max = 150, value = 10),
         actionButton("enTestGeneSig", "Test Gene Signature")
       ),
       mainPanel(
@@ -54,7 +54,7 @@ tabPanel(
         # Button to start training
         actionButton("continueNN", "Train Model"),
 
-        sliderInput("nnSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
+        sliderInput("nnSignatureSize", "Set Signature Size: ", min = 1, max = 150, value = 10),
         actionButton("nnTestGeneSig", "Test Gene Signature")
       ),
       mainPanel(
@@ -71,7 +71,7 @@ tabPanel(
         numericInput("mtryInput", "mtry:", value = 2, min = 1),
         actionButton("continueRF", "Train Model"),
 
-        sliderInput("rfSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
+        sliderInput("rfSignatureSize", "Set Signature Size: ", min = 1, max = 150, value = 10),
         actionButton("rfTestGeneSig", "Test Gene Signature")
       ),
       mainPanel(
@@ -86,7 +86,7 @@ tabPanel(
         selectInput("kernelType", "Kernel Type", choices = c("Linear", "Radial", "Polynomial")),
         actionButton("continueSVM", "Train Model"),
 
-        sliderInput("svmSignatureSize", "Set Signature Size: ", min = 1, max = 100, value = 10),
+        sliderInput("svmSignatureSize", "Set Signature Size: ", min = 1, max = 150, value = 10),
         actionButton("svmTestGeneSig", "Test Gene Signature")
       ),
       mainPanel(
