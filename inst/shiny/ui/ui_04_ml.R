@@ -33,6 +33,7 @@ tabPanel(
       "Elastic Net Regression",
       sidebarPanel(
         "Elastic Net Regression",
+        br(),
         actionButton("continueEN", "Train Model"),
 
         sliderInput("enSignatureSize", "Set Signature Size: ", min = 1, max = 150, value = 10),
