@@ -31,7 +31,7 @@ rv <- reactiveValues(
   nnPredictions = NULL,
   nnConfusionMatrix = NULL,
 
-  TBsignatures_reactive = NULL,
+  TBsignatures_reactive = TBsignatures,
   datasetConfirm = NULL
 
 )
@@ -283,87 +283,93 @@ output$rfImportancePlot <- renderPlot({
 
 # Update and Test Random Forest Model upon Button Click
 observeEvent(input$rfTestGeneSig, {
+  tryCatch({
+    colKeep <- c(input$covariateCategory, rv$rfGeneSigNames)
 
-  colKeep <- c(input$covariateCategory, rv$rfGeneSigNames)
+    # Reduces testing and training data to only include chosen genes
+    newTrainingData <- rv$trainingData[, unlist(colKeep)]
 
-  # Reduces testing and training data to only include chosen genes
-  newTrainingData <- rv$trainingData[, unlist(colKeep)]
-
-  control <- trainControl(
-    method = "cv",
-    number = input$foldCount
-  )
-
-  # Forming random forest model
-  rfModel <- caret::train(
-    as.formula(paste(input$covariateCategory, "~ .")),
-    data = newTrainingData,
-    method = "rf",
-    tuneGrid = data.frame(mtry = input$mtryInput),
-    nodesize = input$nodeSize,
-    ntree = input$numTrees,
-    trControl = control
-  )
-
-  # Generates a list of plots for each
-  plotList <- lapply(names(vals$testDataList), function(namey) {
-    testy <- vals$testDataList[[namey]]
-
-    newtestingData <- testy[, unlist(colKeep)]
-    rfPredictions <- predict(rfModel, newtestingData)
-    rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, newtestingData[[input$covariateCategory]])
-
-    # Renders the matrix plot
-    table <- rv$rfConfusionMatrix$table
-
-    df <- data.frame(
-      Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
-      Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
-      Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
+    control <- trainControl(
+      method = "cv",
+      number = input$foldCount
     )
 
-    cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
+    # Forming random forest model
+    rfModel <- caret::train(
+      as.formula(paste(input$covariateCategory, "~ .")),
+      data = newTrainingData,
+      method = "rf",
+      tuneGrid = data.frame(mtry = input$mtryInput),
+      nodesize = input$nodeSize,
+      ntree = input$numTrees,
+      trControl = control
+    )
 
-    rownames(cm) <- c(input$oc1, input$oc2)
-    colnames(cm) <- c(input$oc1, input$oc2)
+    # Generates a list of plots for each
+    plotList <- lapply(names(vals$testDataList), function(namey) {
+      testy <- vals$testDataList[[namey]]
 
-    # Convert the matrix to a data frame suitable for ggplot
-    cmDf <- as.data.frame(cm)
-    cmDf$Reference <- rownames(cmDf)
-    cmMelt <- melt(cmDf, id.vars = "Reference")
+      newtestingData <- testy[, unlist(colKeep)]
+      rfPredictions <- predict(rfModel, newtestingData)
+      rv$rfConfusionMatrix <- confusionMatrix(rfPredictions, newtestingData[[input$covariateCategory]])
 
-    colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
+      # Renders the matrix plot
+      table <- rv$rfConfusionMatrix$table
 
-    # Define colors for the cells
-    cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
+      df <- data.frame(
+        Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
+        Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
+        Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
+      )
 
-    # Confusion matrix plot
-    plotty <- ggplot(data = cmMelt, aes(x = Predicted, y = Actual)) +
-      geom_tile(aes(fill = Color), color = "white") +
-      scale_fill_identity() +
-      geom_text(aes(label = Freq), vjust = 1) +
-      labs(title = namey,
-           x = "Predicted",
-           y = "Actual") +
-      theme_minimal()
+      cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
 
-    return(plotty)
+      rownames(cm) <- c(input$oc1, input$oc2)
+      colnames(cm) <- c(input$oc1, input$oc2)
 
+      # Convert the matrix to a data frame suitable for ggplot
+      cmDf <- as.data.frame(cm)
+      cmDf$Reference <- rownames(cmDf)
+      cmMelt <- melt(cmDf, id.vars = "Reference")
+
+      colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
+
+      # Define colors for the cells
+      cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
+
+      # Confusion matrix plot
+      plotty <- ggplot(data = cmMelt, aes(x = Predicted, y = Actual)) +
+        geom_tile(aes(fill = Color), color = "white") +
+        scale_fill_identity() +
+        geom_text(aes(label = Freq), vjust = 1) +
+        labs(title = namey,
+             x = "Predicted",
+             y = "Actual") +
+        theme_minimal()
+
+      return(plotty)
+
+    })
+    # Renaming the items in the plotList
+    names(plotList) <- names(vals$testDataList)
+
+    # Outputs the Matrix plots in a table
+    output$rfMatrixPlot <- renderPlot({
+      do.call(grid.arrange, c(plotList, ncol = 2))
+    })
+
+    # Create and update TBSignatures after the Random Forest testing is completed
+    customName <- paste0("RFGeneSignature_", length(rv$rfGeneSigNames))
+    rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$rfGeneSigNames)))
+    names(rv$TBsignatures_reactive)[length(rv$TBsignatures_reactive)] <- customName
+
+    # Display notification when TBSignatures are updated
+    showNotification("TBSignatures have been updated.", type = "message")
+  }, error = function(e) {
+    cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
-  # Renaming the items in the plotList
-  names(plotList) <- names(vals$testDataList)
 
-  # Outputs the Matrix plots in a table
-  output$rfMatrixPlot <- renderPlot({
-    do.call(grid.arrange, c(plotList, ncol = 2))
-  })
-
-  # Create and update TBSignatures after the Random Forest testing is completed
-  TBsignatures <- c(TBsignatures, list(RFGeneSignature = rv$rfGeneSigNames))
-  rv$TBsignatures_reactive <- TBsignatures
-
-  # Display notification when TBSignatures are updated
-  showNotification("TBSignatures have been updated.", type = "message")
 })
 
 ###################################################################
@@ -436,84 +442,90 @@ output$svmImportancePlot <- renderPlot({
 
 # Update and Test SVM Model upon Button Click
 observeEvent(input$svmTestGeneSig, {
-  colKeep <- c(input$covariateCategory, rv$svmGeneSigNames)
+  tryCatch({
+    colKeep <- c(input$covariateCategory, rv$svmGeneSigNames)
 
-  newTrainingData <- rv$trainingData[, unlist(colKeep)]
+    newTrainingData <- rv$trainingData[, unlist(colKeep)]
 
-  if(input$kernelType == "Linear"){
-    kType <- "svmLinear"
-  } else if(input$kernelType == "Radial"){
-    kType <- "svmRadial"
-  } else {
-    kType <- "svmPoly"
-  }
+    if(input$kernelType == "Linear"){
+      kType <- "svmLinear"
+    } else if(input$kernelType == "Radial"){
+      kType <- "svmRadial"
+    } else {
+      kType <- "svmPoly"
+    }
 
-  # Cross-validation and SVM training with new selected features
-  control <- trainControl(method = "cv", number = input$foldCount)
-  svmModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
-                           data = newTrainingData,
-                           method = kType,
-                           trControl = control)
+    # Cross-validation and SVM training with new selected features
+    control <- trainControl(method = "cv", number = input$foldCount)
+    svmModel <- caret::train(as.formula(paste(input$covariateCategory, "~ .")),
+                             data = newTrainingData,
+                             method = kType,
+                             trControl = control)
 
 
-  # Generates a list of plots for each
-  plotList <- lapply(names(vals$testDataList), function(namey) {
-    testy <- vals$testDataList[[namey]]
-    newtestingData <- testy[, unlist(colKeep)]
-    svmPredictions <- predict(svmModel, newtestingData)
-    rv$svmConfusionMatrix <- confusionMatrix(svmPredictions, newtestingData[[input$covariateCategory]])
+    # Generates a list of plots for each
+    plotList <- lapply(names(vals$testDataList), function(namey) {
+      testy <- vals$testDataList[[namey]]
+      newtestingData <- testy[, unlist(colKeep)]
+      svmPredictions <- predict(svmModel, newtestingData)
+      rv$svmConfusionMatrix <- confusionMatrix(svmPredictions, newtestingData[[input$covariateCategory]])
 
-    # Renders the matrix plot
-    table <- rv$svmConfusionMatrix$table
+      # Renders the matrix plot
+      table <- rv$svmConfusionMatrix$table
 
-    df <- data.frame(
-      Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
-      Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
-      Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
-    )
+      df <- data.frame(
+        Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
+        Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
+        Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
+      )
 
-    cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
+      cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
 
-    rownames(cm) <- c(input$oc1, input$oc2)
-    colnames(cm) <- c(input$oc1, input$oc2)
+      rownames(cm) <- c(input$oc1, input$oc2)
+      colnames(cm) <- c(input$oc1, input$oc2)
 
-    # Convert the matrix to a data frame suitable for ggplot
-    cmDf <- as.data.frame(cm)
-    cmDf$Reference <- rownames(cmDf)
-    cmMelt <- melt(cmDf, id.vars = "Reference")
+      # Convert the matrix to a data frame suitable for ggplot
+      cmDf <- as.data.frame(cm)
+      cmDf$Reference <- rownames(cmDf)
+      cmMelt <- melt(cmDf, id.vars = "Reference")
 
-    colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
+      colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
 
-    # Define colors for the cells
-    cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
+      # Define colors for the cells
+      cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
 
-    # Confusion matrix plot
-    plotty <- ggplot(data = cmMelt, aes(x = Predicted, y = Actual)) +
-      geom_tile(aes(fill = Color), color = "white") +
-      scale_fill_identity() +
-      geom_text(aes(label = Freq), vjust = 1) +
-      labs(title = namey,
-           x = "Predicted",
-           y = "Actual") +
-      theme_minimal()
+      # Confusion matrix plot
+      plotty <- ggplot(data = cmMelt, aes(x = Predicted, y = Actual)) +
+        geom_tile(aes(fill = Color), color = "white") +
+        scale_fill_identity() +
+        geom_text(aes(label = Freq), vjust = 1) +
+        labs(title = namey,
+             x = "Predicted",
+             y = "Actual") +
+        theme_minimal()
 
-    return(plotty)
+      return(plotty)
 
+    })
+    # Renaming the items in the plotList
+    names(plotList) <- names(vals$testDataList)
+
+    # Outputs the Matrix plots in a table
+    output$svmMatrixPlot <- renderPlot({
+      do.call(grid.arrange, c(plotList, ncol = 2))
+    })
+
+    # Create and update TBSignatures after the SVM testing is completed
+    customName <- paste0("SVMGeneSignature_", length(rv$svmGeneSigNames))
+    rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$rfGeneSigNames)))
+    names(rv$TBsignatures_reactive)[length(rv$TBsignatures_reactive)] <- customName
+
+    # Display notification when TBSignatures are updated
+    showNotification("TBSignatures have been updated.", type = "message")
+  }, error = function(e) {
+    cat("Error:", conditionMessage(e), "\n")
+    showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
-  # Renaming the items in the plotList
-  names(plotList) <- names(vals$testDataList)
-
-  # Outputs the Matrix plots in a table
-  output$svmMatrixPlot <- renderPlot({
-    do.call(grid.arrange, c(plotList, ncol = 2))
-  })
-
-  # Create and update TBSignatures after the SVM testing is completed
-  TBsignatures <- c(TBsignatures, list(SVMGeneSignature = rv$svmGeneSigNames))
-  rv$TBsignatures_reactive <- TBsignatures
-
-  # Display notification when TBSignatures are updated
-  showNotification("TBSignatures have been updated.", type = "message")
 })
 
 ###################################################################
@@ -652,8 +664,9 @@ observeEvent(input$enTestGeneSig, {
     })
 
     # Create and update TBSignatures after Elastic Net testing is completed
-    TBsignatures <- c(TBsignatures, list(ENGeneSignature = rv$enGeneSigNames))
-    rv$TBsignatures_reactive <- TBsignatures
+    customName <- paste0("ENGeneSignature_", length(rv$enGeneSigNames))
+    rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$rfGeneSigNames)))
+    names(rv$TBsignatures_reactive)[length(rv$TBsignatures_reactive)] <- customName
 
     # Display notification when TBSignatures are updated
     showNotification("TBSignatures have been updated.", type = "message")
@@ -803,8 +816,9 @@ observeEvent(input$nnTestGeneSig, {
     })
 
     # Create and update TBSignatures after Neural Network testing is completed
-    TBsignatures <- c(TBsignatures, list(NNGeneSignature = rv$nnGeneSigNames))
-    rv$TBsignatures_reactive <- TBsignatures
+    customName <- paste0("NNGeneSignature_", length(rv$nnGeneSigNames))
+    rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$rfGeneSigNames)))
+    names(rv$TBsignatures_reactive)[length(rv$TBsignatures_reactive)] <- customName
 
     # Display notification when TBSignatures are updated
     showNotification("TBSignatures have been updated.", type = "message")
