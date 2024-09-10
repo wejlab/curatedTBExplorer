@@ -1,34 +1,34 @@
 library(curatedTBData)
 library(SummarizedExperiment)
 library(sva)
-geo <- c("GSE79362","GSE94438", "GSE107993", "GSE112104", "GSETornheim")
-tt <- curatedTBData(geo, dry.run = FALSE, curated.only = TRUE)
-# Combine assays from multiple experiments
-combined <- combine_objects(tt, experiment_name = "assay_curated")
+
+# All Datasets:
+all <- c("GSE31348", "GSE36238", "GSE41055", "GSE54992",
+         "GSE73408", "GSE107731", "GSE79362", "GSE84076",
+         "GSE89403", "GSE94438", "GSE107991", "GSE107992",
+         "GSE107993", "GSE107994", "GSE101705", "GSE107104",
+         "GSE112104", "GSETornheim", "GSE19435", "GSE19439",
+         "GSE19442", "GSE19443", "GSE19444", "GSE22098",
+         "GSE29536", "GSE37250", "GSE39939", "GSE39940",
+         "GSE40553", "GSE42825", "GSE42826", "GSE42827",
+         "GSE42830", "GSE42831", "GSE42832", "GSE50834",
+         "GSE56153", "GSE69581", "GSE83456", "GSE83892",
+         "GSEBruno", "GSE25534", "GSE28623", "GSE34608",
+         "GSE62147", "GSE81746", "GSE62525", "GSE74092",
+         "GSE6112", "GSE152218")
+
+# Progression Datasets:
+progression <- c("GSE79362","GSE94438", "GSE107993", "GSE112104", "GSETornheim")
+
+
 # Perform batch correction on the combined assay
-my_formula <- "~ Age + Gender + TBStatus"
-mod <- model.matrix(as.formula(my_formula), colData(combined))
+# my_formula <- "~ Age + Gender + TBStatus"
+# mod <- model.matrix(as.formula(my_formula), colData(combined))
 
 assay(combined, "corrected_assay") <- ComBat(assay(combined, "assay1"),
                                               batch = colData(combined)$Study,
                                               mod = mod)
 combined
 
-GSE79362 <- curatedTBData("GSE79362", dry.run = FALSE, curated.only = TRUE)
-GSE94438 <- curatedTBData("GSE94438", dry.run = FALSE, curated.only = TRUE)
-GSE107993 <- curatedTBData("GSE107993", dry.run = FALSE, curated.only = TRUE)
-GSE112104 <- curatedTBData("GSE112104", dry.run = FALSE, curated.only = TRUE)
-GSETornheim <- curatedTBData("GSETornheim", dry.run = FALSE, curated.only = TRUE)
-
-
-
-totalNameCount <- unlist(tt[1]@colData@nrows) + tt[2]@colData@nrows + tt[3]@colData@nrows + tt[4]@colData@nrows + tt[5]@colData@nrows
-
-
-totalNameCount <- GSE79362@colData@nrows + GSE94438@colData@nrows + GSE107993@colData@nrows + GSE112104@colData@nrows + GSETornheim@colData@nrows
-
-print(totalNameCount)
-
-
-
+# This is the combined set of column data with progressor relevant information.
 dunno <- as.data.frame(colData(combined))[, c("TBStatus", "MeasurementTime", "PatientID", "PreviousTB", "Progression", "TimeToTB", "Study")]
