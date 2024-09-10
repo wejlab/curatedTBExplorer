@@ -33,7 +33,11 @@ tabPanel(
 
         # Reset filter button
         actionButton("filter_reset_btn", "Reset"),
-        br()
+        br(),
+        br(),
+        h4("Additional Options:"),
+        selectInput("repeatPatients", "Resolution For Repeat Patients:", choices = c("Keep Both", "Keep First", "Keep Last")),
+        actionButton("resolveBtn", "Resolve")
       ),
       mainPanel(
         fluidRow(

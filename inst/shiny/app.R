@@ -21,6 +21,7 @@ library(shinyWidgets)
 library(snow)
 library(SummarizedExperiment)
 library(sva)
+library(tibble)
 library(TBSignatureProfiler)
 
 # Get the list of available studies

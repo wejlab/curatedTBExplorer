@@ -212,6 +212,70 @@ output$filter_summary_table <- renderDT({
     )
   ))
 })
+
+observeEvent(input$resolveBtn, {
+  repeatChoice = input$repeatPatients
+
+
+
+
+
+  if(repeatChoice == "Keep First") {
+
+    df <- as.data.frame(colData(vals$SEList)) %>%
+      mutate(OriginalRowNames = rownames(.)) %>%
+      mutate(
+        MeasurementTime_processed = case_when(
+          grepl("Month\\(s\\)", MeasurementTime) ~ as.numeric(gsub("(\\d+) Month\\(s\\)", "\\1", MeasurementTime)) * 30, # Convert "# Month(s)" to days
+          grepl("Month", MeasurementTime) ~ as.numeric(gsub("(\\d+) Month", "\\1", MeasurementTime)) * 30,               # Convert "# Month" to days
+          grepl("Week", MeasurementTime) ~ as.numeric(gsub("Week (\\d+)", "\\1", MeasurementTime)) * 7,                  # Convert "Week #" to days
+          grepl("Day", MeasurementTime) ~ as.numeric(gsub("(\\d+) Day\\(s\\)", "\\1", MeasurementTime)),                  # Extract day numbers
+          MeasurementTime == "End" ~ Inf,                                                                                  # Replace "End" with Inf
+          TRUE ~ NA_real_                                                                                                # Handle any other cases
+        )
+      ) %>%
+      group_by(PatientID, Study) %>%
+      slice_min(MeasurementTime_processed) %>%
+      ungroup() %>%
+      # Restore original row names only for rows that were not filtered out
+      column_to_rownames(var = "OriginalRowNames")
+
+    View(df_unique)
+    View(as.data.frame(colData(vals$SEList)))
+  }
+  if(repeatChoice == "Keep Last") {
+    df_unique <- as.data.frame(colData(vals$SEList)) %>%
+      mutate(
+        MeasurementTime_processed = case_when(
+          grepl("Week", MeasurementTime) ~ as.numeric(gsub("Week (\\d+)", "\\1", MeasurementTime)) * 7,   # Convert "Week #" to days
+          grepl("Month\\(s\\)", MeasurementTime) ~ as.numeric(gsub("(\\d+) Month\\(s\\)", "\\1", MeasurementTime)) * 30, # Convert "# Month(s)" to days
+          grepl("Month", MeasurementTime) ~ as.numeric(gsub("(\\d+) Month", "\\1", MeasurementTime)) * 30, # Convert "# Month" to days
+          grepl("Day", MeasurementTime) ~ as.numeric(gsub("(\\d+) Day\\(s\\)", "\\1", MeasurementTime)),   # Extract day numbers
+          MeasurementTime == "End" ~ Inf,                                                                 # Replace "End" with Inf
+          TRUE ~ NA_real_                                                                               # Handle any other cases
+        )
+      ) %>%
+      group_by(PatientID, Study) %>%
+      slice_max(MeasurementTime_processed) %>%
+      ungroup()
+
+    View(df_unique)
+    View(as.data.frame(colData(vals$SEList)))
+  }
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
 ########### Visualize Tab ################
 
 # Generates visualizations
