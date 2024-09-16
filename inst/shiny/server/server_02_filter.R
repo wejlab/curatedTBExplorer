@@ -169,11 +169,13 @@ observeEvent(input$filter_apply_btn, {
         subset_SE <- subset_SE[, !is.na(colData(subset_SE)[[filter_by]]) & colData(subset_SE)[[filter_by]] == sub_filter]
       }
     }
-    # View(subset_SE)
-    my_data(as.data.frame(colData(subset_SE)))
 
     # Applies filtered changes to SEList
     vals$SEList <- subset_SE
+
+    # View(subset_SE)
+    my_data(as.data.frame(colData(vals$SEList)))
+
   }
 })
 
@@ -214,16 +216,21 @@ output$filter_summary_table <- renderDT({
 })
 
 observeEvent(input$resolveBtn, {
+  # Stores the user's input on first or last
   repeatChoice = input$repeatPatients
 
+  # Takes dataframe from SEList
+  newDF <- as.data.frame(colData(vals$SEList))
 
-
-
+  # Stores samplenames in a column of colData
+  newDF$rowNames <- rownames(newDF)
+  # View(newDF)
 
   if(repeatChoice == "Keep First") {
 
-    df <- as.data.frame(colData(vals$SEList)) %>%
-      mutate(OriginalRowNames = rownames(.)) %>%
+    # Removes all MeasurementTime words and adjusts to days in all cases.
+    # Keeps the patient version with less days
+    df_unique <- newDF %>%
       mutate(
         MeasurementTime_processed = case_when(
           grepl("Month\\(s\\)", MeasurementTime) ~ as.numeric(gsub("(\\d+) Month\\(s\\)", "\\1", MeasurementTime)) * 30, # Convert "# Month(s)" to days
@@ -236,15 +243,22 @@ observeEvent(input$resolveBtn, {
       ) %>%
       group_by(PatientID, Study) %>%
       slice_min(MeasurementTime_processed) %>%
-      ungroup() %>%
-      # Restore original row names only for rows that were not filtered out
-      column_to_rownames(var = "OriginalRowNames")
+      ungroup()
+    # print(newDF$rowNames)
 
-    View(df_unique)
-    View(as.data.frame(colData(vals$SEList)))
+    # Subsets SEList to only unique patients
+    vals$SEList <- vals$SEList[, colnames(vals$SEList) %in% df_unique$rowNames]
+
+    # Updates table
+    my_data(as.data.frame(colData(vals$SEList)))
+    # View(df_unique)
+    # View(as.data.frame(colData(vals$SEList)))
   }
   if(repeatChoice == "Keep Last") {
-    df_unique <- as.data.frame(colData(vals$SEList)) %>%
+
+    # Removes all MeasurementTime words and adjusts to days in all cases.
+    # Keeps the patient version with most days
+    df_unique <- newDF %>%
       mutate(
         MeasurementTime_processed = case_when(
           grepl("Week", MeasurementTime) ~ as.numeric(gsub("Week (\\d+)", "\\1", MeasurementTime)) * 7,   # Convert "Week #" to days
@@ -259,8 +273,14 @@ observeEvent(input$resolveBtn, {
       slice_max(MeasurementTime_processed) %>%
       ungroup()
 
-    View(df_unique)
-    View(as.data.frame(colData(vals$SEList)))
+    # Subsets SEList to only unique patients
+    vals$SEList <- vals$SEList[, colnames(vals$SEList) %in% df_unique$rowNames]
+
+    # Updates Table
+    my_data(as.data.frame(colData(vals$SEList)))
+
+    # View(df_unique)
+    # View(as.data.frame(colData(vals$SEList)))
   }
 })
 
