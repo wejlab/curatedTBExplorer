@@ -233,6 +233,29 @@ output$downloadCreatedSig <- downloadHandler(
   }
 )
 
+observeEvent(input$inputFile, {
+  # Makes sure that the file is downloaded correctly
+  req(input$inputFile)
+
+  showNotification("File successfully uploaded", type = "message")
+
+  # Fetches file name
+  originalFileName <- input$inputFile$name
+  originalFileName <- sub("\\.txt$", "", originalFileName)
+  # print(originalFileName)
+
+  # Fetches gene sig from file
+  fileInfo <- readLines(input$inputFile$datapath)
+  # print(fileInfo)
+
+  rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(originalFileName = unlist(fileInfo)))
+  names(rv$TBsignatures_reactive)[length(rv$TBsignatures_reactive)] <- originalFileName
+
+  # rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$svmGeneSigNames)))
+  # names(rv$TBsignatures_reactive)[length(rv$TBsignatures_reactive)] <- customName
+
+})
+
 ######################################################################################################
 ####################################### MACHINE LEARNING METHODS #####################################
 ######################################################################################################

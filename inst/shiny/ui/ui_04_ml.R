@@ -104,6 +104,11 @@ tabPanel(
 
       # Button to download the selected signature
       downloadButton("downloadCreatedSig", "Download Signature")
+    ),
+    tabPanel(
+      "Upload Signatures",
+      fileInput("inputFile", "Choose a txt file",
+                accept = c("text/plain", ".txt"))
     )
   )
 )
