@@ -35,9 +35,17 @@ tabPanel(
         actionButton("filter_reset_btn", "Reset"),
         br(),
         br(),
-        h4("Additional Options:"),
-        selectInput("repeatPatients", "Resolution For Repeat Patients:", choices = c("Keep Both", "Keep First", "Keep Last")),
-        actionButton("resolveBtn", "Resolve")
+
+        # Download options button
+        actionButton("filterOptions", "Additional Options"),
+
+        # Conditional panel for more options
+        conditionalPanel(
+          condition = "input.filterOptions % 2 != 0",
+          h4("Additional Options:"),
+          selectInput("repeatPatients", "Resolution For Repeat Patients:", choices = c("Keep Both", "Keep First", "Keep Last")),
+          actionButton("resolveBtn", "Resolve")
+        ),
       ),
       mainPanel(
         fluidRow(
