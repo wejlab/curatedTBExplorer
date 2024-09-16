@@ -94,6 +94,16 @@ tabPanel(
         plotOutput("svmImportancePlot", height = "600"),
         plotOutput("svmMatrixPlot"),
       )
+    ),
+    tabPanel(
+      "Download Signatures",
+      selectInput("selectCreatedSig",
+                  label = "Select Signature",
+                  choices = NULL,  # Will be updated dynamically
+                  selected = NULL),
+
+      # Button to download the selected signature
+      downloadButton("downloadCreatedSig", "Download Signature")
     )
   )
 )

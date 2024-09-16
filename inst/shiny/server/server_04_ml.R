@@ -32,6 +32,7 @@ rv <- reactiveValues(
   nnConfusionMatrix = NULL,
 
   TBsignatures_reactive = TBsignatures,
+  createdTBSignatures = NULL,
   datasetConfirm = NULL
 
 )
@@ -212,6 +213,26 @@ mlList <- reactive({
   }
 })
 
+
+# Update dropdown choices for createdTBSignatures
+observe({
+  updateSelectInput(session, "selectCreatedSig", choices = names(rv$createdTBSignatures))
+})
+
+#Download for the createdTBSignatures
+output$downloadCreatedSig <- downloadHandler(
+  filename = function() {
+    paste(input$selectCreatedSig, ".txt", sep = "")
+  },
+  content = function(file) {
+    selectedSig <- input$selectCreatedSig
+    if (!is.null(selectedSig)) {
+      # Write selected signature to a text file
+      writeLines(rv$createdTBSignatures[[selectedSig]], file)
+    }
+  }
+)
+
 ######################################################################################################
 ####################################### MACHINE LEARNING METHODS #####################################
 ######################################################################################################
@@ -362,6 +383,9 @@ observeEvent(input$rfTestGeneSig, {
     customName <- paste0("RFGeneSignature_", length(rv$rfGeneSigNames))
     rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$rfGeneSigNames)))
     names(rv$TBsignatures_reactive)[length(rv$TBsignatures_reactive)] <- customName
+
+    # Add signatures to createdTBSignatures dataset
+    rv$createdTBSignatures[[customName]] <- unlist(rv$rfGeneSigNames)
 
     # Display notification when TBSignatures are updated
     showNotification("TBSignatures have been updated.", type = "message")
@@ -517,8 +541,11 @@ observeEvent(input$svmTestGeneSig, {
 
     # Create and update TBSignatures after the SVM testing is completed
     customName <- paste0("SVMGeneSignature_", length(rv$svmGeneSigNames))
-    rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$rfGeneSigNames)))
+    rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$svmGeneSigNames)))
     names(rv$TBsignatures_reactive)[length(rv$TBsignatures_reactive)] <- customName
+
+    # Add signatures to createdTBSignatures dataset
+    rv$createdTBSignatures[[customName]] <- unlist(rv$svmGeneSigNames)
 
     # Display notification when TBSignatures are updated
     showNotification("TBSignatures have been updated.", type = "message")
@@ -665,8 +692,11 @@ observeEvent(input$enTestGeneSig, {
 
     # Create and update TBSignatures after Elastic Net testing is completed
     customName <- paste0("ENGeneSignature_", length(rv$enGeneSigNames))
-    rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$rfGeneSigNames)))
+    rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$enGeneSigNames)))
     names(rv$TBsignatures_reactive)[length(rv$TBsignatures_reactive)] <- customName
+
+    # Add signatures to createdTBSignatures dataset
+    rv$createdTBSignatures[[customName]] <- unlist(rv$enGeneSigNames)
 
     # Display notification when TBSignatures are updated
     showNotification("TBSignatures have been updated.", type = "message")
@@ -742,7 +772,7 @@ output$nnImportancePlot <- renderPlot({
   })
 })
 
-# Update and Test Neural Network Model upon Button Click
+# Update createdTBSignatures when Neural Network model is tested
 observeEvent(input$nnTestGeneSig, {
   tryCatch({
     colKeep <- c(input$covariateCategory, rv$nnGeneSigNames)
@@ -772,15 +802,12 @@ observeEvent(input$nnTestGeneSig, {
 
       # Renders the matrix plot
       table <- rv$nnConfusionMatrix$table
-
       df <- data.frame(
         Prediction = c(input$oc1, input$oc2, input$oc1, input$oc2),
         Reference = c(input$oc1, input$oc1, input$oc2, input$oc2),
         Freq = c(table[1, 1], table[2, 1], table[1, 2], table[2, 2])
       )
-
       cm <- matrix(as.character(unlist(df[3])), nrow=2, byrow=TRUE)
-
       rownames(cm) <- c(input$oc1, input$oc2)
       colnames(cm) <- c(input$oc1, input$oc2)
 
@@ -790,8 +817,6 @@ observeEvent(input$nnTestGeneSig, {
       cmMelt <- melt(cmDf, id.vars = "Reference")
 
       colnames(cmMelt) <- c("Actual", "Predicted", "Freq")
-
-      # Define colors for the cells
       cmMelt$Color <- ifelse(cmMelt$Actual == cmMelt$Predicted, "lightgreen", "lightcoral")
 
       # Confusion matrix plot
@@ -799,14 +824,11 @@ observeEvent(input$nnTestGeneSig, {
         geom_tile(aes(fill = Color), color = "white") +
         scale_fill_identity() +
         geom_text(aes(label = Freq), vjust = 1) +
-        labs(title = namey,
-             x = "Predicted",
-             y = "Actual") +
+        labs(title = namey, x = "Predicted", y = "Actual") +
         theme_minimal()
-
       return(plotty)
-
     })
+
     # Renaming the items in the plotList
     names(plotList) <- names(vals$testDataList)
 
@@ -817,8 +839,11 @@ observeEvent(input$nnTestGeneSig, {
 
     # Create and update TBSignatures after Neural Network testing is completed
     customName <- paste0("NNGeneSignature_", length(rv$nnGeneSigNames))
-    rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$rfGeneSigNames)))
+    rv$TBsignatures_reactive <- c(rv$TBsignatures_reactive, list(customName = unlist(rv$nnGeneSigNames)))
     names(rv$TBsignatures_reactive)[length(rv$TBsignatures_reactive)] <- customName
+
+    # Add signatures to createdTBSignatures dataset
+    rv$createdTBSignatures[[customName]] <- unlist(rv$nnGeneSigNames)
 
     # Display notification when TBSignatures are updated
     showNotification("TBSignatures have been updated.", type = "message")
@@ -827,6 +852,4 @@ observeEvent(input$nnTestGeneSig, {
     showNotification(paste("Error:", conditionMessage(e)), type = "error")
   })
 })
-
-
-###################################################################
+###############################################
