@@ -445,8 +445,8 @@ observeEvent(input$confirmStudiesBtn, {
 
         # Sets up the dataTable in filter page:
         my_data(as.data.frame(colData(vals$SEList)))
-        View(colData(vals$SEList)@listData$Progression)
-        print(colData(vals$SEList)@listData$Progression)
+        # View(colData(vals$SEList)@listData$Progression)
+        # print(colData(vals$SEList)@listData$Progression)
 
       }, error = function(e) {
         cat("Error:", conditionMessage(e), "\n")
