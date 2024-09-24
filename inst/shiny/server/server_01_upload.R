@@ -29,7 +29,9 @@ vals <- reactiveValues(
   # acts as a flag to tell if batch correction was done
   batchFlag = FALSE,
   # A list to hold the subset SEs for testing
-  testDataList = NULL
+  testDataList = NULL,
+  #extra SE with downloaded info for testing on ML
+  extraSE = NULL
 )
 
 # Variables to hold local downloaded and default studies
@@ -513,6 +515,9 @@ observeEvent(input$confirmCovarsBtn, {
     # print(paste("Dimensions of assay:", dim(assay(vals$SEList, "assay1"))))
     # print(paste("Dimensions of colData:", dim(colData(vals$SEList))))
     # print(paste("Dimensions of model matrix:", dim(mod)))
+
+
+    vals$extraSE <- vals$SEList
 
     # Perform batch correction using ComBat
     assay(vals$SEList, "corrected_assay") <- ComBat(assay(vals$SEList, "assay1"),

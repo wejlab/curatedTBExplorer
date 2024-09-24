@@ -126,6 +126,7 @@ observeEvent(input$confirmDataset, {
       filtered_genes <- rownames(vals$filtered[[generatedName]])
 
       limitedSE <- vals$mlList[filtered_genes, , drop = FALSE] # drop = FALSE makes sure it doesn't convert to a vector
+      limitedTestSe <- vals$extraSE[filtered_genes, , drop = FALSE]
 
       # View(limitedSE@assays@data@listData$assay1)
       rv$trainingSE <- limitedSE[, colData(limitedSE)$Study %in% selectedTrainingList]
@@ -142,13 +143,29 @@ observeEvent(input$confirmDataset, {
       rv$trainingData[[input$covariateCategory]] <- factor(rv$trainingData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
 
       # Subsetting the limitedSE into assays for each testing study
+      # vals$testDataList <- lapply(selectedTestingList, function(studyName) {
+      #   testling <- limitedSE[, colData(limitedSE)$Study == studyName]
+      #   testing_assay_data <- testling@assays@data@listData[[input$assaySelection]]
+      #   testing_col_data <- colData(testling)
+      #   testing_col_data[[input$covariateCategory]] <- factor(testing_col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
+      #   testData <- setNames(data.frame(testing_col_data[[input$covariateCategory]], t(testing_assay_data)), c(input$covariateCategory, colnames(t(testing_assay_data))))
+      #   testData[[input$covariateCategory]] <- factor(testData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
+      #   return(testData)
+      # })
+
       vals$testDataList <- lapply(selectedTestingList, function(studyName) {
-        testling <- limitedSE[, colData(limitedSE)$Study == studyName]
-        testing_assay_data <- testling@assays@data@listData[[input$assaySelection]]
+        testling <- limitedTestSe[, colData(limitedTestSe)$Study == studyName]
+        View(testling@assays)
+        if(input$assaySelection == "corrected_assay"){
+          testing_assay_data <- testling@assays@data@listData$assay1
+        } else {
+          testing_assay_data <- testling@assays@data@listData[[input$assaySelection]]
+        }
         testing_col_data <- colData(testling)
         testing_col_data[[input$covariateCategory]] <- factor(testing_col_data[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
         testData <- setNames(data.frame(testing_col_data[[input$covariateCategory]], t(testing_assay_data)), c(input$covariateCategory, colnames(t(testing_assay_data))))
         testData[[input$covariateCategory]] <- factor(testData[[input$covariateCategory]], levels = c(input$oc1, input$oc2))
+        View(testData)
         return(testData)
       })
 
