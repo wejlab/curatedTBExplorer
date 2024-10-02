@@ -224,7 +224,6 @@ observeEvent(input$resolveBtn, {
 
   # Stores samplenames in a column of colData
   newDF$rowNames <- rownames(newDF)
-  # View(newDF)
 
   if(repeatChoice == "Keep First") {
 
@@ -278,10 +277,65 @@ observeEvent(input$resolveBtn, {
 
     # Updates Table
     my_data(as.data.frame(colData(vals$SEList)))
-
-    # View(df_unique)
-    # View(as.data.frame(colData(vals$SEList)))
   }
+
+  #### FOR TESTING DATASET ################################################
+
+  # Takes dataframe from SEList
+  newDF <- as.data.frame(colData(vals$extraSE))
+
+  View(newDF)
+
+  # Stores samplenames in a column of colData
+  newDF$rowNames <- rownames(newDF)
+
+  if(repeatChoice == "Keep First") {
+
+    # Removes all MeasurementTime words and adjusts to days in all cases.
+    # Keeps the patient version with less days
+    df_unique <- newDF %>%
+      mutate(
+        MeasurementTime_processed = case_when(
+          grepl("Month\\(s\\)", MeasurementTime) ~ as.numeric(gsub("(\\d+) Month\\(s\\)", "\\1", MeasurementTime)) * 30, # Convert "# Month(s)" to days
+          grepl("Month", MeasurementTime) ~ as.numeric(gsub("(\\d+) Month", "\\1", MeasurementTime)) * 30,               # Convert "# Month" to days
+          grepl("Week", MeasurementTime) ~ as.numeric(gsub("Week (\\d+)", "\\1", MeasurementTime)) * 7,                  # Convert "Week #" to days
+          grepl("Day", MeasurementTime) ~ as.numeric(gsub("(\\d+) Day\\(s\\)", "\\1", MeasurementTime)),                  # Extract day numbers
+          MeasurementTime == "End" ~ Inf,                                                                                  # Replace "End" with Inf
+          TRUE ~ NA_real_                                                                                                # Handle any other cases
+        )
+      ) %>%
+      group_by(PatientID, Study) %>%
+      slice_min(MeasurementTime_processed) %>%
+      ungroup()
+
+    # Subsets extraSE to only unique patients
+    vals$extraSE <- vals$extraSE[, colnames(vals$extraSE) %in% df_unique$rowNames]
+  }
+  if(repeatChoice == "Keep Last") {
+
+    # Removes all MeasurementTime words and adjusts to days in all cases.
+    # Keeps the patient version with most days
+    df_unique <- newDF %>%
+      mutate(
+        MeasurementTime_processed = case_when(
+          grepl("Week", MeasurementTime) ~ as.numeric(gsub("Week (\\d+)", "\\1", MeasurementTime)) * 7,   # Convert "Week #" to days
+          grepl("Month\\(s\\)", MeasurementTime) ~ as.numeric(gsub("(\\d+) Month\\(s\\)", "\\1", MeasurementTime)) * 30, # Convert "# Month(s)" to days
+          grepl("Month", MeasurementTime) ~ as.numeric(gsub("(\\d+) Month", "\\1", MeasurementTime)) * 30, # Convert "# Month" to days
+          grepl("Day", MeasurementTime) ~ as.numeric(gsub("(\\d+) Day\\(s\\)", "\\1", MeasurementTime)),   # Extract day numbers
+          MeasurementTime == "End" ~ Inf,                                                                 # Replace "End" with Inf
+          TRUE ~ NA_real_                                                                               # Handle any other cases
+        )
+      ) %>%
+      group_by(PatientID, Study) %>%
+      slice_max(MeasurementTime_processed) %>%
+      ungroup()
+
+    # Subsets extraSE to only unique patients
+    vals$extraSE <- vals$extraSE[, colnames(vals$extraSE) %in% df_unique$rowNames]
+
+
+  }
+  View(as.data.frame(colData(vals$extraSE)))
 })
 
 
